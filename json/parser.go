@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/dsh2dsh/gofeed/v2/internal/shared"
+	"github.com/dsh2dsh/gofeed/v2/options"
 )
 
 // Parser is an JSON Feed Parser
@@ -18,7 +18,7 @@ func NewParser() *Parser {
 }
 
 // Parse parses an json feed into an json.Feed
-func (ap *Parser) Parse(feed io.Reader, opts *shared.ParseOptions) (*Feed, error) {
+func (ap *Parser) Parse(feed io.Reader, opts *options.ParseOptions) (*Feed, error) {
 	jsonFeed := &Feed{}
 
 	buffer := new(bytes.Buffer)

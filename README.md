@@ -194,7 +194,7 @@ fmt.Println(jsonFeed.HomePageURL)
 
 ```go
 fp := gofeed.NewParser()
-fp.AuthConfig = &gofeed.Auth{
+fp.AuthConfig = &options.Auth{
   Username: "foo",
   Password: "bar",
 }

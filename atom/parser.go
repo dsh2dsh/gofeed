@@ -10,6 +10,7 @@ import (
 
 	ext "github.com/dsh2dsh/gofeed/v2/extensions"
 	"github.com/dsh2dsh/gofeed/v2/internal/shared"
+	"github.com/dsh2dsh/gofeed/v2/options"
 )
 
 // Atom elements which contain URIs
@@ -31,7 +32,7 @@ func NewParser() *Parser {
 }
 
 // Parse parses an xml feed into an atom.Feed
-func (ap *Parser) Parse(feed io.Reader, opts *shared.ParseOptions) (*Feed, error) {
+func (ap *Parser) Parse(feed io.Reader, opts *options.ParseOptions) (*Feed, error) {
 	p := xpp.NewXMLPullParser(feed, false, shared.NewReaderLabel)
 
 	_, err := shared.FindRoot(p)
@@ -42,7 +43,7 @@ func (ap *Parser) Parse(feed io.Reader, opts *shared.ParseOptions) (*Feed, error
 	return ap.parseRoot(p, opts)
 }
 
-func (ap *Parser) parseRoot(p *xpp.XMLPullParser, _ *shared.ParseOptions) (*Feed, error) {
+func (ap *Parser) parseRoot(p *xpp.XMLPullParser, _ *options.ParseOptions) (*Feed, error) {
 	if err := p.Expect(xpp.StartTag, "feed"); err != nil {
 		return nil, fmt.Errorf("gofeed/atom: %w", err)
 	}

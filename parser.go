@@ -11,6 +11,7 @@ import (
 
 	"github.com/dsh2dsh/gofeed/v2/atom"
 	"github.com/dsh2dsh/gofeed/v2/json"
+	"github.com/dsh2dsh/gofeed/v2/options"
 	"github.com/dsh2dsh/gofeed/v2/rss"
 )
 
@@ -39,14 +40,6 @@ type Parser struct {
 	jp             *json.Parser
 }
 
-// Auth is a structure allowing to
-// use the BasicAuth during the HTTP request
-// It must be instantiated with your new Parser
-type Auth struct {
-	Username string
-	Password string
-}
-
 // NewParser creates a universal feed parser.
 func NewParser() *Parser {
 	fp := Parser{
@@ -60,9 +53,9 @@ func NewParser() *Parser {
 // Parse parses a RSS or Atom or JSON feed into
 // the universal gofeed.Feed.  It takes an
 // io.Reader which should return the xml/json content.
-func (f *Parser) Parse(feed io.Reader, opts *ParseOptions) (*Feed, error) {
+func (f *Parser) Parse(feed io.Reader, opts *options.ParseOptions) (*Feed, error) {
 	if opts == nil {
-		opts = DefaultParseOptions()
+		opts = options.DefaultParseOptions()
 	}
 
 	// Wrap the feed io.Reader in a io.TeeReader
@@ -93,9 +86,9 @@ func (f *Parser) Parse(feed io.Reader, opts *ParseOptions) (*Feed, error) {
 // ParseURL fetches the contents of a given url and attempts to parse
 // the response into the universal feed type. Context can be used to control
 // timeout and cancellation.
-func (f *Parser) ParseURL(ctx context.Context, feedURL string, opts *ParseOptions) (feed *Feed, err error) {
+func (f *Parser) ParseURL(ctx context.Context, feedURL string, opts *options.ParseOptions) (feed *Feed, err error) {
 	if opts == nil {
-		opts = DefaultParseOptions()
+		opts = options.DefaultParseOptions()
 	}
 
 	client := opts.RequestOptions.Client
@@ -119,7 +112,7 @@ func (f *Parser) ParseURL(ctx context.Context, feedURL string, opts *ParseOption
 	// This will be implemented as part of issue #247
 
 	// Set auth if provided
-	if auth, ok := opts.RequestOptions.AuthConfig.(*Auth); ok && auth != nil && auth.Username != "" && auth.Password != "" {
+	if auth := opts.RequestOptions.AuthConfig; auth != nil && !auth.Empty() {
 		req.SetBasicAuth(auth.Username, auth.Password)
 	}
 
@@ -149,11 +142,11 @@ func (f *Parser) ParseURL(ctx context.Context, feedURL string, opts *ParseOption
 
 // ParseString parses a feed XML string and into the
 // universal feed type.
-func (f *Parser) ParseString(feed string, opts *ParseOptions) (*Feed, error) {
+func (f *Parser) ParseString(feed string, opts *options.ParseOptions) (*Feed, error) {
 	return f.Parse(strings.NewReader(feed), opts)
 }
 
-func (f *Parser) parseAtomFeed(feed io.Reader, opts *ParseOptions) (*Feed, error) {
+func (f *Parser) parseAtomFeed(feed io.Reader, opts *options.ParseOptions) (*Feed, error) {
 	af, err := f.ap.Parse(feed, opts)
 	if err != nil {
 		return nil, err
@@ -171,7 +164,7 @@ func (f *Parser) parseAtomFeed(feed io.Reader, opts *ParseOptions) (*Feed, error
 	return result, nil
 }
 
-func (f *Parser) parseRSSFeed(feed io.Reader, opts *ParseOptions) (*Feed, error) {
+func (f *Parser) parseRSSFeed(feed io.Reader, opts *options.ParseOptions) (*Feed, error) {
 	rf, err := f.rp.Parse(feed, opts)
 	if err != nil {
 		return nil, err
@@ -189,7 +182,7 @@ func (f *Parser) parseRSSFeed(feed io.Reader, opts *ParseOptions) (*Feed, error)
 	return result, nil
 }
 
-func (f *Parser) parseJSONFeed(feed io.Reader, opts *ParseOptions) (*Feed, error) {
+func (f *Parser) parseJSONFeed(feed io.Reader, opts *options.ParseOptions) (*Feed, error) {
 	jf, err := f.jp.Parse(feed, opts)
 	if err != nil {
 		return nil, err

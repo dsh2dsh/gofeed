@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/dsh2dsh/gofeed/v2"
+	"github.com/dsh2dsh/gofeed/v2/options"
 )
 
 func TestParser_Parse(t *testing.T) {
@@ -135,8 +136,8 @@ func TestParser_ParseURL_Success(t *testing.T) {
 		// Get actual value
 		server, client := mockServerResponse(200, string(f), 0)
 		fp := gofeed.NewParser()
-		opts := &gofeed.ParseOptions{
-			RequestOptions: gofeed.RequestOptions{
+		opts := &options.ParseOptions{
+			RequestOptions: options.RequestOptions{
 				Client: client,
 			},
 		}
@@ -159,8 +160,8 @@ func TestParser_ParseURLWithContext(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	fp := gofeed.NewParser()
-	opts := &gofeed.ParseOptions{
-		RequestOptions: gofeed.RequestOptions{
+	opts := &options.ParseOptions{
+		RequestOptions: options.RequestOptions{
 			Client: client,
 		},
 	}
@@ -171,8 +172,8 @@ func TestParser_ParseURLWithContext(t *testing.T) {
 func TestParser_ParseURL_Failure(t *testing.T) {
 	server, client := mockServerResponse(404, "", 0)
 	fp := gofeed.NewParser()
-	opts := &gofeed.ParseOptions{
-		RequestOptions: gofeed.RequestOptions{
+	opts := &options.ParseOptions{
+		RequestOptions: options.RequestOptions{
 			Client: client,
 		},
 	}
@@ -189,10 +190,10 @@ func TestParser_ParseURLWithContextAndBasicAuth(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	fp := gofeed.NewParser()
-	opts := &gofeed.ParseOptions{
-		RequestOptions: gofeed.RequestOptions{
+	opts := &options.ParseOptions{
+		RequestOptions: options.RequestOptions{
 			Client: client,
-			AuthConfig: &gofeed.Auth{
+			AuthConfig: &options.Auth{
 				Username: "foo",
 				Password: "bar",
 			},
@@ -288,9 +289,9 @@ func ExampleParser_ParseString() {
 
 func ExampleParser_ParseURL_withAuth() {
 	fp := gofeed.NewParser()
-	opts := &gofeed.ParseOptions{
-		RequestOptions: gofeed.RequestOptions{
-			AuthConfig: &gofeed.Auth{
+	opts := &options.ParseOptions{
+		RequestOptions: options.RequestOptions{
+			AuthConfig: &options.Auth{
 				Username: "foo",
 				Password: "bar",
 			},

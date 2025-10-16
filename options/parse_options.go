@@ -1,4 +1,4 @@
-package shared
+package options
 
 import (
 	"net/http"
@@ -34,7 +34,19 @@ type RequestOptions struct {
 	IfNoneMatch     string    // ETag for conditional requests
 	IfModifiedSince time.Time // For conditional requests
 	Client          *http.Client
-	AuthConfig      interface{} // Will be *Auth from parent package
+	AuthConfig      *Auth
+}
+
+// Auth is a structure allowing to use the BasicAuth during the HTTP request. It
+// must be instantiated with your new Parser.
+type Auth struct {
+	Username string
+	Password string
+}
+
+// Empty return true if this Auth has not Username and Password.
+func (self *Auth) Empty() bool {
+	return self.Username == "" && self.Password == ""
 }
 
 // DefaultParseOptions returns sensible defaults
