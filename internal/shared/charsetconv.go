@@ -12,8 +12,5 @@ func NewReaderLabel(label string, input io.Reader) (io.Reader, error) {
 	if err != nil {
 		return nil, fmt.Errorf("gofeed/internal/shared: %w", err)
 	}
-
-	// Wrap the charset decoder reader with a XML sanitizer
-	// clean := NewXMLSanitizerReader(conv)
 	return conv, nil
 }
