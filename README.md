@@ -1,10 +1,18 @@
 # gofeed
 
-[![Build Status](https://travis-ci.org/mmcdole/gofeed.svg?branch=master)](https://travis-ci.org/mmcdole/gofeed) [![Coverage Status](https://coveralls.io/repos/github/mmcdole/gofeed/badge.svg?branch=master)](https://coveralls.io/github/mmcdole/gofeed?branch=master) [![Go Report Card](https://goreportcard.com/badge/github.com/mmcdole/gofeed)](https://goreportcard.com/report/github.com/mmcdole/gofeed) [![](https://godoc.org/github.com/mmcdole/gofeed?status.svg)](http://godoc.org/github.com/mmcdole/gofeed) [![License](http://img.shields.io/:license-mit-blue.svg)](http://doge.mit-license.org)
+[![Go](https://github.com/dsh2dsh/gofeed/actions/workflows/go.yml/badge.svg)](https://github.com/dsh2dsh/gofeed/actions/workflows/go.yml)
+[![GoDoc](https://godoc.org/github.com/dsh2dsh/gofeed?status.png)](https://godoc.org/github.com/dsh2dsh/gofeed)
+
+This project is a fork of [gofeed](https://github.com/mmcdole/gofeed). Changes
+from upstream:
+
+* `master` branch follows `v2` branch of upstream
+
+---
 
 # Gofeed: A Robust Feed Parser for Golang
 
-<img src="https://github.com/mmcdole/gofeed/assets/3767096/ab4e7b0e-1472-4249-880c-c6784000ed31" width="150" height="150"> 
+<img src="https://github.com/dsh2dsh/gofeed/assets/3767096/ab4e7b0e-1472-4249-880c-c6784000ed31" width="150" height="150"> 
 <br /><br />
 
 `gofeed` is a powerful and flexible library designed for parsing **RSS**, **Atom**, and **JSON** feeds across various formats and versions. It effectively manages non-standard elements and known extensions, and demonstrates resilience against common feed issues.
