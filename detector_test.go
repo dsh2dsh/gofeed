@@ -7,12 +7,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mmcdole/gofeed/v2"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/dsh2dsh/gofeed/v2"
 )
 
 func TestDetectFeedType(t *testing.T) {
-	var feedTypeTests = []struct {
+	feedTypeTests := []struct {
 		file     string
 		expected gofeed.FeedType
 	}{
@@ -31,13 +32,13 @@ func TestDetectFeedType(t *testing.T) {
 		fmt.Printf("Testing %s... ", test.file)
 
 		// Get feed content
-		path := fmt.Sprintf("testdata/parser/universal/%s", test.file)
+		path := "testdata/parser/universal/" + test.file
 		f, _ := os.ReadFile(path)
 
 		// Get actual value
 		actual := gofeed.DetectFeedType(bytes.NewReader(f))
 
-		if assert.Equal(t, actual, test.expected, "Feed file %s did not match expected type %d", test.file, test.expected) {
+		if assert.Equal(t, test.expected, actual, "Feed file %s did not match expected type %d", test.file, test.expected) {
 			fmt.Printf("OK\n")
 		} else {
 			fmt.Printf("Failed\n")

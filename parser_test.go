@@ -5,21 +5,23 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/mmcdole/gofeed/v2"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/dsh2dsh/gofeed/v2"
 )
 
 func TestParser_Parse(t *testing.T) {
-	var feedTests = []struct {
+	feedTests := []struct {
 		file      string
 		feedType  string
 		feedTitle string
@@ -43,7 +45,7 @@ func TestParser_Parse(t *testing.T) {
 		fmt.Printf("Testing %s... ", test.file)
 
 		// Get feed content
-		path := fmt.Sprintf("testdata/parser/universal/%s", test.file)
+		path := "testdata/parser/universal/" + test.file
 		f, _ := os.ReadFile(path)
 
 		// Get actual value
@@ -51,11 +53,11 @@ func TestParser_Parse(t *testing.T) {
 		feed, err := fp.Parse(bytes.NewReader(f), nil)
 
 		if test.hasError {
-			assert.NotNil(t, err)
+			require.Error(t, err)
 			assert.Nil(t, feed)
 		} else {
 			assert.NotNil(t, feed)
-			assert.Nil(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, feed.FeedType, test.feedType)
 			assert.Equal(t, feed.Title, test.feedTitle)
 		}
@@ -63,7 +65,7 @@ func TestParser_Parse(t *testing.T) {
 }
 
 func TestParser_ParseString(t *testing.T) {
-	var feedTests = []struct {
+	feedTests := []struct {
 		file      string
 		feedType  string
 		feedTitle string
@@ -85,7 +87,7 @@ func TestParser_ParseString(t *testing.T) {
 		fmt.Printf("Testing %s... ", test.file)
 
 		// Get feed content
-		path := fmt.Sprintf("testdata/parser/universal/%s", test.file)
+		path := "testdata/parser/universal/" + test.file
 		f, _ := os.ReadFile(path)
 
 		// Get actual value
@@ -93,11 +95,11 @@ func TestParser_ParseString(t *testing.T) {
 		feed, err := fp.ParseString(string(f), nil)
 
 		if test.hasError {
-			assert.NotNil(t, err)
+			require.Error(t, err)
 			assert.Nil(t, feed)
 		} else {
 			assert.NotNil(t, feed)
-			assert.Nil(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, feed.FeedType, test.feedType)
 			assert.Equal(t, feed.Title, test.feedTitle)
 		}
@@ -105,7 +107,7 @@ func TestParser_ParseString(t *testing.T) {
 }
 
 func TestParser_ParseURL_Success(t *testing.T) {
-	var feedTests = []struct {
+	feedTests := []struct {
 		file      string
 		feedType  string
 		feedTitle string
@@ -127,7 +129,7 @@ func TestParser_ParseURL_Success(t *testing.T) {
 		fmt.Printf("Testing %s... ", test.file)
 
 		// Get feed content
-		path := fmt.Sprintf("testdata/parser/universal/%s", test.file)
+		path := "testdata/parser/universal/" + test.file
 		f, _ := os.ReadFile(path)
 
 		// Get actual value
@@ -141,11 +143,11 @@ func TestParser_ParseURL_Success(t *testing.T) {
 		feed, err := fp.ParseURL(context.Background(), server.URL, opts)
 
 		if test.hasError {
-			assert.NotNil(t, err)
+			require.Error(t, err)
 			assert.Nil(t, feed)
 		} else {
 			assert.NotNil(t, feed)
-			assert.Nil(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, feed.FeedType, test.feedType)
 			assert.Equal(t, feed.Title, test.feedTitle)
 		}
@@ -163,7 +165,7 @@ func TestParser_ParseURLWithContext(t *testing.T) {
 		},
 	}
 	_, err := fp.ParseURL(ctx, server.URL, opts)
-	assert.True(t, strings.Contains(err.Error(), ctx.Err().Error()))
+	assert.Contains(t, err.Error(), ctx.Err().Error())
 }
 
 func TestParser_ParseURL_Failure(t *testing.T) {
@@ -176,8 +178,9 @@ func TestParser_ParseURL_Failure(t *testing.T) {
 	}
 	feed, err := fp.ParseURL(context.Background(), server.URL, opts)
 
-	assert.NotNil(t, err)
-	assert.IsType(t, gofeed.HTTPError{}, err)
+	require.Error(t, err)
+	var httpErr gofeed.HTTPError
+	require.ErrorAs(t, err, &httpErr)
 	assert.Nil(t, feed)
 }
 
@@ -196,15 +199,16 @@ func TestParser_ParseURLWithContextAndBasicAuth(t *testing.T) {
 		},
 	}
 	_, err := fp.ParseURL(ctx, server.URL, opts)
-	assert.True(t, strings.Contains(err.Error(), ctx.Err().Error()))
+	assert.Contains(t, err.Error(), ctx.Err().Error())
 }
 
 // to detect race conditions, run with go test -race
 func TestParser_Concurrent(t *testing.T) {
-
-	var feedTests = []string{"atom03_feed.xml", "atom10_feed.xml", "rss_feed.xml", "rss_feed_bom.xml",
+	feedTests := []string{
+		"atom03_feed.xml", "atom10_feed.xml", "rss_feed.xml", "rss_feed_bom.xml",
 		"rss_feed_leading_spaces.xml", "rdf_feed.xml", "json10_feed.json",
-		"json11_feed.json"}
+		"json11_feed.json",
+	}
 
 	fp := gofeed.NewParser()
 	fp.AtomTranslator = &gofeed.DefaultAtomTranslator{}
@@ -215,14 +219,10 @@ func TestParser_Concurrent(t *testing.T) {
 		fmt.Printf("\nTesting concurrently %s... ", test)
 
 		// Get feed content
-		path := fmt.Sprintf("testdata/parser/universal/%s", test)
+		path := "testdata/parser/universal/" + test
 		f, _ := os.ReadFile(path)
 
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			fp.ParseString(string(f), nil)
-		}()
+		wg.Go(func() { fp.ParseString(string(f), nil) })
 	}
 	wg.Wait()
 }

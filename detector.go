@@ -6,8 +6,9 @@ import (
 	"io"
 	"strings"
 
-	"github.com/mmcdole/gofeed/v2/internal/shared"
 	xpp "github.com/mmcdole/goxpp"
+
+	"github.com/dsh2dsh/gofeed/v2/internal/shared"
 )
 
 // FeedType represents one of the possible feed
@@ -31,10 +32,11 @@ const (
 // various feed types.
 func DetectFeedType(feed io.Reader) FeedType {
 	buffer := new(bytes.Buffer)
-	buffer.ReadFrom(feed)
+	buffer.ReadFrom(feed) //nolint:errcheck // upstream ignores err
 
 	var firstChar byte
-	loop: for {
+loop:
+	for {
 		ch, err := buffer.ReadByte()
 		if err != nil {
 			return FeedTypeUnknown
@@ -42,15 +44,16 @@ func DetectFeedType(feed io.Reader) FeedType {
 		// ignore leading whitespace & byte order marks
 		switch ch {
 		case ' ', '\r', '\n', '\t':
-		case 0xFE, 0xFF, 0x00, 0xEF, 0xBB, 0xBF:  // utf 8-16-32 bom
+		case 0xFE, 0xFF, 0x00, 0xEF, 0xBB, 0xBF: // utf 8-16-32 bom
 		default:
 			firstChar = ch
-			buffer.UnreadByte()
+			buffer.UnreadByte() //nolint:errcheck // upstream ignores err
 			break loop
 		}
 	}
 
-	if firstChar == '<' {
+	switch firstChar {
+	case '<':
 		// Check if it's an XML based feed
 		p := xpp.NewXMLPullParser(bytes.NewReader(buffer.Bytes()), false, shared.NewReaderLabel)
 
@@ -70,7 +73,7 @@ func DetectFeedType(feed io.Reader) FeedType {
 		default:
 			return FeedTypeUnknown
 		}
-	} else if firstChar == '{' {
+	case '{':
 		// Check if document is valid JSON
 		if json.Valid(buffer.Bytes()) {
 			return FeedTypeJSON

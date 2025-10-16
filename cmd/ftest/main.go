@@ -7,10 +7,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/mmcdole/gofeed/v2"
-	"github.com/mmcdole/gofeed/v2/atom"
-	"github.com/mmcdole/gofeed/v2/rss"
 	"github.com/urfave/cli"
+
+	"github.com/dsh2dsh/gofeed/v2"
+	"github.com/dsh2dsh/gofeed/v2/atom"
+	"github.com/dsh2dsh/gofeed/v2/rss"
 )
 
 func main() {
@@ -39,17 +40,16 @@ func main() {
 			os.Exit(1)
 		}
 
-		var feed interface{}
+		var feed any
 
-		if strings.EqualFold(feedType, "rss") ||
-			strings.EqualFold(feedType, "r") {
+		switch {
+		case strings.EqualFold(feedType, "rss") || strings.EqualFold(feedType, "r"):
 			p := rss.Parser{}
 			feed, err = p.Parse(strings.NewReader(fc), nil)
-		} else if strings.EqualFold(feedType, "atom") ||
-			strings.EqualFold(feedType, "a") {
+		case strings.EqualFold(feedType, "atom") || strings.EqualFold(feedType, "a"):
 			p := atom.Parser{}
 			feed, err = p.Parse(strings.NewReader(fc), nil)
-		} else {
+		default:
 			p := gofeed.NewParser()
 			feed, err = p.ParseString(fc, nil)
 		}
@@ -61,7 +61,7 @@ func main() {
 
 		fmt.Println(feed)
 	}
-	app.Run(os.Args)
+	app.Run(os.Args) //nolint:errcheck // upstream ignores err
 }
 
 func fetchFeed(feedLoc string) (string, error) {
@@ -72,7 +72,7 @@ func fetchFeed(feedLoc string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return string(file), nil
+	return file, nil
 }
 
 func fetchFile(path string) (string, error) {
@@ -83,12 +83,12 @@ func fetchFile(path string) (string, error) {
 func fetchURL(url string) (string, error) {
 	response, err := http.Get(url)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("gofeed: %w", err)
 	}
 	defer response.Body.Close()
 	contents, err := io.ReadAll(response.Body)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("gofeed: %w", err)
 	}
 
 	return string(contents), nil

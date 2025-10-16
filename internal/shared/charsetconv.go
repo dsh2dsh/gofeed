@@ -1,6 +1,7 @@
 package shared
 
 import (
+	"fmt"
 	"io"
 
 	"golang.org/x/net/html/charset"
@@ -8,12 +9,11 @@ import (
 
 func NewReaderLabel(label string, input io.Reader) (io.Reader, error) {
 	conv, err := charset.NewReaderLabel(label, input)
-
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gofeed/internal/shared: %w", err)
 	}
 
 	// Wrap the charset decoder reader with a XML sanitizer
-	//clean := NewXMLSanitizerReader(conv)
+	// clean := NewXMLSanitizerReader(conv)
 	return conv, nil
 }

@@ -2,6 +2,7 @@ package shared
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -51,7 +52,7 @@ func NextTag(p *xpp.XMLPullParser) (event xpp.XMLEventType, err error) {
 	for {
 		event, err = p.Next()
 		if err != nil {
-			return event, err
+			return event, fmt.Errorf("gofeed/internal/shared: %w", err)
 		}
 
 		if event == xpp.EndTag {
@@ -59,24 +60,20 @@ func NextTag(p *xpp.XMLPullParser) (event xpp.XMLEventType, err error) {
 		}
 
 		if event == xpp.StartTag {
-			if err != nil {
-				return
-			}
-
 			err = resolveAttrs(p)
 			if err != nil {
-				return
+				return event, err
 			}
 
 			break
 		}
 
 		if event == xpp.EndDocument {
-			return event, fmt.Errorf("Failed to find NextTag before reaching the end of the document.")
+			return event, errors.New("failed to find NextTag before reaching the end of the document")
 		}
 
 	}
-	return
+	return event, nil
 }
 
 // resolve relative URI attributes according to xml:base
@@ -98,7 +95,7 @@ func resolveAttrs(p *xpp.XMLPullParser) error {
 func XmlBaseResolveUrl(b *url.URL, u string) (*url.URL, error) {
 	relURL, err := url.Parse(u)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gofeed/internal/shared: %w", err)
 	}
 
 	if b == nil {
@@ -108,7 +105,7 @@ func XmlBaseResolveUrl(b *url.URL, u string) (*url.URL, error) {
 	if b.Path != "" && u != "" && b.Path[len(b.Path)-1] != '/' {
 		// There's no reason someone would use a path in xml:base if they
 		// didn't mean for it to be a directory
-		b.Path = b.Path + "/"
+		b.Path += "/"
 	}
 	absURL := b.ResolveReference(relURL)
 	return absURL, nil
@@ -126,7 +123,7 @@ func ResolveHTML(base *url.URL, relHTML string) (string, error) {
 
 	doc, err := html.Parse(htmlReader)
 	if err != nil {
-		return relHTML, err
+		return relHTML, fmt.Errorf("gofeed/internal/shared: %w", err)
 	}
 
 	var visit func(*html.Node)
@@ -153,7 +150,7 @@ func ResolveHTML(base *url.URL, relHTML string) (string, error) {
 	var w bytes.Buffer
 	err = html.Render(&w, doc)
 	if err != nil {
-		return relHTML, err
+		return relHTML, fmt.Errorf("gofeed/internal/shared: %w", err)
 	}
 
 	// html.Render() always writes a complete html5 document, so strip the html
@@ -162,5 +159,5 @@ func ResolveHTML(base *url.URL, relHTML string) (string, error) {
 	absHTML = strings.TrimPrefix(absHTML, "<html><head></head><body>")
 	absHTML = strings.TrimSuffix(absHTML, "</body></html>")
 
-	return absHTML, err
+	return absHTML, nil
 }

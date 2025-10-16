@@ -1,13 +1,13 @@
 package gofeed
 
 import (
-	"github.com/mmcdole/gofeed/v2/internal/shared"
+	"github.com/dsh2dsh/gofeed/v2/internal/shared"
 )
 
 // ParseOptions re-exports the shared type
 type ParseOptions = shared.ParseOptions
 
-// StrictnessOptions re-exports the shared type  
+// StrictnessOptions re-exports the shared type
 type StrictnessOptions = shared.StrictnessOptions
 
 // RequestOptions re-exports the shared type

@@ -16,12 +16,12 @@ type Extension struct {
 
 func parseTextExtension(name string, extensions map[string][]Extension) (value string) {
 	if extensions == nil {
-		return
+		return value
 	}
 
 	matches, ok := extensions[name]
 	if !ok || len(matches) == 0 {
-		return
+		return value
 	}
 
 	match := matches[0]
@@ -30,17 +30,17 @@ func parseTextExtension(name string, extensions map[string][]Extension) (value s
 
 func parseTextArrayExtension(name string, extensions map[string][]Extension) (values []string) {
 	if extensions == nil {
-		return
+		return values
 	}
 
 	matches, ok := extensions[name]
 	if !ok || len(matches) == 0 {
-		return
+		return values
 	}
 
 	values = []string{}
 	for _, m := range matches {
 		values = append(values, m.Value)
 	}
-	return
+	return values
 }

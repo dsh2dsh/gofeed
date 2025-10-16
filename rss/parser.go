@@ -5,9 +5,10 @@ import (
 	"io"
 	"strings"
 
-	ext "github.com/mmcdole/gofeed/v2/extensions"
-	"github.com/mmcdole/gofeed/v2/internal/shared"
 	xpp "github.com/mmcdole/goxpp"
+
+	ext "github.com/dsh2dsh/gofeed/v2/extensions"
+	"github.com/dsh2dsh/gofeed/v2/internal/shared"
 )
 
 // Parser is a RSS Parser
@@ -59,35 +60,36 @@ func (rp *Parser) parseRoot(p *xpp.XMLPullParser, opts *shared.ParseOptions) (*F
 
 			// Skip any extensions found in the feed root.
 			if shared.IsExtension(p) {
-				p.Skip()
+				p.Skip() //nolint:errcheck // upstream ignores err
 				continue
 			}
 
 			name := strings.ToLower(p.Name)
 
-			if name == "channel" {
+			switch name {
+			case "channel":
 				channel, err = rp.parseChannel(p, opts)
 				if err != nil {
 					return nil, err
 				}
-			} else if name == "item" {
+			case "item":
 				item, err := rp.parseItem(p)
 				if err != nil {
 					return nil, err
 				}
 				items = append(items, item)
-			} else if name == "textinput" {
+			case "textinput":
 				textinput, err = rp.parseTextInput(p)
 				if err != nil {
 					return nil, err
 				}
-			} else if name == "image" {
+			case "image":
 				image, err = rp.parseImage(p)
 				if err != nil {
 					return nil, err
 				}
-			} else {
-				p.Skip()
+			default:
+				p.Skip() //nolint:errcheck // upstream ignores err
 			}
 		}
 	}
@@ -119,9 +121,9 @@ func (rp *Parser) parseRoot(p *xpp.XMLPullParser, opts *shared.ParseOptions) (*F
 	return channel, nil
 }
 
-func (rp *Parser) parseChannel(p *xpp.XMLPullParser, opts *shared.ParseOptions) (rss *Feed, err error) {
+func (rp *Parser) parseChannel(p *xpp.XMLPullParser, _ *shared.ParseOptions) (rss *Feed, err error) {
 	if err = p.Expect(xpp.StartTag, "channel"); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gofeed/rss: %w", err)
 	}
 
 	rss = &Feed{}
@@ -145,56 +147,57 @@ func (rp *Parser) parseChannel(p *xpp.XMLPullParser, opts *shared.ParseOptions) 
 
 			name := strings.ToLower(p.Name)
 
-			if shared.IsExtension(p) {
+			switch {
+			case shared.IsExtension(p):
 				ext, err := shared.ParseExtension(extensions, p)
 				if err != nil {
 					return nil, err
 				}
 				extensions = ext
-			} else if name == "title" {
+			case name == "title":
 				result, err := shared.ParseText(p)
 				if err != nil {
 					return nil, err
 				}
 				rss.Title = result
-			} else if name == "description" {
+			case name == "description":
 				result, err := shared.ParseText(p)
 				if err != nil {
 					return nil, err
 				}
 				rss.Description = result
-			} else if name == "link" {
+			case name == "link":
 				result, err := rp.parseLink(p)
 				if err != nil {
 					return nil, err
 				}
 				rss.Link = result
 				links = append(links, result)
-			} else if name == "language" {
+			case name == "language":
 				result, err := shared.ParseText(p)
 				if err != nil {
 					return nil, err
 				}
 				rss.Language = result
-			} else if name == "copyright" {
+			case name == "copyright":
 				result, err := shared.ParseText(p)
 				if err != nil {
 					return nil, err
 				}
 				rss.Copyright = result
-			} else if name == "managingeditor" {
+			case name == "managingeditor":
 				result, err := shared.ParseText(p)
 				if err != nil {
 					return nil, err
 				}
 				rss.ManagingEditor = result
-			} else if name == "webmaster" {
+			case name == "webmaster":
 				result, err := shared.ParseText(p)
 				if err != nil {
 					return nil, err
 				}
 				rss.WebMaster = result
-			} else if name == "pubdate" {
+			case name == "pubdate":
 				result, err := shared.ParseText(p)
 				if err != nil {
 					return nil, err
@@ -205,7 +208,7 @@ func (rp *Parser) parseChannel(p *xpp.XMLPullParser, opts *shared.ParseOptions) 
 					utcDate := date.UTC()
 					rss.PubDateParsed = &utcDate
 				}
-			} else if name == "lastbuilddate" {
+			case name == "lastbuilddate":
 				result, err := shared.ParseText(p)
 				if err != nil {
 					return nil, err
@@ -216,97 +219,97 @@ func (rp *Parser) parseChannel(p *xpp.XMLPullParser, opts *shared.ParseOptions) 
 					utcDate := date.UTC()
 					rss.LastBuildDateParsed = &utcDate
 				}
-			} else if name == "generator" {
+			case name == "generator":
 				result, err := shared.ParseText(p)
 				if err != nil {
 					return nil, err
 				}
 				rss.Generator = result
-			} else if name == "docs" {
+			case name == "docs":
 				result, err := shared.ParseText(p)
 				if err != nil {
 					return nil, err
 				}
 				rss.Docs = result
-			} else if name == "ttl" {
+			case name == "ttl":
 				result, err := shared.ParseText(p)
 				if err != nil {
 					return nil, err
 				}
 				rss.TTL = result
-			} else if name == "rating" {
+			case name == "rating":
 				result, err := shared.ParseText(p)
 				if err != nil {
 					return nil, err
 				}
 				rss.Rating = result
-			} else if name == "skiphours" {
+			case name == "skiphours":
 				result, err := rp.parseSkipHours(p)
 				if err != nil {
 					return nil, err
 				}
 				rss.SkipHours = result
-			} else if name == "skipdays" {
+			case name == "skipdays":
 				result, err := rp.parseSkipDays(p)
 				if err != nil {
 					return nil, err
 				}
 				rss.SkipDays = result
-			} else if name == "item" {
+			case name == "item":
 				result, err := rp.parseItem(p)
 				if err != nil {
 					return nil, err
 				}
 				rss.Items = append(rss.Items, result)
-			} else if name == "cloud" {
+			case name == "cloud":
 				result, err := rp.parseCloud(p)
 				if err != nil {
 					return nil, err
 				}
 				rss.Cloud = result
-			} else if name == "category" {
+			case name == "category":
 				result, err := rp.parseCategory(p)
 				if err != nil {
 					return nil, err
 				}
 				categories = append(categories, result)
-			} else if name == "image" {
+			case name == "image":
 				result, err := rp.parseImage(p)
 				if err != nil {
 					return nil, err
 				}
 				rss.Image = result
-			} else if name == "textinput" {
+			case name == "textinput":
 				result, err := rp.parseTextInput(p)
 				if err != nil {
 					return nil, err
 				}
 				rss.TextInput = result
-			} else if name == "items" {
+			case name == "items":
 				// Skip RDF items element - it's a structural element
 				// that contains item references, not actual content
-				p.Skip()
-			} else {
+				p.Skip() //nolint:errcheck // upstream ignores err
+			default:
 				// For non-standard RSS channel elements, add them to extensions
 				// under a special "_custom" namespace prefix
 				customExt := ext.Extension{
 					Name:  p.Name,
 					Attrs: make(map[string]string),
 				}
-				
+
 				// Copy attributes
 				for _, attr := range p.Attrs {
 					customExt.Attrs[attr.Name.Local] = attr.Value
 				}
-				
+
 				// Parse the text content
 				result, err := shared.ParseText(p)
 				if err != nil {
-					p.Skip()
+					p.Skip() //nolint:errcheck // upstream ignores err
 					continue
 				}
 				customExt.Value = result
-				
+
 				// Initialize extensions map if needed
 				if extensions == nil {
 					extensions = make(ext.Extensions)
@@ -314,7 +317,7 @@ func (rp *Parser) parseChannel(p *xpp.XMLPullParser, opts *shared.ParseOptions) 
 				if extensions["_custom"] == nil {
 					extensions["_custom"] = make(map[string][]ext.Extension)
 				}
-				
+
 				// Add to extensions
 				extensions["_custom"][p.Name] = append(extensions["_custom"][p.Name], customExt)
 			}
@@ -322,7 +325,7 @@ func (rp *Parser) parseChannel(p *xpp.XMLPullParser, opts *shared.ParseOptions) 
 	}
 
 	if err = p.Expect(xpp.EndTag, "channel"); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gofeed/rss: %w", err)
 	}
 
 	if len(categories) > 0 {
@@ -350,7 +353,7 @@ func (rp *Parser) parseChannel(p *xpp.XMLPullParser, opts *shared.ParseOptions) 
 
 func (rp *Parser) parseItem(p *xpp.XMLPullParser) (item *Item, err error) {
 	if err = p.Expect(xpp.StartTag, "item"); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gofeed/rss: %w", err)
 	}
 
 	item = &Item{}
@@ -373,25 +376,26 @@ func (rp *Parser) parseItem(p *xpp.XMLPullParser) (item *Item, err error) {
 
 			name := strings.ToLower(p.Name)
 
-			if shared.IsExtension(p) {
+			switch {
+			case shared.IsExtension(p):
 				ext, err := shared.ParseExtension(extensions, p)
 				if err != nil {
 					return nil, err
 				}
 				item.Extensions = ext
-			} else if name == "title" {
+			case name == "title":
 				result, err := shared.ParseText(p)
 				if err != nil {
 					return nil, err
 				}
 				item.Title = result
-			} else if name == "description" {
+			case name == "description":
 				result, err := shared.ParseText(p)
 				if err != nil {
 					return nil, err
 				}
 				item.Description = result
-			} else if name == "encoded" {
+			case name == "encoded":
 				space := strings.TrimSpace(p.Space)
 				prefix := shared.PrefixForNamespace(space, p)
 				if prefix == "content" {
@@ -401,26 +405,26 @@ func (rp *Parser) parseItem(p *xpp.XMLPullParser) (item *Item, err error) {
 					}
 					item.Content = result
 				}
-			} else if name == "link" {
+			case name == "link":
 				result, err := rp.parseLink(p)
 				if err != nil {
 					return nil, err
 				}
 				item.Link = result
 				links = append(links, result)
-			} else if name == "author" {
+			case name == "author":
 				result, err := shared.ParseText(p)
 				if err != nil {
 					return nil, err
 				}
 				item.Author = result
-			} else if name == "comments" {
+			case name == "comments":
 				result, err := shared.ParseText(p)
 				if err != nil {
 					return nil, err
 				}
 				item.Comments = result
-			} else if name == "pubdate" {
+			case name == "pubdate":
 				result, err := shared.ParseText(p)
 				if err != nil {
 					return nil, err
@@ -431,59 +435,55 @@ func (rp *Parser) parseItem(p *xpp.XMLPullParser) (item *Item, err error) {
 					utcDate := date.UTC()
 					item.PubDateParsed = &utcDate
 				}
-			} else if name == "source" {
+			case name == "source":
 				result, err := rp.parseSource(p)
 				if err != nil {
 					return nil, err
 				}
 				item.Source = result
-			} else if name == "enclosure" {
+			case name == "enclosure":
 				result, err := rp.parseEnclosure(p)
 				if err != nil {
 					return nil, err
 				}
 				item.Enclosure = result
 				enclosures = append(enclosures, result)
-			} else if name == "guid" {
+			case name == "guid":
 				result, err := rp.parseGUID(p)
 				if err != nil {
 					return nil, err
 				}
 				item.GUID = result
-			} else if name == "category" {
+			case name == "category":
 				result, err := rp.parseCategory(p)
 				if err != nil {
 					return nil, err
 				}
 				categories = append(categories, result)
-			} else {
+			default:
 				// For non-standard RSS elements, add them to extensions
 				// under a special "_custom" namespace prefix
 				customExt := ext.Extension{
 					Name:  p.Name,
 					Attrs: make(map[string]string),
 				}
-				
+
 				// Copy attributes
 				for _, attr := range p.Attrs {
 					customExt.Attrs[attr.Name.Local] = attr.Value
 				}
-				
+
 				// Parse the text content
 				result, err := shared.ParseText(p)
 				if err != nil {
 					continue
 				}
 				customExt.Value = result
-				
-				// Initialize extensions map if needed
-				if extensions == nil {
-					extensions = make(ext.Extensions)
-				}
+
 				if extensions["_custom"] == nil {
 					extensions["_custom"] = make(map[string][]ext.Extension)
 				}
-				
+
 				// Add to extensions
 				extensions["_custom"][p.Name] = append(extensions["_custom"][p.Name], customExt)
 			}
@@ -515,7 +515,7 @@ func (rp *Parser) parseItem(p *xpp.XMLPullParser) (item *Item, err error) {
 	}
 
 	if err = p.Expect(xpp.EndTag, "item"); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gofeed/rss: %w", err)
 	}
 
 	return item, nil
@@ -525,7 +525,7 @@ func (rp *Parser) parseLink(p *xpp.XMLPullParser) (url string, err error) {
 	href := p.Attribute("href")
 	url, err = shared.ParseText(p)
 	if err != nil {
-		return
+		return "", err
 	}
 	if url == "" && href != "" {
 		url = href
@@ -535,7 +535,7 @@ func (rp *Parser) parseLink(p *xpp.XMLPullParser) (url string, err error) {
 
 func (rp *Parser) parseSource(p *xpp.XMLPullParser) (source *Source, err error) {
 	if err = p.Expect(xpp.StartTag, "source"); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gofeed/rss: %w", err)
 	}
 
 	source = &Source{}
@@ -548,14 +548,14 @@ func (rp *Parser) parseSource(p *xpp.XMLPullParser) (source *Source, err error) 
 	source.Title = result
 
 	if err = p.Expect(xpp.EndTag, "source"); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gofeed/rss: %w", err)
 	}
 	return source, nil
 }
 
 func (rp *Parser) parseEnclosure(p *xpp.XMLPullParser) (enclosure *Enclosure, err error) {
 	if err = p.Expect(xpp.StartTag, "enclosure"); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gofeed/rss: %w", err)
 	}
 
 	enclosure = &Enclosure{}
@@ -567,7 +567,7 @@ func (rp *Parser) parseEnclosure(p *xpp.XMLPullParser) (enclosure *Enclosure, er
 	for {
 		_, err := p.Next()
 		if err != nil {
-			return enclosure, err
+			return enclosure, fmt.Errorf("gofeed/rss: %w", err)
 		}
 
 		if p.Event == xpp.EndTag && p.Name == "enclosure" {
@@ -580,7 +580,7 @@ func (rp *Parser) parseEnclosure(p *xpp.XMLPullParser) (enclosure *Enclosure, er
 
 func (rp *Parser) parseImage(p *xpp.XMLPullParser) (image *Image, err error) {
 	if err = p.Expect(xpp.StartTag, "image"); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gofeed/rss: %w", err)
 	}
 
 	image = &Image{}
@@ -598,50 +598,51 @@ func (rp *Parser) parseImage(p *xpp.XMLPullParser) (image *Image, err error) {
 		if tok == xpp.StartTag {
 			name := strings.ToLower(p.Name)
 
-			if name == "url" {
+			switch name {
+			case "url":
 				result, err := shared.ParseText(p)
 				if err != nil {
 					return nil, err
 				}
 				image.URL = result
-			} else if name == "title" {
+			case "title":
 				result, err := shared.ParseText(p)
 				if err != nil {
 					return nil, err
 				}
 				image.Title = result
-			} else if name == "link" {
+			case "link":
 				result, err := shared.ParseText(p)
 				if err != nil {
 					return nil, err
 				}
 				image.Link = result
-			} else if name == "width" {
+			case "width":
 				result, err := shared.ParseText(p)
 				if err != nil {
 					return nil, err
 				}
 				image.Width = result
-			} else if name == "height" {
+			case "height":
 				result, err := shared.ParseText(p)
 				if err != nil {
 					return nil, err
 				}
 				image.Height = result
-			} else if name == "description" {
+			case "description":
 				result, err := shared.ParseText(p)
 				if err != nil {
 					return nil, err
 				}
 				image.Description = result
-			} else {
-				p.Skip()
+			default:
+				p.Skip() //nolint:errcheck // upstream ignores err
 			}
 		}
 	}
 
 	if err = p.Expect(xpp.EndTag, "image"); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gofeed/rss: %w", err)
 	}
 
 	return image, nil
@@ -649,7 +650,7 @@ func (rp *Parser) parseImage(p *xpp.XMLPullParser) (image *Image, err error) {
 
 func (rp *Parser) parseGUID(p *xpp.XMLPullParser) (guid *GUID, err error) {
 	if err = p.Expect(xpp.StartTag, "guid"); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gofeed/rss: %w", err)
 	}
 
 	guid = &GUID{}
@@ -657,12 +658,12 @@ func (rp *Parser) parseGUID(p *xpp.XMLPullParser) (guid *GUID, err error) {
 
 	result, err := shared.ParseText(p)
 	if err != nil {
-		return
+		return nil, err
 	}
 	guid.Value = result
 
 	if err = p.Expect(xpp.EndTag, "guid"); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gofeed/rss: %w", err)
 	}
 
 	return guid, nil
@@ -670,7 +671,7 @@ func (rp *Parser) parseGUID(p *xpp.XMLPullParser) (guid *GUID, err error) {
 
 func (rp *Parser) parseCategory(p *xpp.XMLPullParser) (cat *Category, err error) {
 	if err = p.Expect(xpp.StartTag, "category"); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gofeed/rss: %w", err)
 	}
 
 	cat = &Category{}
@@ -684,14 +685,14 @@ func (rp *Parser) parseCategory(p *xpp.XMLPullParser) (cat *Category, err error)
 	cat.Value = result
 
 	if err = p.Expect(xpp.EndTag, "category"); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gofeed/rss: %w", err)
 	}
 	return cat, nil
 }
 
 func (rp *Parser) parseTextInput(p *xpp.XMLPullParser) (*TextInput, error) {
 	if err := p.Expect(xpp.StartTag, "textinput"); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gofeed/rss: %w", err)
 	}
 
 	ti := &TextInput{}
@@ -709,38 +710,39 @@ func (rp *Parser) parseTextInput(p *xpp.XMLPullParser) (*TextInput, error) {
 		if tok == xpp.StartTag {
 			name := strings.ToLower(p.Name)
 
-			if name == "title" {
+			switch name {
+			case "title":
 				result, err := shared.ParseText(p)
 				if err != nil {
 					return nil, err
 				}
 				ti.Title = result
-			} else if name == "description" {
+			case "description":
 				result, err := shared.ParseText(p)
 				if err != nil {
 					return nil, err
 				}
 				ti.Description = result
-			} else if name == "name" {
+			case "name":
 				result, err := shared.ParseText(p)
 				if err != nil {
 					return nil, err
 				}
 				ti.Name = result
-			} else if name == "link" {
+			case "link":
 				result, err := shared.ParseText(p)
 				if err != nil {
 					return nil, err
 				}
 				ti.Link = result
-			} else {
-				p.Skip()
+			default:
+				p.Skip() //nolint:errcheck // upstream ignores err
 			}
 		}
 	}
 
 	if err := p.Expect(xpp.EndTag, "textinput"); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gofeed/rss: %w", err)
 	}
 
 	return ti, nil
@@ -748,7 +750,7 @@ func (rp *Parser) parseTextInput(p *xpp.XMLPullParser) (*TextInput, error) {
 
 func (rp *Parser) parseSkipHours(p *xpp.XMLPullParser) ([]string, error) {
 	if err := p.Expect(xpp.StartTag, "skiphours"); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gofeed/rss: %w", err)
 	}
 
 	hours := []string{}
@@ -772,13 +774,13 @@ func (rp *Parser) parseSkipHours(p *xpp.XMLPullParser) ([]string, error) {
 				}
 				hours = append(hours, result)
 			} else {
-				p.Skip()
+				p.Skip() //nolint:errcheck // upstream ignores err
 			}
 		}
 	}
 
 	if err := p.Expect(xpp.EndTag, "skiphours"); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gofeed/rss: %w", err)
 	}
 
 	return hours, nil
@@ -786,7 +788,7 @@ func (rp *Parser) parseSkipHours(p *xpp.XMLPullParser) ([]string, error) {
 
 func (rp *Parser) parseSkipDays(p *xpp.XMLPullParser) ([]string, error) {
 	if err := p.Expect(xpp.StartTag, "skipdays"); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gofeed/rss: %w", err)
 	}
 
 	days := []string{}
@@ -810,13 +812,13 @@ func (rp *Parser) parseSkipDays(p *xpp.XMLPullParser) ([]string, error) {
 				}
 				days = append(days, result)
 			} else {
-				p.Skip()
+				p.Skip() //nolint:errcheck // upstream ignores err
 			}
 		}
 	}
 
 	if err := p.Expect(xpp.EndTag, "skipdays"); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gofeed/rss: %w", err)
 	}
 
 	return days, nil
@@ -824,7 +826,7 @@ func (rp *Parser) parseSkipDays(p *xpp.XMLPullParser) ([]string, error) {
 
 func (rp *Parser) parseCloud(p *xpp.XMLPullParser) (*Cloud, error) {
 	if err := p.Expect(xpp.StartTag, "cloud"); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gofeed/rss: %w", err)
 	}
 
 	cloud := &Cloud{}
@@ -834,27 +836,28 @@ func (rp *Parser) parseCloud(p *xpp.XMLPullParser) (*Cloud, error) {
 	cloud.RegisterProcedure = p.Attribute("registerProcedure")
 	cloud.Protocol = p.Attribute("protocol")
 
-	shared.NextTag(p)
+	shared.NextTag(p) //nolint:errcheck // upstream ignores err
 
 	if err := p.Expect(xpp.EndTag, "cloud"); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gofeed/rss: %w", err)
 	}
 
 	return cloud, nil
 }
 
-func (rp *Parser) parseVersion(p *xpp.XMLPullParser) (ver string) {
+func (rp *Parser) parseVersion(p *xpp.XMLPullParser) string {
 	name := strings.ToLower(p.Name)
-	if name == "rss" {
-		ver = p.Attribute("version")
-	} else if name == "rdf" {
-		ns := p.Attribute("xmlns")
-		if ns == "http://channel.netscape.com/rdf/simple/0.9/" ||
-			ns == "http://my.netscape.com/rdf/simple/0.9/" {
-			ver = "0.9"
-		} else if ns == "http://purl.org/rss/1.0/" {
-			ver = "1.0"
+	switch name {
+	case "rss":
+		return p.Attribute("version")
+	case "rdf":
+		switch p.Attribute("xmlns") {
+		case "http://channel.netscape.com/rdf/simple/0.9/",
+			"http://my.netscape.com/rdf/simple/0.9/":
+			return "0.9"
+		case "http://purl.org/rss/1.0/":
+			return "1.0"
 		}
 	}
-	return
+	return ""
 }

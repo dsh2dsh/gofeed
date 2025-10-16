@@ -1,21 +1,22 @@
 package gofeed
 
 import (
-	"fmt"
+	"errors"
+	"strconv"
 	"strings"
 	"time"
 
-	"github.com/mmcdole/gofeed/v2/atom"
-	ext "github.com/mmcdole/gofeed/v2/extensions"
-	"github.com/mmcdole/gofeed/v2/internal/shared"
-	"github.com/mmcdole/gofeed/v2/json"
-	"github.com/mmcdole/gofeed/v2/rss"
+	"github.com/dsh2dsh/gofeed/v2/atom"
+	ext "github.com/dsh2dsh/gofeed/v2/extensions"
+	"github.com/dsh2dsh/gofeed/v2/internal/shared"
+	"github.com/dsh2dsh/gofeed/v2/json"
+	"github.com/dsh2dsh/gofeed/v2/rss"
 )
 
 // Translator converts a particular feed (atom.Feed or rss.Feed of json.Feed)
 // into the generic Feed struct
 type Translator interface {
-	Translate(feed interface{}, opts *ParseOptions) (*Feed, error)
+	Translate(feed any, opts *ParseOptions) (*Feed, error)
 }
 
 // DefaultRSSTranslator converts an rss.Feed struct
@@ -28,12 +29,11 @@ type DefaultRSSTranslator struct{}
 
 // Translate converts an RSS feed into the universal
 // feed type.
-func (t *DefaultRSSTranslator) Translate(feed interface{}, opts *ParseOptions) (*Feed, error) {
+func (t *DefaultRSSTranslator) Translate(feed any, opts *ParseOptions) (*Feed, error) {
 	rss, found := feed.(*rss.Feed)
 	if !found {
-		return nil, fmt.Errorf("Feed did not match expected type of *rss.Feed")
+		return nil, errors.New("Feed did not match expected type of *rss.Feed")
 	}
-	
 
 	result := &Feed{}
 	result.Title = t.translateFeedTitle(rss)
@@ -79,7 +79,7 @@ func (t *DefaultRSSTranslator) translateFeedItem(rssItem *rss.Item) (item *Item)
 	item.DublinCoreExt = rssItem.DublinCoreExt
 	item.ITunesExt = rssItem.ITunesExt
 	item.Extensions = rssItem.Extensions
-	return
+	return item
 }
 
 func (t *DefaultRSSTranslator) translateFeedTitle(rss *rss.Feed) (title string) {
@@ -88,7 +88,7 @@ func (t *DefaultRSSTranslator) translateFeedTitle(rss *rss.Feed) (title string) 
 	} else if rss.DublinCoreExt != nil && rss.DublinCoreExt.Title != nil {
 		title = t.firstEntry(rss.DublinCoreExt.Title)
 	}
-	return
+	return title
 }
 
 func (t *DefaultRSSTranslator) translateFeedDescription(rss *rss.Feed) (desc string) {
@@ -97,7 +97,7 @@ func (t *DefaultRSSTranslator) translateFeedDescription(rss *rss.Feed) (desc str
 	} else if rss.ITunesExt != nil && rss.ITunesExt.Summary != "" {
 		desc = rss.ITunesExt.Summary
 	}
-	return
+	return desc
 }
 
 func (t *DefaultRSSTranslator) translateFeedLink(rss *rss.Feed) (link string) {
@@ -106,7 +106,7 @@ func (t *DefaultRSSTranslator) translateFeedLink(rss *rss.Feed) (link string) {
 	} else if rss.ITunesExt != nil && rss.ITunesExt.Subtitle != "" {
 		link = rss.ITunesExt.Subtitle
 	}
-	return
+	return link
 }
 
 func (t *DefaultRSSTranslator) translateFeedFeedLink(rss *rss.Feed) (link string) {
@@ -120,7 +120,7 @@ func (t *DefaultRSSTranslator) translateFeedFeedLink(rss *rss.Feed) (link string
 			}
 		}
 	}
-	return
+	return link
 }
 
 func (t *DefaultRSSTranslator) translateFeedLinks(rss *rss.Feed) (links []string) {
@@ -137,7 +137,7 @@ func (t *DefaultRSSTranslator) translateFeedLinks(rss *rss.Feed) (links []string
 			}
 		}
 	}
-	return
+	return links
 }
 
 func (t *DefaultRSSTranslator) translateFeedUpdated(rss *rss.Feed) (updated string) {
@@ -146,7 +146,7 @@ func (t *DefaultRSSTranslator) translateFeedUpdated(rss *rss.Feed) (updated stri
 	} else if rss.DublinCoreExt != nil && rss.DublinCoreExt.Date != nil {
 		updated = t.firstEntry(rss.DublinCoreExt.Date)
 	}
-	return
+	return updated
 }
 
 func (t *DefaultRSSTranslator) translateFeedUpdatedParsed(rss *rss.Feed) (updated *time.Time) {
@@ -159,7 +159,7 @@ func (t *DefaultRSSTranslator) translateFeedUpdatedParsed(rss *rss.Feed) (update
 			updated = &date
 		}
 	}
-	return
+	return updated
 }
 
 func (t *DefaultRSSTranslator) translateFeedPublished(rss *rss.Feed) (published string) {
@@ -171,42 +171,43 @@ func (t *DefaultRSSTranslator) translateFeedPublishedParsed(rss *rss.Feed) (publ
 }
 
 func (t *DefaultRSSTranslator) translateFeedAuthor(rss *rss.Feed) (author *Person) {
-	if rss.ManagingEditor != "" {
+	switch {
+	case rss.ManagingEditor != "":
 		name, address := shared.ParseNameAddress(rss.ManagingEditor)
 		author = &Person{}
 		author.Name = name
 		author.Email = address
-	} else if rss.WebMaster != "" {
+	case rss.WebMaster != "":
 		name, address := shared.ParseNameAddress(rss.WebMaster)
 		author = &Person{}
 		author.Name = name
 		author.Email = address
-	} else if rss.DublinCoreExt != nil && rss.DublinCoreExt.Author != nil {
+	case rss.DublinCoreExt != nil && rss.DublinCoreExt.Author != nil:
 		dcAuthor := t.firstEntry(rss.DublinCoreExt.Author)
 		name, address := shared.ParseNameAddress(dcAuthor)
 		author = &Person{}
 		author.Name = name
 		author.Email = address
-	} else if rss.DublinCoreExt != nil && rss.DublinCoreExt.Creator != nil {
+	case rss.DublinCoreExt != nil && rss.DublinCoreExt.Creator != nil:
 		dcCreator := t.firstEntry(rss.DublinCoreExt.Creator)
 		name, address := shared.ParseNameAddress(dcCreator)
 		author = &Person{}
 		author.Name = name
 		author.Email = address
-	} else if rss.ITunesExt != nil && rss.ITunesExt.Author != "" {
+	case rss.ITunesExt != nil && rss.ITunesExt.Author != "":
 		name, address := shared.ParseNameAddress(rss.ITunesExt.Author)
 		author = &Person{}
 		author.Name = name
 		author.Email = address
 	}
-	return
+	return author
 }
 
 func (t *DefaultRSSTranslator) translateFeedAuthors(rss *rss.Feed) (authors []*Person) {
 	if author := t.translateFeedAuthor(rss); author != nil {
 		authors = []*Person{author}
 	}
-	return
+	return authors
 }
 
 func (t *DefaultRSSTranslator) translateFeedLanguage(rss *rss.Feed) (language string) {
@@ -215,7 +216,7 @@ func (t *DefaultRSSTranslator) translateFeedLanguage(rss *rss.Feed) (language st
 	} else if rss.DublinCoreExt != nil && rss.DublinCoreExt.Language != nil {
 		language = t.firstEntry(rss.DublinCoreExt.Language)
 	}
-	return
+	return language
 }
 
 func (t *DefaultRSSTranslator) translateFeedImage(rss *rss.Feed) *Image {
@@ -246,7 +247,7 @@ func (t *DefaultRSSTranslator) translateFeedCopyright(rss *rss.Feed) (rights str
 	} else if rss.DublinCoreExt != nil && rss.DublinCoreExt.Rights != nil {
 		rights = t.firstEntry(rss.DublinCoreExt.Rights)
 	}
-	return
+	return rights
 }
 
 func (t *DefaultRSSTranslator) translateFeedGenerator(rss *rss.Feed) (generator string) {
@@ -284,7 +285,7 @@ func (t *DefaultRSSTranslator) translateFeedCategories(rss *rss.Feed) (categorie
 		categories = cats
 	}
 
-	return
+	return categories
 }
 
 func (t *DefaultRSSTranslator) translateFeedItems(rss *rss.Feed) (items []*Item) {
@@ -292,7 +293,7 @@ func (t *DefaultRSSTranslator) translateFeedItems(rss *rss.Feed) (items []*Item)
 	for _, i := range rss.Items {
 		items = append(items, t.translateFeedItem(i))
 	}
-	return
+	return items
 }
 
 func (t *DefaultRSSTranslator) translateItemTitle(rssItem *rss.Item) (title string) {
@@ -301,18 +302,19 @@ func (t *DefaultRSSTranslator) translateItemTitle(rssItem *rss.Item) (title stri
 	} else if rssItem.DublinCoreExt != nil && rssItem.DublinCoreExt.Title != nil {
 		title = t.firstEntry(rssItem.DublinCoreExt.Title)
 	}
-	return
+	return title
 }
 
 func (t *DefaultRSSTranslator) translateItemDescription(rssItem *rss.Item) (desc string) {
-	if rssItem.Description != "" {
+	switch {
+	case rssItem.Description != "":
 		desc = rssItem.Description
-	} else if rssItem.DublinCoreExt != nil && rssItem.DublinCoreExt.Description != nil {
+	case rssItem.DublinCoreExt != nil && rssItem.DublinCoreExt.Description != nil:
 		desc = t.firstEntry(rssItem.DublinCoreExt.Description)
-	} else if rssItem.ITunesExt != nil && rssItem.ITunesExt.Summary != "" {
+	case rssItem.ITunesExt != nil && rssItem.ITunesExt.Summary != "":
 		desc = rssItem.ITunesExt.Summary
 	}
-	return
+	return desc
 }
 
 func (t *DefaultRSSTranslator) translateItemContent(rssItem *rss.Item) (content string) {
@@ -330,31 +332,13 @@ func (t *DefaultRSSTranslator) translateItemLinks(rssItem *rss.Item) (links []st
 	return links
 }
 
-func (t *DefaultRSSTranslator) translateItemUpdated(rssItem *rss.Item) (updated string) {
-	if rssItem.DublinCoreExt != nil && rssItem.DublinCoreExt.Date != nil {
-		updated = t.firstEntry(rssItem.DublinCoreExt.Date)
-	}
-	return updated
-}
-
-func (t *DefaultRSSTranslator) translateItemUpdatedParsed(rssItem *rss.Item) (updated *time.Time) {
-	if rssItem.DublinCoreExt != nil && rssItem.DublinCoreExt.Date != nil {
-		updatedText := t.firstEntry(rssItem.DublinCoreExt.Date)
-		updatedDate, err := shared.ParseDate(updatedText)
-		if err == nil {
-			updated = &updatedDate
-		}
-	}
-	return
-}
-
 func (t *DefaultRSSTranslator) translateItemPublished(rssItem *rss.Item) (pubDate string) {
 	if rssItem.PubDate != "" {
 		return rssItem.PubDate
 	} else if rssItem.DublinCoreExt != nil && rssItem.DublinCoreExt.Date != nil {
 		return t.firstEntry(rssItem.DublinCoreExt.Date)
 	}
-	return
+	return pubDate
 }
 
 func (t *DefaultRSSTranslator) translateItemPublishedParsed(rssItem *rss.Item) (pubDate *time.Time) {
@@ -367,48 +351,49 @@ func (t *DefaultRSSTranslator) translateItemPublishedParsed(rssItem *rss.Item) (
 			pubDate = &pubDateParsed
 		}
 	}
-	return
+	return pubDate
 }
 
 func (t *DefaultRSSTranslator) translateItemAuthor(rssItem *rss.Item) (author *Person) {
-	if rssItem.Author != "" {
+	switch {
+	case rssItem.Author != "":
 		name, address := shared.ParseNameAddress(rssItem.Author)
 		author = &Person{}
 		author.Name = name
 		author.Email = address
-	} else if rssItem.DublinCoreExt != nil && rssItem.DublinCoreExt.Author != nil {
+	case rssItem.DublinCoreExt != nil && rssItem.DublinCoreExt.Author != nil:
 		dcAuthor := t.firstEntry(rssItem.DublinCoreExt.Author)
 		name, address := shared.ParseNameAddress(dcAuthor)
 		author = &Person{}
 		author.Name = name
 		author.Email = address
-	} else if rssItem.DublinCoreExt != nil && rssItem.DublinCoreExt.Creator != nil {
+	case rssItem.DublinCoreExt != nil && rssItem.DublinCoreExt.Creator != nil:
 		dcCreator := t.firstEntry(rssItem.DublinCoreExt.Creator)
 		name, address := shared.ParseNameAddress(dcCreator)
 		author = &Person{}
 		author.Name = name
 		author.Email = address
-	} else if rssItem.ITunesExt != nil && rssItem.ITunesExt.Author != "" {
+	case rssItem.ITunesExt != nil && rssItem.ITunesExt.Author != "":
 		name, address := shared.ParseNameAddress(rssItem.ITunesExt.Author)
 		author = &Person{}
 		author.Name = name
 		author.Email = address
 	}
-	return
+	return author
 }
 
 func (t *DefaultRSSTranslator) translateItemAuthors(rssItem *rss.Item) (authors []*Person) {
 	if author := t.translateItemAuthor(rssItem); author != nil {
 		authors = []*Person{author}
 	}
-	return
+	return authors
 }
 
 func (t *DefaultRSSTranslator) translateItemGUID(rssItem *rss.Item) (guid string) {
 	if rssItem.GUID != nil {
 		guid = rssItem.GUID.Value
 	}
-	return
+	return guid
 }
 
 func (t *DefaultRSSTranslator) translateItemImage(rssItem *rss.Item) *Image {
@@ -469,11 +454,11 @@ func (t *DefaultRSSTranslator) translateItemCategories(rssItem *rss.Item) (categ
 		categories = cats
 	}
 
-	return
+	return categories
 }
 
 func (t *DefaultRSSTranslator) translateItemEnclosures(rssItem *rss.Item) (enclosures []*Enclosure) {
-	if rssItem.Enclosures != nil && len(rssItem.Enclosures) > 0 {
+	if len(rssItem.Enclosures) > 0 {
 		// Accumulate the enclosures
 		for _, enc := range rssItem.Enclosures {
 			e := &Enclosure{}
@@ -488,14 +473,14 @@ func (t *DefaultRSSTranslator) translateItemEnclosures(rssItem *rss.Item) (enclo
 		enclosures = nil
 	}
 
-	return
+	return enclosures
 }
 
 func (t *DefaultRSSTranslator) extensionsForKeys(keys []string, extensions ext.Extensions) (matches []map[string][]ext.Extension) {
 	matches = []map[string][]ext.Extension{}
 
 	if extensions == nil {
-		return
+		return matches
 	}
 
 	for _, key := range keys {
@@ -503,16 +488,16 @@ func (t *DefaultRSSTranslator) extensionsForKeys(keys []string, extensions ext.E
 			matches = append(matches, match)
 		}
 	}
-	return
+	return matches
 }
 
 func (t *DefaultRSSTranslator) firstEntry(entries []string) (value string) {
 	if entries == nil {
-		return
+		return value
 	}
 
 	if len(entries) == 0 {
-		return
+		return value
 	}
 
 	return entries[0]
@@ -528,12 +513,11 @@ type DefaultAtomTranslator struct{}
 
 // Translate converts an Atom feed into the universal
 // feed type.
-func (t *DefaultAtomTranslator) Translate(feed interface{}, opts *ParseOptions) (*Feed, error) {
+func (t *DefaultAtomTranslator) Translate(feed any, opts *ParseOptions) (*Feed, error) {
 	atom, found := feed.(*atom.Feed)
 	if !found {
-		return nil, fmt.Errorf("Feed did not match expected type of *atom.Feed")
+		return nil, errors.New("Feed did not match expected type of *atom.Feed")
 	}
-	
 
 	result := &Feed{}
 	result.Title = t.translateFeedTitle(atom)
@@ -575,7 +559,7 @@ func (t *DefaultAtomTranslator) translateFeedItem(entry *atom.Entry) (item *Item
 	item.Categories = t.translateItemCategories(entry)
 	item.Enclosures = t.translateItemEnclosures(entry)
 	item.Extensions = entry.Extensions
-	return
+	return item
 }
 
 func (t *DefaultAtomTranslator) translateFeedTitle(atom *atom.Feed) (title string) {
@@ -591,7 +575,7 @@ func (t *DefaultAtomTranslator) translateFeedLink(atom *atom.Feed) (link string)
 	if l != nil {
 		link = l.Href
 	}
-	return
+	return link
 }
 
 func (t *DefaultAtomTranslator) translateFeedFeedLink(atom *atom.Feed) (link string) {
@@ -599,7 +583,7 @@ func (t *DefaultAtomTranslator) translateFeedFeedLink(atom *atom.Feed) (link str
 	if feedLink != nil {
 		link = feedLink.Href
 	}
-	return
+	return link
 }
 
 func (t *DefaultAtomTranslator) translateFeedLinks(atom *atom.Feed) (links []string) {
@@ -608,7 +592,7 @@ func (t *DefaultAtomTranslator) translateFeedLinks(atom *atom.Feed) (links []str
 			links = append(links, l.Href)
 		}
 	}
-	return
+	return links
 }
 
 func (t *DefaultAtomTranslator) translateFeedUpdated(atom *atom.Feed) (updated string) {
@@ -627,7 +611,7 @@ func (t *DefaultAtomTranslator) translateFeedAuthor(atom *atom.Feed) (author *Pe
 		feedAuthor.Email = a.Email
 		author = &feedAuthor
 	}
-	return
+	return author
 }
 
 func (t *DefaultAtomTranslator) translateFeedAuthors(atom *atom.Feed) (authors []*Person) {
@@ -642,7 +626,7 @@ func (t *DefaultAtomTranslator) translateFeedAuthors(atom *atom.Feed) (authors [
 		}
 	}
 
-	return
+	return authors
 }
 
 func (t *DefaultAtomTranslator) translateFeedLanguage(atom *atom.Feed) (language string) {
@@ -659,7 +643,7 @@ func (t *DefaultAtomTranslator) translateFeedImage(atom *atom.Feed) (image *Imag
 		feedImage.URL = atom.Icon
 		image = &feedImage
 	}
-	return
+	return image
 }
 
 func (t *DefaultAtomTranslator) translateFeedCopyright(atom *atom.Feed) (rights string) {
@@ -679,7 +663,7 @@ func (t *DefaultAtomTranslator) translateFeedGenerator(atom *atom.Feed) (generat
 		}
 		generator = strings.TrimSpace(generator)
 	}
-	return
+	return generator
 }
 
 func (t *DefaultAtomTranslator) translateFeedCategories(atom *atom.Feed) (categories []string) {
@@ -693,7 +677,7 @@ func (t *DefaultAtomTranslator) translateFeedCategories(atom *atom.Feed) (catego
 			}
 		}
 	}
-	return
+	return categories
 }
 
 func (t *DefaultAtomTranslator) translateFeedItems(atom *atom.Feed) (items []*Item) {
@@ -701,7 +685,7 @@ func (t *DefaultAtomTranslator) translateFeedItems(atom *atom.Feed) (items []*It
 	for _, entry := range atom.Entries {
 		items = append(items, t.translateFeedItem(entry))
 	}
-	return
+	return items
 }
 
 func (t *DefaultAtomTranslator) translateItemTitle(entry *atom.Entry) (title string) {
@@ -716,7 +700,7 @@ func (t *DefaultAtomTranslator) translateItemContent(entry *atom.Entry) (content
 	if entry.Content != nil {
 		content = entry.Content.Value
 	}
-	return
+	return content
 }
 
 func (t *DefaultAtomTranslator) translateItemLink(entry *atom.Entry) (link string) {
@@ -724,7 +708,7 @@ func (t *DefaultAtomTranslator) translateItemLink(entry *atom.Entry) (link strin
 	if l != nil {
 		link = l.Href
 	}
-	return
+	return link
 }
 
 func (t *DefaultAtomTranslator) translateItemLinks(entry *atom.Entry) (links []string) {
@@ -733,7 +717,7 @@ func (t *DefaultAtomTranslator) translateItemLinks(entry *atom.Entry) (links []s
 			links = append(links, l.Href)
 		}
 	}
-	return
+	return links
 }
 
 func (t *DefaultAtomTranslator) translateItemUpdated(entry *atom.Entry) (updated string) {
@@ -749,7 +733,7 @@ func (t *DefaultAtomTranslator) translateItemPublished(entry *atom.Entry) (publi
 	if published == "" {
 		published = entry.Updated
 	}
-	return
+	return published
 }
 
 func (t *DefaultAtomTranslator) translateItemPublishedParsed(entry *atom.Entry) (published *time.Time) {
@@ -757,7 +741,7 @@ func (t *DefaultAtomTranslator) translateItemPublishedParsed(entry *atom.Entry) 
 	if published == nil {
 		published = entry.UpdatedParsed
 	}
-	return
+	return published
 }
 
 func (t *DefaultAtomTranslator) translateItemAuthor(entry *atom.Entry) (author *Person) {
@@ -767,7 +751,7 @@ func (t *DefaultAtomTranslator) translateItemAuthor(entry *atom.Entry) (author *
 		author.Name = a.Name
 		author.Email = a.Email
 	}
-	return
+	return author
 }
 
 func (t *DefaultAtomTranslator) translateItemAuthors(entry *atom.Entry) (authors []*Person) {
@@ -780,14 +764,14 @@ func (t *DefaultAtomTranslator) translateItemAuthors(entry *atom.Entry) (authors
 			})
 		}
 	}
-	return
+	return authors
 }
 
 func (t *DefaultAtomTranslator) translateItemGUID(entry *atom.Entry) (guid string) {
 	return entry.ID
 }
 
-func (t *DefaultAtomTranslator) translateItemImage(entry *atom.Entry) (image *Image) {
+func (t *DefaultAtomTranslator) translateItemImage(_ *atom.Entry) (image *Image) {
 	return nil
 }
 
@@ -802,7 +786,7 @@ func (t *DefaultAtomTranslator) translateItemCategories(entry *atom.Entry) (cate
 			}
 		}
 	}
-	return
+	return categories
 }
 
 func (t *DefaultAtomTranslator) translateItemEnclosures(entry *atom.Entry) (enclosures []*Enclosure) {
@@ -822,7 +806,7 @@ func (t *DefaultAtomTranslator) translateItemEnclosures(entry *atom.Entry) (encl
 			enclosures = nil
 		}
 	}
-	return
+	return enclosures
 }
 
 func (t *DefaultAtomTranslator) firstLinkWithType(linkType string, links []*atom.Link) *atom.Link {
@@ -839,12 +823,10 @@ func (t *DefaultAtomTranslator) firstLinkWithType(linkType string, links []*atom
 }
 
 func (t *DefaultAtomTranslator) firstPerson(persons []*atom.Person) (person *atom.Person) {
-	if persons == nil || len(persons) == 0 {
-		return
+	if len(persons) == 0 {
+		return person
 	}
-
-	person = persons[0]
-	return
+	return persons[0]
 }
 
 // DefaultJSONTranslator converts an json.Feed struct
@@ -857,10 +839,10 @@ type DefaultJSONTranslator struct{}
 
 // Translate converts an JSON feed into the universal
 // feed type.
-func (t *DefaultJSONTranslator) Translate(feed interface{}, opts *ParseOptions) (*Feed, error) {
+func (t *DefaultJSONTranslator) Translate(feed any, opts *ParseOptions) (*Feed, error) {
 	json, found := feed.(*json.Feed)
 	if !found {
-		return nil, fmt.Errorf("Feed did not match expected type of *json.Feed")
+		return nil, errors.New("Feed did not match expected type of *json.Feed")
 	}
 
 	result := &Feed{}
@@ -908,14 +890,14 @@ func (t *DefaultJSONTranslator) translateFeedItem(jsonItem *json.Item) (item *It
 	item.Enclosures = t.translateItemEnclosures(jsonItem)
 	// TODO ExternalURL is missing in global Feed
 	// TODO BannerImage is missing in global Feed
-	return
+	return item
 }
 
 func (t *DefaultJSONTranslator) translateFeedTitle(json *json.Feed) (title string) {
 	if json.Title != "" {
 		title = json.Title
 	}
-	return
+	return title
 }
 
 func (t *DefaultJSONTranslator) translateFeedDescription(json *json.Feed) (desc string) {
@@ -926,14 +908,14 @@ func (t *DefaultJSONTranslator) translateFeedLink(json *json.Feed) (link string)
 	if json.HomePageURL != "" {
 		link = json.HomePageURL
 	}
-	return
+	return link
 }
 
 func (t *DefaultJSONTranslator) translateFeedFeedLink(json *json.Feed) (link string) {
 	if json.FeedURL != "" {
 		link = json.FeedURL
 	}
-	return
+	return link
 }
 
 func (t *DefaultJSONTranslator) translateFeedLinks(json *json.Feed) (links []string) {
@@ -943,14 +925,14 @@ func (t *DefaultJSONTranslator) translateFeedLinks(json *json.Feed) (links []str
 	if json.FeedURL != "" {
 		links = append(links, json.FeedURL)
 	}
-	return
+	return links
 }
 
 func (t *DefaultJSONTranslator) translateFeedUpdated(json *json.Feed) (updated string) {
 	if len(json.Items) > 0 {
 		updated = json.Items[0].DateModified
 	}
-	return
+	return updated
 }
 
 func (t *DefaultJSONTranslator) translateFeedUpdatedParsed(json *json.Feed) (updated *time.Time) {
@@ -960,14 +942,14 @@ func (t *DefaultJSONTranslator) translateFeedUpdatedParsed(json *json.Feed) (upd
 			updated = &updateTime
 		}
 	}
-	return
+	return updated
 }
 
 func (t *DefaultJSONTranslator) translateFeedPublished(json *json.Feed) (published string) {
 	if len(json.Items) > 0 {
 		published = json.Items[0].DatePublished
 	}
-	return
+	return published
 }
 
 func (t *DefaultJSONTranslator) translateFeedPublishedParsed(json *json.Feed) (published *time.Time) {
@@ -977,7 +959,7 @@ func (t *DefaultJSONTranslator) translateFeedPublishedParsed(json *json.Feed) (p
 			published = &publishTime
 		}
 	}
-	return
+	return published
 }
 
 func (t *DefaultJSONTranslator) translateFeedAuthor(json *json.Feed) (author *Person) {
@@ -989,7 +971,7 @@ func (t *DefaultJSONTranslator) translateFeedAuthor(json *json.Feed) (author *Pe
 	}
 	// Author.URL is missing in global feed
 	// Author.Avatar is missing in global feed
-	return
+	return author
 }
 
 func (t *DefaultJSONTranslator) translateFeedAuthors(json *json.Feed) (authors []*Person) {
@@ -1008,12 +990,11 @@ func (t *DefaultJSONTranslator) translateFeedAuthors(json *json.Feed) (authors [
 	}
 	// Author.URL is missing in global feed
 	// Author.Avatar is missing in global feed
-	return
+	return authors
 }
 
-func (t *DefaultJSONTranslator) translateFeedLanguage(json *json.Feed) (language string) {
-	language = json.Language
-	return
+func (t *DefaultJSONTranslator) translateFeedLanguage(json *json.Feed) string {
+	return json.Language
 }
 
 func (t *DefaultJSONTranslator) translateFeedImage(json *json.Feed) (image *Image) {
@@ -1023,7 +1004,7 @@ func (t *DefaultJSONTranslator) translateFeedImage(json *json.Feed) (image *Imag
 		image = &Image{}
 		image.URL = json.Icon
 	}
-	return
+	return image
 }
 
 func (t *DefaultJSONTranslator) translateFeedItems(json *json.Feed) (items []*Item) {
@@ -1031,21 +1012,21 @@ func (t *DefaultJSONTranslator) translateFeedItems(json *json.Feed) (items []*It
 	for _, i := range json.Items {
 		items = append(items, t.translateFeedItem(i))
 	}
-	return
+	return items
 }
 
 func (t *DefaultJSONTranslator) translateItemTitle(jsonItem *json.Item) (title string) {
 	if jsonItem.Title != "" {
 		title = jsonItem.Title
 	}
-	return
+	return title
 }
 
 func (t *DefaultJSONTranslator) translateItemDescription(jsonItem *json.Item) (desc string) {
 	if jsonItem.Summary != "" {
 		desc = jsonItem.Summary
 	}
-	return
+	return desc
 }
 
 func (t *DefaultJSONTranslator) translateItemContent(jsonItem *json.Item) (content string) {
@@ -1054,10 +1035,10 @@ func (t *DefaultJSONTranslator) translateItemContent(jsonItem *json.Item) (conte
 	} else if jsonItem.ContentText != "" {
 		content = jsonItem.ContentText
 	}
-	return
+	return content
 }
 
-func (t *DefaultJSONTranslator) translateItemLink(jsonItem *json.Item) (link string) {
+func (t *DefaultJSONTranslator) translateItemLink(jsonItem *json.Item) string {
 	return jsonItem.URL
 }
 
@@ -1068,7 +1049,7 @@ func (t *DefaultJSONTranslator) translateItemLinks(jsonItem *json.Item) (links [
 	if jsonItem.ExternalURL != "" {
 		links = append(links, jsonItem.ExternalURL)
 	}
-	return
+	return links
 }
 
 func (t *DefaultJSONTranslator) translateItemUpdated(jsonItem *json.Item) (updated string) {
@@ -1085,14 +1066,14 @@ func (t *DefaultJSONTranslator) translateItemUpdatedParsed(jsonItem *json.Item) 
 			updated = &updatedTime
 		}
 	}
-	return
+	return updated
 }
 
 func (t *DefaultJSONTranslator) translateItemPublished(jsonItem *json.Item) (pubDate string) {
 	if jsonItem.DatePublished != "" {
 		pubDate = jsonItem.DatePublished
 	}
-	return
+	return pubDate
 }
 
 func (t *DefaultJSONTranslator) translateItemPublishedParsed(jsonItem *json.Item) (pubDate *time.Time) {
@@ -1102,7 +1083,7 @@ func (t *DefaultJSONTranslator) translateItemPublishedParsed(jsonItem *json.Item
 			pubDate = &publishTime
 		}
 	}
-	return
+	return pubDate
 }
 
 func (t *DefaultJSONTranslator) translateItemAuthor(jsonItem *json.Item) (author *Person) {
@@ -1114,7 +1095,7 @@ func (t *DefaultJSONTranslator) translateItemAuthor(jsonItem *json.Item) (author
 	}
 	// Author.URL is missing in global feed
 	// Author.Avatar is missing in global feed
-	return
+	return author
 }
 
 func (t *DefaultJSONTranslator) translateItemAuthors(jsonItem *json.Item) (authors []*Person) {
@@ -1133,14 +1114,14 @@ func (t *DefaultJSONTranslator) translateItemAuthors(jsonItem *json.Item) (autho
 	}
 	// Author.URL is missing in global feed
 	// Author.Avatar is missing in global feed
-	return
+	return authors
 }
 
 func (t *DefaultJSONTranslator) translateItemGUID(jsonItem *json.Item) (guid string) {
 	if jsonItem.ID != "" {
 		guid = jsonItem.ID
 	}
-	return
+	return guid
 }
 
 func (t *DefaultJSONTranslator) translateItemImage(jsonItem *json.Item) (image *Image) {
@@ -1151,14 +1132,14 @@ func (t *DefaultJSONTranslator) translateItemImage(jsonItem *json.Item) (image *
 		image = &Image{}
 		image.URL = jsonItem.BannerImage
 	}
-	return
+	return image
 }
 
 func (t *DefaultJSONTranslator) translateItemCategories(jsonItem *json.Item) (categories []string) {
 	if len(jsonItem.Tags) > 0 {
 		categories = jsonItem.Tags
 	}
-	return
+	return categories
 }
 
 func (t *DefaultJSONTranslator) translateItemEnclosures(jsonItem *json.Item) (enclosures []*Enclosure) {
@@ -1167,11 +1148,11 @@ func (t *DefaultJSONTranslator) translateItemEnclosures(jsonItem *json.Item) (en
 			e := &Enclosure{}
 			e.URL = attachment.URL
 			e.Type = attachment.MimeType
-			e.Length = fmt.Sprintf("%d", attachment.DurationInSeconds)
+			e.Length = strconv.FormatInt(attachment.DurationInSeconds, 10)
 			// Title is not defined in global enclosure
 			// SizeInBytes is not defined in global enclosure
 			enclosures = append(enclosures, e)
 		}
 	}
-	return
+	return enclosures
 }

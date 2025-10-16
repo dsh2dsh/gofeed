@@ -9,8 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	jsonParser "github.com/mmcdole/gofeed/v2/json"
 	"github.com/stretchr/testify/assert"
+
+	jsonParser "github.com/dsh2dsh/gofeed/v2/json"
 )
 
 // Tests
@@ -91,7 +92,7 @@ func TestParser_ParseInvalidAndStruct(t *testing.T) {
 	assert.Equal(t, "author_name", actual.Author.Name)
 	assert.Equal(t, "https://sample-feed-author.com", actual.Author.URL)
 	assert.Equal(t, "https://sample-feed-author.com/me.png", actual.Author.Avatar)
-	assert.Equal(t, false, actual.Expired)
+	assert.False(t, actual.Expired)
 	assert.Equal(t, "id", actual.Items[0].ID)
 	assert.Equal(t, "https://sample-json-feed.com/id", actual.Items[0].URL)
 	assert.Equal(t, "https://sample-json-feed.com/external", actual.Items[0].ExternalURL)

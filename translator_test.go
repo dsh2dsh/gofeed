@@ -8,11 +8,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mmcdole/gofeed/v2"
-	"github.com/mmcdole/gofeed/v2/atom"
-	"github.com/mmcdole/gofeed/v2/json"
-	"github.com/mmcdole/gofeed/v2/rss"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/dsh2dsh/gofeed/v2"
+	"github.com/dsh2dsh/gofeed/v2/atom"
+	"github.com/dsh2dsh/gofeed/v2/json"
+	"github.com/dsh2dsh/gofeed/v2/rss"
 )
 
 func TestDefaultRSSTranslator_Translate(t *testing.T) {
@@ -53,8 +55,8 @@ func TestDefaultRSSTranslator_Translate(t *testing.T) {
 func TestDefaultRSSTranslator_Translate_WrongType(t *testing.T) {
 	translator := &gofeed.DefaultRSSTranslator{}
 	af, err := translator.Translate("wrong type", nil)
-	assert.Nil(t, af)
-	assert.NotNil(t, err)
+	require.Nil(t, af)
+	require.Error(t, err)
 }
 
 func TestDefaultAtomTranslator_Translate(t *testing.T) {
@@ -96,7 +98,7 @@ func TestDefaultAtomTranslator_Translate_WrongType(t *testing.T) {
 	translator := &gofeed.DefaultAtomTranslator{}
 	af, err := translator.Translate("wrong type", nil)
 	assert.Nil(t, af)
-	assert.NotNil(t, err)
+	assert.Error(t, err)
 }
 
 func TestDefaultJSONTranslator_Translate(t *testing.T) {
@@ -220,5 +222,5 @@ func TestDefaultJSONTranslator_Translate_WrongType(t *testing.T) {
 	translator := &gofeed.DefaultJSONTranslator{}
 	af, err := translator.Translate("wrong type", nil)
 	assert.Nil(t, af)
-	assert.NotNil(t, err)
+	assert.Error(t, err)
 }

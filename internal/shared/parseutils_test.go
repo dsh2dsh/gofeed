@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDecodeEntities(t *testing.T) {
@@ -32,7 +33,7 @@ func TestDecodeEntities(t *testing.T) {
 
 	for _, test := range tests {
 		res, err := DecodeEntities(test.str)
-		assert.Nil(t, err, "cannot decode %q", test.str)
+		require.NoError(t, err, "cannot decode %q", test.str)
 		assert.Equal(t, res, test.res,
 			"%q was decoded to %q instead of %q",
 			test.str, res, test.res)

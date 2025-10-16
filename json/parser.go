@@ -3,11 +3,11 @@ package json
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
-	
-	"github.com/mmcdole/gofeed/v2/internal/shared"
-)
 
+	"github.com/dsh2dsh/gofeed/v2/internal/shared"
+)
 
 // Parser is an JSON Feed Parser
 type Parser struct{}
@@ -22,12 +22,14 @@ func (ap *Parser) Parse(feed io.Reader, opts *shared.ParseOptions) (*Feed, error
 	jsonFeed := &Feed{}
 
 	buffer := new(bytes.Buffer)
-	buffer.ReadFrom(feed)
+	if _, err := buffer.ReadFrom(feed); err != nil {
+		return nil, fmt.Errorf("gofeed/json: %w", err)
+	}
 
 	err := json.Unmarshal(buffer.Bytes(), jsonFeed)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gofeed/json: %w", err)
 	}
-	
+
 	return jsonFeed, nil
 }

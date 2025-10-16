@@ -1,10 +1,12 @@
 package shared
 
 import (
+	"fmt"
 	"strings"
 
-	"github.com/mmcdole/gofeed/v2/extensions"
-	"github.com/mmcdole/goxpp"
+	xpp "github.com/mmcdole/goxpp"
+
+	ext "github.com/dsh2dsh/gofeed/v2/extensions"
 )
 
 // IsExtension returns whether or not the current
@@ -13,7 +15,7 @@ import (
 func IsExtension(p *xpp.XMLPullParser) bool {
 	space := strings.TrimSpace(p.Space)
 	prefix := PrefixForNamespace(space, p)
-	return !(prefix == "" || prefix == "rss" || prefix == "rdf" || prefix == "content")
+	return prefix != "" && prefix != "rss" && prefix != "rdf" && prefix != "content"
 }
 
 // ParseExtension parses the current element of the
@@ -42,7 +44,7 @@ func ParseExtension(fe ext.Extensions, p *xpp.XMLPullParser) (ext.Extensions, er
 
 func parseExtensionElement(p *xpp.XMLPullParser) (e ext.Extension, err error) {
 	if err = p.Expect(xpp.StartTag, "*"); err != nil {
-		return e, err
+		return e, fmt.Errorf("gofeed/internal/shared: %w", err)
 	}
 
 	e.Name = p.Name
@@ -58,14 +60,15 @@ func parseExtensionElement(p *xpp.XMLPullParser) (e ext.Extension, err error) {
 	for {
 		tok, err := p.Next()
 		if err != nil {
-			return e, err
+			return e, fmt.Errorf("gofeed/internal/shared: %w", err)
 		}
 
 		if tok == xpp.EndTag {
 			break
 		}
 
-		if tok == xpp.StartTag {
+		switch tok {
+		case xpp.StartTag:
 			child, err := parseExtensionElement(p)
 			if err != nil {
 				return e, err
@@ -76,7 +79,7 @@ func parseExtensionElement(p *xpp.XMLPullParser) (e ext.Extension, err error) {
 			}
 
 			e.Children[child.Name] = append(e.Children[child.Name], child)
-		} else if tok == xpp.Text {
+		case xpp.Text:
 			e.Value += p.Text
 		}
 	}
@@ -84,7 +87,7 @@ func parseExtensionElement(p *xpp.XMLPullParser) (e ext.Extension, err error) {
 	e.Value = strings.TrimSpace(e.Value)
 
 	if err = p.Expect(xpp.EndTag, e.Name); err != nil {
-		return e, err
+		return e, fmt.Errorf("gofeed/internal/shared: %w", err)
 	}
 
 	return e, nil

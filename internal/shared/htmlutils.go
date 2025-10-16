@@ -93,7 +93,7 @@ func StripWrappingDiv(content string) string {
 	// Return inner HTML of the div
 	var buf bytes.Buffer
 	for c := firstElement.FirstChild; c != nil; c = c.NextSibling {
-		html.Render(&buf, c)
+		html.Render(&buf, c) //nolint:errcheck // upstream ignores err
 	}
 	return buf.String()
 }

@@ -88,26 +88,26 @@ func NewITunesItemExtension(extensions map[string][]Extension) *ITunesItemExtens
 
 func parseImage(extensions map[string][]Extension) (image string) {
 	if extensions == nil {
-		return
+		return image
 	}
 
 	matches, ok := extensions["image"]
 	if !ok || len(matches) == 0 {
-		return
+		return image
 	}
 
 	image = matches[0].Attrs["href"]
-	return
+	return image
 }
 
 func parseOwner(extensions map[string][]Extension) (owner *ITunesOwner) {
 	if extensions == nil {
-		return
+		return owner
 	}
 
 	matches, ok := extensions["owner"]
 	if !ok || len(matches) == 0 {
-		return
+		return owner
 	}
 
 	owner = &ITunesOwner{}
@@ -117,17 +117,17 @@ func parseOwner(extensions map[string][]Extension) (owner *ITunesOwner) {
 	if email, ok := matches[0].Children["email"]; ok {
 		owner.Email = email[0].Value
 	}
-	return
+	return owner
 }
 
 func parseCategories(extensions map[string][]Extension) (categories []*ITunesCategory) {
 	if extensions == nil {
-		return
+		return categories
 	}
 
 	matches, ok := extensions["category"]
 	if !ok || len(matches) == 0 {
-		return
+		return categories
 	}
 
 	categories = []*ITunesCategory{}
@@ -146,5 +146,5 @@ func parseCategories(extensions map[string][]Extension) (categories []*ITunesCat
 		}
 		categories = append(categories, c)
 	}
-	return
+	return categories
 }

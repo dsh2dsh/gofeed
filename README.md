@@ -67,22 +67,22 @@ Alternatively, if your focus is on a single feed type, then using a specialized 
 ## Installation
 
 ```bash
-go get github.com/mmcdole/gofeed/v2
+go get github.com/dsh2dsh/gofeed/v2
 ```
 
 Import in your code:
 
 ```go
-import "github.com/mmcdole/gofeed/v2"
+import "github.com/dsh2dsh/gofeed/v2"
 ```
 
 For feed-specific parsers:
 
 ```go
 import (
-    "github.com/mmcdole/gofeed/v2/rss"
-    "github.com/mmcdole/gofeed/v2/atom" 
-    "github.com/mmcdole/gofeed/v2/json"
+    "github.com/dsh2dsh/gofeed/v2/rss"
+    "github.com/dsh2dsh/gofeed/v2/atom"
+    "github.com/dsh2dsh/gofeed/v2/json"
 )
 ```
 
@@ -96,7 +96,7 @@ Here's how to parse feeds using `gofeed.Parser`:
 ```go
 import (
     "fmt"
-    "github.com/mmcdole/gofeed/v2"
+    "github.com/dsh2dsh/gofeed/v2"
 )
 
 fp := gofeed.NewParser()
@@ -155,7 +155,7 @@ If you have a usage scenario that requires a specialized parser:
 ```go
 import (
     "strings"
-    "github.com/mmcdole/gofeed/v2/rss"
+    "github.com/dsh2dsh/gofeed/v2/rss"
 )
 
 feedData := `<rss version="2.0">

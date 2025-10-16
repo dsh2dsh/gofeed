@@ -9,14 +9,14 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/mmcdole/gofeed/v2/atom"
-	"github.com/mmcdole/gofeed/v2/json"
-	"github.com/mmcdole/gofeed/v2/rss"
+	"github.com/dsh2dsh/gofeed/v2/atom"
+	"github.com/dsh2dsh/gofeed/v2/json"
+	"github.com/dsh2dsh/gofeed/v2/rss"
 )
 
 // ErrFeedTypeNotDetected is returned when the detection system can not figure
 // out the Feed format
-var ErrFeedTypeNotDetected = errors.New("Failed to detect feed type")
+var ErrFeedTypeNotDetected = errors.New("failed to detect feed type")
 
 // HTTPError represents an HTTP error returned by a server.
 type HTTPError struct {
@@ -25,9 +25,7 @@ type HTTPError struct {
 }
 
 // Error returns the string representation of the HTTP error.
-func (err HTTPError) Error() string {
-	return fmt.Sprintf("http error: %s", err.Status)
-}
+func (err HTTPError) Error() string { return "http error: " + err.Status }
 
 // Parser is a universal feed parser that detects
 // a given feed type, parsers it, and translates it
@@ -52,9 +50,9 @@ type Auth struct {
 // NewParser creates a universal feed parser.
 func NewParser() *Parser {
 	fp := Parser{
-		rp:        rss.NewParser(),
-		ap:        atom.NewParser(),
-		jp:        json.NewParser(),
+		rp: rss.NewParser(),
+		ap: atom.NewParser(),
+		jp: json.NewParser(),
 	}
 	return &fp
 }
@@ -66,7 +64,7 @@ func (f *Parser) Parse(feed io.Reader, opts *ParseOptions) (*Feed, error) {
 	if opts == nil {
 		opts = DefaultParseOptions()
 	}
-	
+
 	// Wrap the feed io.Reader in a io.TeeReader
 	// so we can capture all the bytes read by the
 	// DetectFeedType function and construct a new
@@ -107,11 +105,11 @@ func (f *Parser) ParseURL(ctx context.Context, feedURL string, opts *ParseOption
 		}
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "GET", feedURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, feedURL, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gofeed: %w", err)
 	}
-	
+
 	// Set user agent
 	if opts.RequestOptions.UserAgent != "" {
 		req.Header.Set("User-Agent", opts.RequestOptions.UserAgent)
@@ -127,7 +125,7 @@ func (f *Parser) ParseURL(ctx context.Context, feedURL string, opts *ParseOption
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gofeed: %w", err)
 	}
 
 	if resp != nil {
@@ -160,16 +158,16 @@ func (f *Parser) parseAtomFeed(feed io.Reader, opts *ParseOptions) (*Feed, error
 	if err != nil {
 		return nil, err
 	}
-	
+
 	result, err := f.atomTrans().Translate(af, opts)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gofeed: %w", err)
 	}
-	
+
 	if opts != nil && opts.KeepOriginalFeed {
 		result.OriginalFeed = af
 	}
-	
+
 	return result, nil
 }
 
@@ -181,13 +179,13 @@ func (f *Parser) parseRSSFeed(feed io.Reader, opts *ParseOptions) (*Feed, error)
 
 	result, err := f.rssTrans().Translate(rf, opts)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gofeed: %w", err)
 	}
-	
+
 	if opts != nil && opts.KeepOriginalFeed {
 		result.OriginalFeed = rf
 	}
-	
+
 	return result, nil
 }
 
@@ -196,16 +194,16 @@ func (f *Parser) parseJSONFeed(feed io.Reader, opts *ParseOptions) (*Feed, error
 	if err != nil {
 		return nil, err
 	}
-	
+
 	result, err := f.jsonTrans().Translate(jf, opts)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gofeed: %w", err)
 	}
-	
+
 	if opts != nil && opts.KeepOriginalFeed {
 		result.OriginalFeed = jf
 	}
-	
+
 	return result, nil
 }
 
@@ -232,4 +230,3 @@ func (f *Parser) jsonTrans() Translator {
 	f.JSONTranslator = &DefaultJSONTranslator{}
 	return f.JSONTranslator
 }
-

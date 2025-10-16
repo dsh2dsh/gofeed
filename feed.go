@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
-	ext "github.com/mmcdole/gofeed/v2/extensions"
+	ext "github.com/dsh2dsh/gofeed/v2/extensions"
 )
 
 // Feed is the universal Feed type that atom.Feed
@@ -35,9 +35,9 @@ type Feed struct {
 	Items           []*Item                  `json:"items"`
 	FeedType        string                   `json:"feedType"`
 	FeedVersion     string                   `json:"feedVersion"`
-	
+
 	// Original format-specific feed data (only populated if KeepOriginalFeed is true)
-	OriginalFeed interface{} `json:"-"`
+	OriginalFeed any `json:"-"`
 }
 
 // String returns a JSON representation of the Feed for debugging purposes.
@@ -53,12 +53,12 @@ func (f *Feed) GetExtension(namespace, element string) []ext.Extension {
 	if f.Extensions == nil {
 		return nil
 	}
-	
+
 	nsMap, ok := f.Extensions[namespace]
 	if !ok {
 		return nil
 	}
-	
+
 	return nsMap[element]
 }
 
@@ -109,12 +109,12 @@ func (i *Item) GetExtension(namespace, element string) []ext.Extension {
 	if i.Extensions == nil {
 		return nil
 	}
-	
+
 	nsMap, ok := i.Extensions[namespace]
 	if !ok {
 		return nil
 	}
-	
+
 	return nsMap[element]
 }
 
@@ -166,7 +166,7 @@ func (f Feed) Len() int {
 func (f Feed) Less(i, k int) bool {
 	iParsed := f.Items[i].PublishedParsed
 	kParsed := f.Items[k].PublishedParsed
-	
+
 	if iParsed == nil && kParsed == nil {
 		return false
 	}

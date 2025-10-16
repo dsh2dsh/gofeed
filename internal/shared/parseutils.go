@@ -17,12 +17,14 @@ var (
 	nameOnlyRgx  = regexp.MustCompile(`^([^@()]+)$`)
 	emailOnlyRgx = regexp.MustCompile(`^([^@()]+@[^@()]+)$`)
 
-	TruncatedEntity         = errors.New("truncated entity")
-	InvalidNumericReference = errors.New("invalid numeric reference")
+	ErrTruncatedEntity         = errors.New("truncated entity")
+	ErrInvalidNumericReference = errors.New("invalid numeric reference")
 )
 
-const CDATA_START = "<![CDATA["
-const CDATA_END = "]]>"
+const (
+	CDATA_START = "<![CDATA["
+	CDATA_END   = "]]>"
+)
 
 // FindRoot iterates through the tokens of an xml document until
 // it encounters its first StartTag event.  It returns an error
@@ -31,17 +33,17 @@ func FindRoot(p *xpp.XMLPullParser) (event xpp.XMLEventType, err error) {
 	for {
 		event, err = p.Next()
 		if err != nil {
-			return event, err
+			return event, fmt.Errorf("gofeed/internal/shared: %w", err)
 		}
 		if event == xpp.StartTag {
 			break
 		}
 
 		if event == xpp.EndDocument {
-			return event, fmt.Errorf("Failed to find root node before document end.")
+			return event, errors.New("failed to find root node before document end")
 		}
 	}
-	return
+	return event, nil
 }
 
 // ParseText is a helper function for parsing the text
@@ -56,7 +58,7 @@ func ParseText(p *xpp.XMLPullParser) (string, error) {
 
 	err := p.DecodeElement(&text)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("gofeed/internal/shared: %w", err)
 	}
 
 	result := text.InnerXML
@@ -152,27 +154,28 @@ func DecodeEntities(str string) (string, error) {
 // ParseNameAddress parses name/email strings commonly
 // found in RSS feeds of the format "Example Name (example@site.com)"
 // and other variations of this format.
-func ParseNameAddress(nameAddressText string) (name string, address string) {
+func ParseNameAddress(nameAddressText string) (name, address string) {
 	if nameAddressText == "" {
-		return
+		return name, address
 	}
 
-	if emailNameRgx.MatchString(nameAddressText) {
+	switch {
+	case emailNameRgx.MatchString(nameAddressText):
 		result := emailNameRgx.FindStringSubmatch(nameAddressText)
 		address = result[1]
 		name = result[2]
-	} else if nameEmailRgx.MatchString(nameAddressText) {
+	case nameEmailRgx.MatchString(nameAddressText):
 		result := nameEmailRgx.FindStringSubmatch(nameAddressText)
 		name = result[1]
 		address = result[2]
-	} else if nameOnlyRgx.MatchString(nameAddressText) {
+	case nameOnlyRgx.MatchString(nameAddressText):
 		result := nameOnlyRgx.FindStringSubmatch(nameAddressText)
 		name = result[1]
-	} else if emailOnlyRgx.MatchString(nameAddressText) {
+	case emailOnlyRgx.MatchString(nameAddressText):
 		result := emailOnlyRgx.FindStringSubmatch(nameAddressText)
 		address = result[1]
 	}
-	return
+	return name, address
 }
 
 func indexAt(str, substr string, start int) int {

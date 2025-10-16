@@ -1,6 +1,7 @@
 package shared
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -192,11 +193,11 @@ var dateFormatsWithNamedZone = []string{
 func ParseDate(ds string) (t time.Time, err error) {
 	d := strings.TrimSpace(ds)
 	if d == "" {
-		return t, fmt.Errorf("Date string is empty")
+		return t, errors.New("date string is empty")
 	}
 	for _, f := range dateFormats {
 		if t, err = time.Parse(f, d); err == nil {
-			return
+			return t, nil
 		}
 	}
 	for _, f := range dateFormatsWithNamedZone {
@@ -218,6 +219,6 @@ func ParseDate(ds string) (t time.Time, err error) {
 		// This should not be reachable
 	}
 
-	err = fmt.Errorf("Failed to parse date: %s", ds)
-	return
+	err = fmt.Errorf("failed to parse date: %s", ds)
+	return t, err
 }
