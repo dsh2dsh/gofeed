@@ -12,9 +12,6 @@ from upstream:
 
 # Gofeed: A Robust Feed Parser for Golang
 
-<img src="https://github.com/dsh2dsh/gofeed/assets/3767096/ab4e7b0e-1472-4249-880c-c6784000ed31" width="150" height="150"> 
-<br /><br />
-
 `gofeed` is a powerful and flexible library designed for parsing **RSS**, **Atom**, and **JSON** feeds across various formats and versions. It effectively manages non-standard elements and known extensions, and demonstrates resilience against common feed issues.
 
 ## Table of Contents
