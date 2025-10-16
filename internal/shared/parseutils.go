@@ -16,9 +16,6 @@ var (
 	nameEmailRgx = regexp.MustCompile(`^([^@]+)\s+\(([^@]+@[^)]+)\)$`)
 	nameOnlyRgx  = regexp.MustCompile(`^([^@()]+)$`)
 	emailOnlyRgx = regexp.MustCompile(`^([^@()]+@[^@()]+)$`)
-
-	ErrTruncatedEntity         = errors.New("truncated entity")
-	ErrInvalidNumericReference = errors.New("invalid numeric reference")
 )
 
 const (
