@@ -180,7 +180,7 @@ func TestParser_ParseURL_Failure(t *testing.T) {
 	feed, err := fp.ParseURL(context.Background(), server.URL, opts)
 
 	require.Error(t, err)
-	var httpErr gofeed.HTTPError
+	var httpErr *gofeed.HTTPError
 	require.ErrorAs(t, err, &httpErr)
 	assert.Nil(t, feed)
 }

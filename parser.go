@@ -26,7 +26,7 @@ type HTTPError struct {
 }
 
 // Error returns the string representation of the HTTP error.
-func (err HTTPError) Error() string { return "http error: " + err.Status }
+func (self *HTTPError) Error() string { return "http error: " + self.Status }
 
 // Parser is a universal feed parser that detects
 // a given feed type, parsers it, and translates it
@@ -130,7 +130,7 @@ func (f *Parser) ParseURL(ctx context.Context, feedURL string, opts *options.Par
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, HTTPError{
+		return nil, &HTTPError{
 			StatusCode: resp.StatusCode,
 			Status:     resp.Status,
 		}
