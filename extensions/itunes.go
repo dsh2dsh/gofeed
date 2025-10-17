@@ -86,31 +86,29 @@ func NewITunesItemExtension(extensions map[string][]Extension) *ITunesItemExtens
 	return entry
 }
 
-func parseImage(extensions map[string][]Extension) (image string) {
+func parseImage(extensions map[string][]Extension) string {
 	if extensions == nil {
-		return image
+		return ""
 	}
 
 	matches, ok := extensions["image"]
 	if !ok || len(matches) == 0 {
-		return image
+		return ""
 	}
-
-	image = matches[0].Attrs["href"]
-	return image
+	return matches[0].Attrs["href"]
 }
 
-func parseOwner(extensions map[string][]Extension) (owner *ITunesOwner) {
+func parseOwner(extensions map[string][]Extension) *ITunesOwner {
 	if extensions == nil {
-		return owner
+		return nil
 	}
 
 	matches, ok := extensions["owner"]
 	if !ok || len(matches) == 0 {
-		return owner
+		return nil
 	}
 
-	owner = &ITunesOwner{}
+	owner := &ITunesOwner{}
 	if name, ok := matches[0].Children["name"]; ok {
 		owner.Name = name[0].Value
 	}
@@ -120,18 +118,19 @@ func parseOwner(extensions map[string][]Extension) (owner *ITunesOwner) {
 	return owner
 }
 
-func parseCategories(extensions map[string][]Extension) (categories []*ITunesCategory) {
+func parseCategories(extensions map[string][]Extension) []*ITunesCategory {
 	if extensions == nil {
-		return categories
+		return nil
 	}
 
 	matches, ok := extensions["category"]
 	if !ok || len(matches) == 0 {
-		return categories
+		return nil
 	}
 
-	categories = []*ITunesCategory{}
-	for _, cat := range matches {
+	categories := []*ITunesCategory{}
+	for i := range matches {
+		cat := &matches[i]
 		c := &ITunesCategory{}
 		if text, ok := cat.Attrs["text"]; ok {
 			c.Text = text

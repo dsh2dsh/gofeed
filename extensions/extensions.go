@@ -14,33 +14,32 @@ type Extension struct {
 	Children map[string][]Extension `json:"children"`
 }
 
-func parseTextExtension(name string, extensions map[string][]Extension) (value string) {
+func parseTextExtension(name string, extensions map[string][]Extension) string {
 	if extensions == nil {
-		return value
+		return ""
 	}
 
 	matches, ok := extensions[name]
 	if !ok || len(matches) == 0 {
-		return value
+		return ""
 	}
-
-	match := matches[0]
-	return match.Value
+	return matches[0].Value
 }
 
-func parseTextArrayExtension(name string, extensions map[string][]Extension) (values []string) {
+func parseTextArrayExtension(name string, extensions map[string][]Extension,
+) []string {
 	if extensions == nil {
-		return values
+		return nil
 	}
 
 	matches, ok := extensions[name]
 	if !ok || len(matches) == 0 {
-		return values
+		return nil
 	}
 
-	values = []string{}
-	for _, m := range matches {
-		values = append(values, m.Value)
+	values := []string{}
+	for i := range matches {
+		values = append(values, matches[i].Value)
 	}
 	return values
 }
