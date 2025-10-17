@@ -10,6 +10,10 @@ from upstream:
 
 * `ParseURL` is deprecated and removed
 
+* `ParseString` is deprecated and removed
+
+  Easy replaceable with `strings.NewReader` and `Parse`.
+
 ---
 
 # Gofeed: A Robust Feed Parser for Golang
@@ -94,7 +98,7 @@ import (
 
 Here's how to parse feeds using `gofeed.Parser`:
 
-#### From a String
+#### From an io.Reader
 
 ```go
 import (
@@ -102,23 +106,21 @@ import (
     "github.com/dsh2dsh/gofeed/v2"
 )
 
+file, _ := os.Open("/path/to/a/file.xml")
+defer file.Close()
+fp := gofeed.NewParser()
+feed, _ := fp.Parse(file)
+fmt.Println(feed.Title)
+```
+
+```go
 feedData := `<rss version="2.0">
 <channel>
 <title>Sample Feed</title>
 </channel>
 </rss>`
 fp := gofeed.NewParser()
-feed, _ := fp.ParseString(feedData)
-fmt.Println(feed.Title)
-```
-
-#### From an io.Reader
-
-```go
-file, _ := os.Open("/path/to/a/file.xml")
-defer file.Close()
-fp := gofeed.NewParser()
-feed, _ := fp.Parse(file)
+feed, _ := fp.Parse(strings.NewReader(feedData))
 fmt.Println(feed.Title)
 ```
 
@@ -221,7 +223,7 @@ feedData := `<rss version="2.0">
 
 fp := gofeed.NewParser()
 fp.RSSTranslator = NewMyCustomTranslator()
-feed, _ := fp.ParseString(feedData)
+feed, _ := fp.ParseString(strings.NewReader(feedData))
 fmt.Println(feed.Author) // Valentine Wiggin
 ```
 

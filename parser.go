@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strings"
 
 	"github.com/dsh2dsh/gofeed/v2/atom"
 	"github.com/dsh2dsh/gofeed/v2/json"
@@ -70,12 +69,6 @@ func (f *Parser) Parse(feed io.Reader, opts *options.ParseOptions) (*Feed, error
 	}
 
 	return nil, ErrFeedTypeNotDetected
-}
-
-// ParseString parses a feed XML string and into the
-// universal feed type.
-func (f *Parser) ParseString(feed string, opts *options.ParseOptions) (*Feed, error) {
-	return f.Parse(strings.NewReader(feed), opts)
 }
 
 func (f *Parser) parseAtomFeed(feed io.Reader, opts *options.ParseOptions) (*Feed, error) {

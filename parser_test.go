@@ -58,48 +58,6 @@ func TestParser_Parse(t *testing.T) {
 	}
 }
 
-func TestParser_ParseString(t *testing.T) {
-	feedTests := []struct {
-		file      string
-		feedType  string
-		feedTitle string
-		hasError  bool
-	}{
-		{"atom03_feed.xml", "atom", "Feed Title", false},
-		{"atom10_feed.xml", "atom", "Feed Title", false},
-		{"rss_feed.xml", "rss", "Feed Title", false},
-		{"rss_feed_bom.xml", "rss", "Feed Title", false},
-		{"rss_feed_leading_spaces.xml", "rss", "Feed Title", false},
-		{"rdf_feed.xml", "rss", "Feed Title", false},
-		{"sample.json", "json", "title", false},
-		{"unknown_feed.xml", "", "", true},
-		{"empty_feed.xml", "", "", true},
-		{"invalid.json", "", "", true},
-	}
-
-	for _, test := range feedTests {
-		fmt.Printf("Testing %s... ", test.file)
-
-		// Get feed content
-		path := "testdata/parser/universal/" + test.file
-		f, _ := os.ReadFile(path)
-
-		// Get actual value
-		fp := gofeed.NewParser()
-		feed, err := fp.ParseString(string(f), nil)
-
-		if test.hasError {
-			require.Error(t, err)
-			assert.Nil(t, feed)
-		} else {
-			assert.NotNil(t, feed)
-			require.NoError(t, err)
-			assert.Equal(t, feed.FeedType, test.feedType)
-			assert.Equal(t, feed.Title, test.feedTitle)
-		}
-	}
-}
-
 // to detect race conditions, run with go test -race
 func TestParser_Concurrent(t *testing.T) {
 	feedTests := []string{
@@ -120,7 +78,7 @@ func TestParser_Concurrent(t *testing.T) {
 		path := "testdata/parser/universal/" + test
 		f, _ := os.ReadFile(path)
 
-		wg.Go(func() { fp.ParseString(string(f), nil) })
+		wg.Go(func() { fp.Parse(bytes.NewReader(f), nil) })
 	}
 	wg.Wait()
 }
@@ -135,20 +93,6 @@ func ExampleParser_Parse() {
 </rss>`
 	fp := gofeed.NewParser()
 	feed, err := fp.Parse(strings.NewReader(feedData), nil)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(feed.Title)
-}
-
-func ExampleParser_ParseString() {
-	feedData := `<rss version="2.0">
-<channel>
-<title>Sample Feed</title>
-</channel>
-</rss>`
-	fp := gofeed.NewParser()
-	feed, err := fp.ParseString(feedData, nil)
 	if err != nil {
 		panic(err)
 	}
