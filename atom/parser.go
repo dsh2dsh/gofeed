@@ -2,6 +2,7 @@ package atom
 
 import (
 	"encoding/base64"
+	"encoding/xml"
 	"fmt"
 	"io"
 	"strings"
@@ -698,6 +699,11 @@ func (ap *Parser) parseAtomText(p *xpp.XMLPullParser) (string, error) {
 		Type     string `xml:"type,attr"`
 		Mode     string `xml:"mode,attr"`
 		InnerXML string `xml:",innerxml"`
+
+		XHTML struct {
+			XMLName  xml.Name `xml:"div"`
+			InnerXML string   `xml:",innerxml"`
+		} `xml:"http://www.w3.org/1999/xhtml div"`
 	}
 
 	// get current base URL before it is clobbered by DecodeElement
@@ -707,11 +713,16 @@ func (ap *Parser) parseAtomText(p *xpp.XMLPullParser) (string, error) {
 		return "", fmt.Errorf("gofeed/atom: %w", err)
 	}
 
-	result := text.InnerXML
-	result = strings.TrimSpace(result)
-
 	lowerType := strings.ToLower(text.Type)
 	lowerMode := strings.ToLower(text.Mode)
+
+	var result string
+	xhtmlType := strings.Contains(lowerType, "xhtml") || lowerType == "html"
+	if xhtmlType && text.XHTML.XMLName.Local == "div" {
+		result = strings.TrimSpace(text.XHTML.InnerXML)
+	} else {
+		result = strings.TrimSpace(text.InnerXML)
+	}
 
 	if strings.Contains(result, "<![CDATA[") {
 		result = shared.StripCDATA(result)
@@ -727,10 +738,8 @@ func (ap *Parser) parseAtomText(p *xpp.XMLPullParser) (string, error) {
 			(lowerType == "" && lowerMode == ""):
 			result, err = shared.DecodeEntities(result)
 		case strings.Contains(lowerType, "xhtml"):
-			result = ap.stripWrappingDiv(result)
 			result, _ = shared.ResolveHTML(base, result)
 		case lowerType == "html":
-			result = ap.stripWrappingDiv(result)
 			result, err = shared.DecodeEntities(result)
 			if err == nil {
 				result, _ = shared.ResolveHTML(base, result)
@@ -775,8 +784,4 @@ func (ap *Parser) parseVersion(p *xpp.XMLPullParser) string {
 	}
 
 	return ""
-}
-
-func (ap *Parser) stripWrappingDiv(content string) string {
-	return shared.StripWrappingDiv(content)
 }
