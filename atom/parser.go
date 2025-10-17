@@ -726,9 +726,6 @@ func (ap *Parser) parseAtomText(p *xpp.XMLPullParser) (string, error) {
 
 	if strings.Contains(result, "<![CDATA[") {
 		result = shared.StripCDATA(result)
-		if lowerType == "html" || strings.Contains(lowerType, "xhtml") {
-			result, _ = shared.ResolveHTML(base, result)
-		}
 	} else {
 		// decode non-CDATA contents depending on type
 
@@ -738,12 +735,9 @@ func (ap *Parser) parseAtomText(p *xpp.XMLPullParser) (string, error) {
 			(lowerType == "" && lowerMode == ""):
 			result, err = shared.DecodeEntities(result)
 		case strings.Contains(lowerType, "xhtml"):
-			result, _ = shared.ResolveHTML(base, result)
+		// do nothing
 		case lowerType == "html":
-			result, err = shared.DecodeEntities(result)
-			if err == nil {
-				result, _ = shared.ResolveHTML(base, result)
-			}
+			result, _ = shared.DecodeEntities(result)
 		default:
 			decodedStr, err := base64.StdEncoding.DecodeString(result)
 			if err == nil {

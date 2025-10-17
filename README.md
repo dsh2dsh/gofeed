@@ -14,6 +14,8 @@ from upstream:
 
   Easy replaceable with `strings.NewReader` and `Parse`.
 
+* Atom parser doesn't resolve relative links inside (x)html content
+
 ---
 
 # Gofeed: A Robust Feed Parser for Golang
