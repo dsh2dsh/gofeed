@@ -18,7 +18,7 @@ func NewParser() *Parser {
 }
 
 // Parse parses an json feed into an json.Feed
-func (ap *Parser) Parse(feed io.Reader, opts *options.ParseOptions) (*Feed, error) {
+func (ap *Parser) Parse(feed io.Reader, opts *options.Parse) (*Feed, error) {
 	jsonFeed := &Feed{}
 
 	buffer := new(bytes.Buffer)

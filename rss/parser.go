@@ -21,7 +21,7 @@ func NewParser() *Parser {
 }
 
 // Parse parses an xml feed into an rss.Feed
-func (rp *Parser) Parse(feed io.Reader, opts *options.ParseOptions) (*Feed, error) {
+func (rp *Parser) Parse(feed io.Reader, opts *options.Parse) (*Feed, error) {
 	p := xpp.NewXMLPullParser(feed, false, shared.NewReaderLabel)
 
 	_, err := shared.FindRoot(p)
@@ -32,7 +32,7 @@ func (rp *Parser) Parse(feed io.Reader, opts *options.ParseOptions) (*Feed, erro
 	return rp.parseRoot(p, opts)
 }
 
-func (rp *Parser) parseRoot(p *xpp.XMLPullParser, opts *options.ParseOptions) (*Feed, error) {
+func (rp *Parser) parseRoot(p *xpp.XMLPullParser, opts *options.Parse) (*Feed, error) {
 	rssErr := p.Expect(xpp.StartTag, "rss")
 	rdfErr := p.Expect(xpp.StartTag, "rdf")
 	if rssErr != nil && rdfErr != nil {
@@ -122,7 +122,7 @@ func (rp *Parser) parseRoot(p *xpp.XMLPullParser, opts *options.ParseOptions) (*
 	return channel, nil
 }
 
-func (rp *Parser) parseChannel(p *xpp.XMLPullParser, _ *options.ParseOptions) (rss *Feed, err error) {
+func (rp *Parser) parseChannel(p *xpp.XMLPullParser, _ *options.Parse) (rss *Feed, err error) {
 	if err = p.Expect(xpp.StartTag, "channel"); err != nil {
 		return nil, fmt.Errorf("gofeed/rss: %w", err)
 	}

@@ -1,7 +1,7 @@
 package options
 
-// ParseOptions configures how feeds are parsed
-type ParseOptions struct {
+// Parse configures how feeds are parsed
+type Parse struct {
 	// Keep reference to the original format-specific feed
 	KeepOriginalFeed bool
 
@@ -9,22 +9,22 @@ type ParseOptions struct {
 	ParseDates bool
 
 	// Parsing behavior options
-	StrictnessOptions StrictnessOptions
+	StrictnessOptions Strictness
 }
 
-// StrictnessOptions controls parsing strictness
-type StrictnessOptions struct {
+// Strictness controls parsing strictness
+type Strictness struct {
 	AllowInvalidDates    bool
 	AllowMissingRequired bool
 	AllowUnescapedMarkup bool
 }
 
-// DefaultParseOptions returns sensible defaults
-func DefaultParseOptions() *ParseOptions {
-	return &ParseOptions{
+// Default returns sensible defaults
+func Default() *Parse {
+	return &Parse{
 		KeepOriginalFeed: false,
 		ParseDates:       true,
-		StrictnessOptions: StrictnessOptions{
+		StrictnessOptions: Strictness{
 			AllowInvalidDates:    true,
 			AllowMissingRequired: true,
 			AllowUnescapedMarkup: true,

@@ -41,9 +41,9 @@ func NewParser() *Parser {
 // Parse parses a RSS or Atom or JSON feed into
 // the universal gofeed.Feed.  It takes an
 // io.Reader which should return the xml/json content.
-func (f *Parser) Parse(feed io.Reader, opts *options.ParseOptions) (*Feed, error) {
+func (f *Parser) Parse(feed io.Reader, opts *options.Parse) (*Feed, error) {
 	if opts == nil {
-		opts = options.DefaultParseOptions()
+		opts = options.Default()
 	}
 
 	// Wrap the feed io.Reader in a io.TeeReader
@@ -71,7 +71,7 @@ func (f *Parser) Parse(feed io.Reader, opts *options.ParseOptions) (*Feed, error
 	return nil, ErrFeedTypeNotDetected
 }
 
-func (f *Parser) parseAtomFeed(feed io.Reader, opts *options.ParseOptions) (*Feed, error) {
+func (f *Parser) parseAtomFeed(feed io.Reader, opts *options.Parse) (*Feed, error) {
 	af, err := f.ap.Parse(feed, opts)
 	if err != nil {
 		return nil, err
@@ -89,7 +89,7 @@ func (f *Parser) parseAtomFeed(feed io.Reader, opts *options.ParseOptions) (*Fee
 	return result, nil
 }
 
-func (f *Parser) parseRSSFeed(feed io.Reader, opts *options.ParseOptions) (*Feed, error) {
+func (f *Parser) parseRSSFeed(feed io.Reader, opts *options.Parse) (*Feed, error) {
 	rf, err := f.rp.Parse(feed, opts)
 	if err != nil {
 		return nil, err
@@ -107,7 +107,7 @@ func (f *Parser) parseRSSFeed(feed io.Reader, opts *options.ParseOptions) (*Feed
 	return result, nil
 }
 
-func (f *Parser) parseJSONFeed(feed io.Reader, opts *options.ParseOptions) (*Feed, error) {
+func (f *Parser) parseJSONFeed(feed io.Reader, opts *options.Parse) (*Feed, error) {
 	jf, err := f.jp.Parse(feed, opts)
 	if err != nil {
 		return nil, err
