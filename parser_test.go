@@ -44,7 +44,7 @@ func TestParser_Parse(t *testing.T) {
 
 		// Get actual value
 		fp := gofeed.NewParser()
-		feed, err := fp.Parse(bytes.NewReader(f), nil)
+		feed, err := fp.Parse(bytes.NewReader(f))
 
 		if test.hasError {
 			require.Error(t, err)
@@ -78,7 +78,7 @@ func TestParser_Concurrent(t *testing.T) {
 		path := "testdata/parser/universal/" + test
 		f, _ := os.ReadFile(path)
 
-		wg.Go(func() { fp.Parse(bytes.NewReader(f), nil) })
+		wg.Go(func() { fp.Parse(bytes.NewReader(f)) })
 	}
 	wg.Wait()
 }
@@ -92,7 +92,7 @@ func ExampleParser_Parse() {
 </channel>
 </rss>`
 	fp := gofeed.NewParser()
-	feed, err := fp.Parse(strings.NewReader(feedData), nil)
+	feed, err := fp.Parse(strings.NewReader(feedData))
 	if err != nil {
 		panic(err)
 	}

@@ -23,28 +23,17 @@ type Parser struct {
 	AtomTranslator Translator
 	RSSTranslator  Translator
 	JSONTranslator Translator
-	rp             *rss.Parser
-	ap             *atom.Parser
-	jp             *json.Parser
+
+	opts *options.Parse
 }
 
 // NewParser creates a universal feed parser.
-func NewParser() *Parser {
-	fp := Parser{
-		rp: rss.NewParser(),
-		ap: atom.NewParser(),
-		jp: json.NewParser(),
-	}
-	return &fp
-}
+func NewParser() *Parser { return &Parser{} }
 
-// Parse parses a RSS or Atom or JSON feed into
-// the universal gofeed.Feed.  It takes an
-// io.Reader which should return the xml/json content.
-func (f *Parser) Parse(feed io.Reader, opts *options.Parse) (*Feed, error) {
-	if opts == nil {
-		opts = options.Default()
-	}
+// Parse parses a RSS or Atom or JSON feed into the universal gofeed.Feed. It
+// takes an io.Reader which should return the xml/json content.
+func (f *Parser) Parse(feed io.Reader, opts ...options.Option) (*Feed, error) {
+	f.opts = options.Default().Apply(opts...)
 
 	// Wrap the feed io.Reader in a io.TeeReader
 	// so we can capture all the bytes read by the
@@ -61,67 +50,65 @@ func (f *Parser) Parse(feed io.Reader, opts *options.Parse) (*Feed, error) {
 
 	switch feedType {
 	case FeedTypeAtom:
-		return f.parseAtomFeed(r, opts)
+		return f.parseAtomFeed(r)
 	case FeedTypeRSS:
-		return f.parseRSSFeed(r, opts)
+		return f.parseRSSFeed(r)
 	case FeedTypeJSON:
-		return f.parseJSONFeed(r, opts)
+		return f.parseJSONFeed(r)
 	}
-
 	return nil, ErrFeedTypeNotDetected
 }
 
-func (f *Parser) parseAtomFeed(feed io.Reader, opts *options.Parse) (*Feed, error) {
-	af, err := f.ap.Parse(feed, opts)
+func (f *Parser) parseAtomFeed(feed io.Reader) (*Feed, error) {
+	af, err := atom.NewParser().Parse(feed, options.From(f.opts))
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := f.atomTrans().Translate(af, opts)
+	result, err := f.atomTrans().Translate(af, f.opts)
 	if err != nil {
-		return nil, fmt.Errorf("gofeed: %w", err)
+		return nil, fmt.Errorf("gofeed: atom translation failed: %w", err)
 	}
 
-	if opts != nil && opts.KeepOriginalFeed {
+	if f.keepOriginalFeed() {
 		result.OriginalFeed = af
 	}
-
 	return result, nil
 }
 
-func (f *Parser) parseRSSFeed(feed io.Reader, opts *options.Parse) (*Feed, error) {
-	rf, err := f.rp.Parse(feed, opts)
+func (f *Parser) keepOriginalFeed() bool { return f.opts.KeepOriginalFeed }
+
+func (f *Parser) parseRSSFeed(feed io.Reader) (*Feed, error) {
+	rf, err := rss.NewParser().Parse(feed, options.From(f.opts))
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := f.rssTrans().Translate(rf, opts)
+	result, err := f.rssTrans().Translate(rf, f.opts)
 	if err != nil {
-		return nil, fmt.Errorf("gofeed: %w", err)
+		return nil, fmt.Errorf("gofeed: rss translation failed: %w", err)
 	}
 
-	if opts != nil && opts.KeepOriginalFeed {
+	if f.keepOriginalFeed() {
 		result.OriginalFeed = rf
 	}
-
 	return result, nil
 }
 
-func (f *Parser) parseJSONFeed(feed io.Reader, opts *options.Parse) (*Feed, error) {
-	jf, err := f.jp.Parse(feed, opts)
+func (f *Parser) parseJSONFeed(feed io.Reader) (*Feed, error) {
+	jf, err := json.NewParser().Parse(feed, options.From(f.opts))
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := f.jsonTrans().Translate(jf, opts)
+	result, err := f.jsonTrans().Translate(jf, f.opts)
 	if err != nil {
-		return nil, fmt.Errorf("gofeed: %w", err)
+		return nil, fmt.Errorf("gofeed: json translation failed: %w", err)
 	}
 
-	if opts != nil && opts.KeepOriginalFeed {
+	if f.keepOriginalFeed() {
 		result.OriginalFeed = jf
 	}
-
 	return result, nil
 }
 
@@ -129,22 +116,19 @@ func (f *Parser) atomTrans() Translator {
 	if f.AtomTranslator != nil {
 		return f.AtomTranslator
 	}
-	f.AtomTranslator = &DefaultAtomTranslator{}
-	return f.AtomTranslator
+	return &DefaultAtomTranslator{}
 }
 
 func (f *Parser) rssTrans() Translator {
 	if f.RSSTranslator != nil {
 		return f.RSSTranslator
 	}
-	f.RSSTranslator = &DefaultRSSTranslator{}
-	return f.RSSTranslator
+	return &DefaultRSSTranslator{}
 }
 
 func (f *Parser) jsonTrans() Translator {
 	if f.JSONTranslator != nil {
 		return f.JSONTranslator
 	}
-	f.JSONTranslator = &DefaultJSONTranslator{}
-	return f.JSONTranslator
+	return &DefaultJSONTranslator{}
 }

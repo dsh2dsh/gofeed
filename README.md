@@ -54,13 +54,13 @@ For added convenience, gofeed includes native support for parsing certain well-k
 
 - Dublin Core: Accessible via `Feed.DublinCoreExt` and `Item.DublinCoreExt`
 - Apple iTunes: Accessible via `Feed.ITunesExt` and `Item.ITunesExt`
-  
+
 ## Overview
 
 In `gofeed`, you have two primary choices for feed parsing: a universal parser for handling multiple feed types seamlessly, and specialized parsers for more granular control over individual feed types.
 
 
-### Universal Feed Parser 
+### Universal Feed Parser
 
 The universal `gofeed.Parser` is designed to make it easy to work with various types of feeds—RSS, Atom, JSON—by converting them into a unified `gofeed.Feed` model. This is especially useful when you're dealing with multiple feed formats and you want to treat them the same way.
 

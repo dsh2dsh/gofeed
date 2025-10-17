@@ -16,23 +16,19 @@ import (
 type Parser struct{}
 
 // NewParser creates a new RSS parser
-func NewParser() *Parser {
-	return &Parser{}
-}
+func NewParser() *Parser { return &Parser{} }
 
 // Parse parses an xml feed into an rss.Feed
-func (rp *Parser) Parse(feed io.Reader, opts *options.Parse) (*Feed, error) {
+func (rp *Parser) Parse(feed io.Reader, opts ...options.Option) (*Feed, error) {
 	p := xpp.NewXMLPullParser(feed, false, shared.NewReaderLabel)
-
 	_, err := shared.FindRoot(p)
 	if err != nil {
 		return nil, err
 	}
-
-	return rp.parseRoot(p, opts)
+	return rp.parseRoot(p)
 }
 
-func (rp *Parser) parseRoot(p *xpp.XMLPullParser, opts *options.Parse) (*Feed, error) {
+func (rp *Parser) parseRoot(p *xpp.XMLPullParser) (*Feed, error) {
 	rssErr := p.Expect(xpp.StartTag, "rss")
 	rdfErr := p.Expect(xpp.StartTag, "rdf")
 	if rssErr != nil && rdfErr != nil {
@@ -69,7 +65,7 @@ func (rp *Parser) parseRoot(p *xpp.XMLPullParser, opts *options.Parse) (*Feed, e
 
 			switch name {
 			case "channel":
-				channel, err = rp.parseChannel(p, opts)
+				channel, err = rp.parseChannel(p)
 				if err != nil {
 					return nil, err
 				}
@@ -122,7 +118,7 @@ func (rp *Parser) parseRoot(p *xpp.XMLPullParser, opts *options.Parse) (*Feed, e
 	return channel, nil
 }
 
-func (rp *Parser) parseChannel(p *xpp.XMLPullParser, _ *options.Parse) (rss *Feed, err error) {
+func (rp *Parser) parseChannel(p *xpp.XMLPullParser) (rss *Feed, err error) {
 	if err = p.Expect(xpp.StartTag, "channel"); err != nil {
 		return nil, fmt.Errorf("gofeed/rss: %w", err)
 	}
