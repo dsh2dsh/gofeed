@@ -227,19 +227,23 @@ func (t *DefaultRSSTranslator) translateFeedImage(rss *rss.Feed) *Image {
 			URL:   rss.Image.URL,
 		}
 	}
+
 	if rss.ITunesExt != nil && rss.ITunesExt.Image != "" {
 		return &Image{URL: rss.ITunesExt.Image}
 	}
+
 	if media, ok := rss.Extensions["media"]; ok {
 		if content, ok := media["content"]; ok {
 			for _, c := range content {
-				if strings.HasPrefix(c.Attrs["type"], "image/") || c.Attrs["medium"] == "image" {
+				hasImage := strings.HasPrefix(c.Attrs["type"], "image/") ||
+					c.Attrs["medium"] == "image"
+				if hasImage {
 					return &Image{URL: c.Attrs["url"]}
 				}
 			}
 		}
 	}
-	return firstImageFromHtmlDocument(rss.Description)
+	return nil
 }
 
 func (t *DefaultRSSTranslator) translateFeedCopyright(rss *rss.Feed) (rights string) {
@@ -401,33 +405,22 @@ func (t *DefaultRSSTranslator) translateItemImage(rssItem *rss.Item) *Image {
 	if rssItem.ITunesExt != nil && rssItem.ITunesExt.Image != "" {
 		return &Image{URL: rssItem.ITunesExt.Image}
 	}
+
 	if media, ok := rssItem.Extensions["media"]; ok {
 		if content, ok := media["content"]; ok {
 			for _, c := range content {
-				if strings.Contains(c.Attrs["type"], "image") || strings.Contains(c.Attrs["medium"], "image") {
+				hasImage := strings.Contains(c.Attrs["type"], "image") ||
+					strings.Contains(c.Attrs["medium"], "image")
+				if hasImage {
 					return &Image{URL: c.Attrs["url"]}
 				}
 			}
 		}
 	}
+
 	for _, enc := range rssItem.Enclosures {
 		if strings.HasPrefix(enc.Type, "image/") {
 			return &Image{URL: enc.URL}
-		}
-	}
-	if img := firstImageFromHtmlDocument(rssItem.Content); img != nil {
-		return img
-	}
-	if img := firstImageFromHtmlDocument(rssItem.Description); img != nil {
-		return img
-	}
-	return nil
-}
-
-func firstImageFromHtmlDocument(document string) *Image {
-	if src := shared.FindFirstImgSrc(document); src != "" {
-		return &Image{
-			URL: src,
 		}
 	}
 	return nil

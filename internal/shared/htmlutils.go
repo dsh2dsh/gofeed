@@ -7,34 +7,6 @@ import (
 	"golang.org/x/net/html"
 )
 
-// FindFirstImgSrc finds the first <img> tag with a src attribute in the HTML document
-// and returns the src value. Returns empty string if no img with src is found.
-func FindFirstImgSrc(document string) string {
-	doc, err := html.Parse(strings.NewReader(document))
-	if err != nil {
-		return ""
-	}
-
-	var findImg func(*html.Node) string
-	findImg = func(n *html.Node) string {
-		if n.Type == html.ElementNode && n.Data == "img" {
-			for _, attr := range n.Attr {
-				if attr.Key == "src" {
-					return attr.Val
-				}
-			}
-		}
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			if src := findImg(c); src != "" {
-				return src
-			}
-		}
-		return ""
-	}
-
-	return findImg(doc)
-}
-
 // StripWrappingDiv removes a single wrapping <div> element from HTML content
 // if the body contains only that div (and optional whitespace).
 // Returns the inner content of the div, or the original content if conditions aren't met.

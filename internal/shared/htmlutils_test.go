@@ -4,69 +4,6 @@ import (
 	"testing"
 )
 
-func TestFindFirstImgSrc(t *testing.T) {
-	tests := []struct {
-		name     string
-		html     string
-		expected string
-	}{
-		{
-			name:     "simple img tag",
-			html:     `<img src="test.jpg">`,
-			expected: "test.jpg",
-		},
-		{
-			name:     "img tag with other attributes",
-			html:     `<img alt="test" src="image.png" width="100">`,
-			expected: "image.png",
-		},
-		{
-			name:     "nested img tag",
-			html:     `<div><p><img src="nested.gif"></p></div>`,
-			expected: "nested.gif",
-		},
-		{
-			name:     "multiple img tags",
-			html:     `<img src="first.jpg"><img src="second.jpg">`,
-			expected: "first.jpg",
-		},
-		{
-			name:     "img without src",
-			html:     `<img alt="no source">`,
-			expected: "",
-		},
-		{
-			name:     "no img tag",
-			html:     `<div><p>No images here</p></div>`,
-			expected: "",
-		},
-		{
-			name:     "empty html",
-			html:     ``,
-			expected: "",
-		},
-		{
-			name:     "invalid html",
-			html:     `<div><img src="test.jpg"`,
-			expected: "",
-		},
-		{
-			name:     "img in html with body",
-			html:     `<html><body><img src="body-image.jpg"></body></html>`,
-			expected: "body-image.jpg",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := FindFirstImgSrc(tt.html)
-			if result != tt.expected {
-				t.Errorf("FindFirstImgSrc() = %v, want %v", result, tt.expected)
-			}
-		})
-	}
-}
-
 func TestStripWrappingDiv(t *testing.T) {
 	tests := []struct {
 		name     string

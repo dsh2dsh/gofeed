@@ -1,8 +1,0 @@
-<!--
-Description: channel image
--->
-<rss version="0.91">
-  <channel>
-    <description><![CDATA[<img src="http://example.com/description.png">]]></description>
-  </channel>
-</rss>
