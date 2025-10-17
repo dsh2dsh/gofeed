@@ -15,7 +15,7 @@ import (
 )
 
 func TestITunes_Extensions(t *testing.T) {
-	files, _ := filepath.Glob("../testdata/extensions/itunes/*.xml")
+	files, _ := filepath.Glob("testdata/itunes/*.xml")
 	for _, f := range files {
 		base := filepath.Base(f)
 		name := strings.TrimSuffix(base, filepath.Ext(base))
@@ -23,7 +23,7 @@ func TestITunes_Extensions(t *testing.T) {
 		fmt.Printf("Testing %s... ", name)
 
 		// Get actual source feed
-		ff := fmt.Sprintf("../testdata/extensions/itunes/%s.xml", name)
+		ff := fmt.Sprintf("testdata/itunes/%s.xml", name)
 		f, _ := os.ReadFile(ff)
 
 		// Parse actual feed
@@ -31,7 +31,7 @@ func TestITunes_Extensions(t *testing.T) {
 		actual, _ := fp.Parse(bytes.NewReader(f))
 
 		// Get json encoded expected feed result
-		ef := fmt.Sprintf("../testdata/extensions/itunes/%s.json", name)
+		ef := fmt.Sprintf("testdata/itunes/%s.json", name)
 		e, _ := os.ReadFile(ef)
 
 		// Unmarshal expected feed
@@ -47,7 +47,7 @@ func TestITunes_Extensions(t *testing.T) {
 }
 
 func TestMedia_Extensions(t *testing.T) {
-	files, _ := filepath.Glob("../testdata/extensions/media/*.xml")
+	files, _ := filepath.Glob("testdata/media/*.xml")
 	for _, f := range files {
 		base := filepath.Base(f)
 		name := strings.TrimSuffix(base, filepath.Ext(base))
@@ -55,7 +55,7 @@ func TestMedia_Extensions(t *testing.T) {
 		fmt.Printf("Testing %s... ", name)
 
 		// Get actual source feed
-		ff := fmt.Sprintf("../testdata/extensions/media/%s.xml", name)
+		ff := fmt.Sprintf("testdata/media/%s.xml", name)
 		f, _ := os.ReadFile(ff)
 
 		// Parse actual feed
@@ -63,7 +63,7 @@ func TestMedia_Extensions(t *testing.T) {
 		actual, _ := fp.Parse(bytes.NewReader(f))
 
 		// Get json encoded expected feed result
-		ef := fmt.Sprintf("../testdata/extensions/media/%s.json", name)
+		ef := fmt.Sprintf("testdata/media/%s.json", name)
 		e, _ := os.ReadFile(ef)
 
 		// Unmarshal expected feed

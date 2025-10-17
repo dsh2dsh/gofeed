@@ -17,7 +17,7 @@ import (
 // Tests
 
 func TestParser_Parse(t *testing.T) {
-	files, _ := filepath.Glob("../testdata/parser/atom/*.xml")
+	files, _ := filepath.Glob("testdata/*.xml")
 	for _, f := range files {
 		base := filepath.Base(f)
 		name := strings.TrimSuffix(base, filepath.Ext(base))
@@ -25,7 +25,7 @@ func TestParser_Parse(t *testing.T) {
 		fmt.Printf("Testing %s... ", name)
 
 		// Get actual source feed
-		ff := fmt.Sprintf("../testdata/parser/atom/%s.xml", name)
+		ff := fmt.Sprintf("testdata/%s.xml", name)
 		f, _ := os.ReadFile(ff)
 
 		// Parse actual feed
@@ -33,7 +33,7 @@ func TestParser_Parse(t *testing.T) {
 		actual, _ := fp.Parse(bytes.NewReader(f), nil)
 
 		// Get json encoded expected feed result
-		ef := fmt.Sprintf("../testdata/parser/atom/%s.json", name)
+		ef := fmt.Sprintf("testdata/%s.json", name)
 		e, _ := os.ReadFile(ef)
 
 		// Unmarshal expected feed

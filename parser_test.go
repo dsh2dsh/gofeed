@@ -39,7 +39,7 @@ func TestParser_Parse(t *testing.T) {
 		fmt.Printf("Testing %s... ", test.file)
 
 		// Get feed content
-		path := "testdata/parser/universal/" + test.file
+		path := "testdata/parser/" + test.file
 		f, _ := os.ReadFile(path)
 
 		// Get actual value
@@ -75,7 +75,7 @@ func TestParser_Concurrent(t *testing.T) {
 		fmt.Printf("\nTesting concurrently %s... ", test)
 
 		// Get feed content
-		path := "testdata/parser/universal/" + test
+		path := "testdata/parser/" + test
 		f, _ := os.ReadFile(path)
 
 		wg.Go(func() { fp.Parse(bytes.NewReader(f)) })

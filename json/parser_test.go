@@ -19,7 +19,7 @@ import (
 // TODO: add tests for invalid
 
 func TestParser_Parse(t *testing.T) {
-	files, _ := filepath.Glob("../testdata/parser/json/*.json")
+	files, _ := filepath.Glob("testdata/*.json")
 	for _, f := range files {
 		base := filepath.Base(f)
 		name := strings.TrimSuffix(base, filepath.Ext(base))
@@ -31,7 +31,7 @@ func TestParser_Parse(t *testing.T) {
 		fmt.Printf("Testing %s... ", name)
 
 		// Get actual source feed
-		ff := fmt.Sprintf("../testdata/parser/json/%s.json", name)
+		ff := fmt.Sprintf("testdata/%s.json", name)
 		f, _ := os.ReadFile(ff)
 
 		// Parse actual feed
@@ -39,7 +39,7 @@ func TestParser_Parse(t *testing.T) {
 		actual, _ := fp.Parse(bytes.NewReader(f), nil)
 
 		// Get json encoded expected feed result
-		ef := fmt.Sprintf("../testdata/parser/json/%s_expected.json", name)
+		ef := fmt.Sprintf("testdata/%s_expected.json", name)
 		e, _ := os.ReadFile(ef)
 
 		// Unmarshal expected feed
@@ -60,7 +60,7 @@ func TestParser_ParseInvalidAndStruct(t *testing.T) {
 	fmt.Printf("Testing %s... ", name)
 
 	// Get actual source feed
-	ff := fmt.Sprintf("../testdata/parser/json/invalid/%s.json", name)
+	ff := fmt.Sprintf("testdata/invalid/%s.json", name)
 	fmt.Println(ff)
 	f, _ := os.ReadFile(ff)
 
@@ -73,7 +73,7 @@ func TestParser_ParseInvalidAndStruct(t *testing.T) {
 	fmt.Printf("Testing %s... ", name)
 
 	// Get actual source feed
-	ff = fmt.Sprintf("../testdata/parser/json/%s.json", name)
+	ff = fmt.Sprintf("testdata/%s.json", name)
 	fmt.Println(ff)
 	f, _ = os.ReadFile(ff)
 
