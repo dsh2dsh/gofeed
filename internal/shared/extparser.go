@@ -33,11 +33,6 @@ func ParseExtension(fe ext.Extensions, p *xpp.XMLPullParser) (ext.Extensions, er
 	if _, ok := fe[prefix]; !ok {
 		fe[prefix] = map[string][]ext.Extension{}
 	}
-	// Ensure the extension element slice exists
-	if _, ok := fe[prefix][p.Name]; !ok {
-		fe[prefix][p.Name] = []ext.Extension{}
-	}
-
 	fe[prefix][p.Name] = append(fe[prefix][p.Name], result)
 	return fe, nil
 }
@@ -49,8 +44,8 @@ func parseExtensionElement(p *xpp.XMLPullParser) (e ext.Extension, err error) {
 
 	e.Name = p.Name
 	e.Children = map[string][]ext.Extension{}
-	e.Attrs = map[string]string{}
 
+	e.Attrs = make(map[string]string, len(p.Attrs))
 	for _, attr := range p.Attrs {
 		// TODO: Alright that we are stripping
 		// namespace information from attributes ?
@@ -73,11 +68,6 @@ func parseExtensionElement(p *xpp.XMLPullParser) (e ext.Extension, err error) {
 			if err != nil {
 				return e, err
 			}
-
-			if _, ok := e.Children[child.Name]; !ok {
-				e.Children[child.Name] = []ext.Extension{}
-			}
-
 			e.Children[child.Name] = append(e.Children[child.Name], child)
 		case xpp.Text:
 			e.Value += p.Text
