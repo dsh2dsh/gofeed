@@ -4,7 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
+
+	"golang.org/x/sync/singleflight"
 )
 
 // DateFormats taken from github.com/mjibson/goread
@@ -195,11 +198,13 @@ func ParseDate(ds string) (t time.Time, err error) {
 	if d == "" {
 		return t, errors.New("date string is empty")
 	}
+
 	for _, f := range dateFormats {
 		if t, err = time.Parse(f, d); err == nil {
 			return t, nil
 		}
 	}
+
 	for _, f := range dateFormatsWithNamedZone {
 		t, err = time.Parse(f, d)
 		if err != nil {
@@ -207,9 +212,9 @@ func ParseDate(ds string) (t time.Time, err error) {
 		}
 
 		// This is a format match! Now try to load the timezone name
-		loc, err := time.LoadLocation(t.Location().String())
-		if err != nil {
-			// We couldn't load the TZ name. Just use UTC instead...
+		loc := getLocation(t.Location().String())
+		// We couldn't load the TZ name. Just use UTC instead...
+		if loc == time.UTC {
 			return t, nil
 		}
 
@@ -219,6 +224,42 @@ func ParseDate(ds string) (t time.Time, err error) {
 		// This should not be reachable
 	}
 
-	err = fmt.Errorf("failed to parse date: %s", ds)
-	return t, err
+	return t, fmt.Errorf("failed to parse date: %s", ds)
+}
+
+func getLocation(tz string) *time.Location {
+	return cachedLocations.Location(tz)
+}
+
+var cachedLocations = newLocationCache()
+
+type locationCache struct {
+	mu        sync.RWMutex
+	locations map[string]*time.Location
+	sg        singleflight.Group
+}
+
+func newLocationCache() *locationCache {
+	return &locationCache{locations: make(map[string]*time.Location)}
+}
+
+func (self *locationCache) Location(tz string) *time.Location {
+	self.mu.RLock()
+	loc, ok := self.locations[tz]
+	self.mu.RUnlock()
+	if ok {
+		return loc
+	}
+
+	v, _, _ := self.sg.Do(tz, func() (any, error) {
+		loc, err := time.LoadLocation(tz)
+		if err != nil {
+			loc = time.UTC
+		}
+		self.mu.Lock()
+		self.locations[tz] = loc
+		self.mu.Unlock()
+		return loc, nil
+	})
+	return v.(*time.Location)
 }
