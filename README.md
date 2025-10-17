@@ -8,6 +8,8 @@ from upstream:
 
 * `master` branch follows `v2` branch of upstream
 
+* `ParseURL` is deprecated and removed
+
 ---
 
 # Gofeed: A Robust Feed Parser for Golang
@@ -92,21 +94,14 @@ import (
 
 Here's how to parse feeds using `gofeed.Parser`:
 
-#### From a URL
+#### From a String
+
 ```go
 import (
     "fmt"
     "github.com/dsh2dsh/gofeed/v2"
 )
 
-fp := gofeed.NewParser()
-feed, _ := fp.ParseURL("http://feeds.twit.tv/twit.xml")
-fmt.Println(feed.Title)
-```
-
-#### From a String
-
-```go
 feedData := `<rss version="2.0">
 <channel>
 <title>Sample Feed</title>
@@ -124,25 +119,6 @@ file, _ := os.Open("/path/to/a/file.xml")
 defer file.Close()
 fp := gofeed.NewParser()
 feed, _ := fp.Parse(file)
-fmt.Println(feed.Title)
-```
-
-#### From a URL with a 60s Timeout
-
-```go
-ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-defer cancel()
-fp := gofeed.NewParser()
-feed, _ := fp.ParseURLWithContext("http://feeds.twit.tv/twit.xml", ctx)
-fmt.Println(feed.Title)
-```
-
-#### From a URL with a Custom User-Agent
-
-```go
-fp := gofeed.NewParser()
-fp.UserAgent = "MyCustomAgent 1.0"
-feed, _ := fp.ParseURL("http://feeds.twit.tv/twit.xml")
 fmt.Println(feed.Title)
 ```
 
@@ -189,16 +165,6 @@ fmt.Println(jsonFeed.HomePageURL)
 ```
 
 ## Advanced Usage
-
-#### With Basic Authentication
-
-```go
-fp := gofeed.NewParser()
-fp.AuthConfig = &options.Auth{
-  Username: "foo",
-  Password: "bar",
-}
-```
 
 #### Using Custom Translators for Advanced Parsing
 

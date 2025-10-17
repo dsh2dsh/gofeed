@@ -15,9 +15,6 @@ type ParseOptions struct {
 
 	// Parsing behavior options
 	StrictnessOptions StrictnessOptions
-
-	// HTTP request configuration for ParseURL
-	RequestOptions RequestOptions
 }
 
 // StrictnessOptions controls parsing strictness
@@ -58,10 +55,6 @@ func DefaultParseOptions() *ParseOptions {
 			AllowInvalidDates:    true,
 			AllowMissingRequired: true,
 			AllowUnescapedMarkup: true,
-		},
-		RequestOptions: RequestOptions{
-			UserAgent: "gofeed/2.0 (+https://github.com/dsh2dsh/gofeed)",
-			Timeout:   60 * time.Second,
 		},
 	}
 }

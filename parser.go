@@ -2,11 +2,9 @@ package gofeed
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"strings"
 
 	"github.com/dsh2dsh/gofeed/v2/atom"
@@ -18,15 +16,6 @@ import (
 // ErrFeedTypeNotDetected is returned when the detection system can not figure
 // out the Feed format
 var ErrFeedTypeNotDetected = errors.New("failed to detect feed type")
-
-// HTTPError represents an HTTP error returned by a server.
-type HTTPError struct {
-	StatusCode int
-	Status     string
-}
-
-// Error returns the string representation of the HTTP error.
-func (self *HTTPError) Error() string { return "http error: " + self.Status }
 
 // Parser is a universal feed parser that detects
 // a given feed type, parsers it, and translates it
@@ -81,63 +70,6 @@ func (f *Parser) Parse(feed io.Reader, opts *options.ParseOptions) (*Feed, error
 	}
 
 	return nil, ErrFeedTypeNotDetected
-}
-
-// ParseURL fetches the contents of a given url and attempts to parse
-// the response into the universal feed type. Context can be used to control
-// timeout and cancellation.
-func (f *Parser) ParseURL(ctx context.Context, feedURL string, opts *options.ParseOptions) (feed *Feed, err error) {
-	if opts == nil {
-		opts = options.DefaultParseOptions()
-	}
-
-	client := opts.RequestOptions.Client
-	if client == nil {
-		client = &http.Client{
-			Timeout: opts.RequestOptions.Timeout,
-		}
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, feedURL, nil)
-	if err != nil {
-		return nil, fmt.Errorf("gofeed: %w", err)
-	}
-
-	// Set user agent
-	if opts.RequestOptions.UserAgent != "" {
-		req.Header.Set("User-Agent", opts.RequestOptions.UserAgent)
-	}
-
-	// TODO: Implement conditional request support (IfNoneMatch, IfModifiedSince)
-	// This will be implemented as part of issue #247
-
-	// Set auth if provided
-	if auth := opts.RequestOptions.AuthConfig; auth != nil && !auth.Empty() {
-		req.SetBasicAuth(auth.Username, auth.Password)
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("gofeed: %w", err)
-	}
-
-	if resp != nil {
-		defer func() {
-			if ce := resp.Body.Close(); ce != nil && err == nil {
-				err = ce
-			}
-		}()
-	}
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, &HTTPError{
-			StatusCode: resp.StatusCode,
-			Status:     resp.Status,
-		}
-	}
-
-	// Parse the feed
-	return f.Parse(resp.Body, opts)
 }
 
 // ParseString parses a feed XML string and into the

@@ -2,23 +2,16 @@ package gofeed_test
 
 import (
 	"bytes"
-	"context"
 	"fmt"
-	"io"
-	"net/http"
-	"net/http/httptest"
-	"net/url"
 	"os"
 	"strings"
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/dsh2dsh/gofeed/v2"
-	"github.com/dsh2dsh/gofeed/v2/options"
 )
 
 func TestParser_Parse(t *testing.T) {
@@ -107,102 +100,6 @@ func TestParser_ParseString(t *testing.T) {
 	}
 }
 
-func TestParser_ParseURL_Success(t *testing.T) {
-	feedTests := []struct {
-		file      string
-		feedType  string
-		feedTitle string
-		hasError  bool
-	}{
-		{"atom03_feed.xml", "atom", "Feed Title", false},
-		{"atom10_feed.xml", "atom", "Feed Title", false},
-		{"rss_feed.xml", "rss", "Feed Title", false},
-		{"rss_feed_bom.xml", "rss", "Feed Title", false},
-		{"rss_feed_leading_spaces.xml", "rss", "Feed Title", false},
-		{"rdf_feed.xml", "rss", "Feed Title", false},
-		{"json10_feed.json", "json", "title", false},
-		{"json11_feed.json", "json", "title", false},
-		{"unknown_feed.xml", "", "", true},
-		{"invalid.json", "", "", true},
-	}
-
-	for _, test := range feedTests {
-		fmt.Printf("Testing %s... ", test.file)
-
-		// Get feed content
-		path := "testdata/parser/universal/" + test.file
-		f, _ := os.ReadFile(path)
-
-		// Get actual value
-		server, client := mockServerResponse(200, string(f), 0)
-		fp := gofeed.NewParser()
-		opts := &options.ParseOptions{
-			RequestOptions: options.RequestOptions{
-				Client: client,
-			},
-		}
-		feed, err := fp.ParseURL(context.Background(), server.URL, opts)
-
-		if test.hasError {
-			require.Error(t, err)
-			assert.Nil(t, feed)
-		} else {
-			assert.NotNil(t, feed)
-			require.NoError(t, err)
-			assert.Equal(t, feed.FeedType, test.feedType)
-			assert.Equal(t, feed.Title, test.feedTitle)
-		}
-	}
-}
-
-func TestParser_ParseURLWithContext(t *testing.T) {
-	server, client := mockServerResponse(404, "", 1*time.Minute)
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-	fp := gofeed.NewParser()
-	opts := &options.ParseOptions{
-		RequestOptions: options.RequestOptions{
-			Client: client,
-		},
-	}
-	_, err := fp.ParseURL(ctx, server.URL, opts)
-	assert.Contains(t, err.Error(), ctx.Err().Error())
-}
-
-func TestParser_ParseURL_Failure(t *testing.T) {
-	server, client := mockServerResponse(404, "", 0)
-	fp := gofeed.NewParser()
-	opts := &options.ParseOptions{
-		RequestOptions: options.RequestOptions{
-			Client: client,
-		},
-	}
-	feed, err := fp.ParseURL(context.Background(), server.URL, opts)
-
-	require.Error(t, err)
-	var httpErr *gofeed.HTTPError
-	require.ErrorAs(t, err, &httpErr)
-	assert.Nil(t, feed)
-}
-
-func TestParser_ParseURLWithContextAndBasicAuth(t *testing.T) {
-	server, client := mockServerResponse(404, "", 1*time.Minute)
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-	fp := gofeed.NewParser()
-	opts := &options.ParseOptions{
-		RequestOptions: options.RequestOptions{
-			Client: client,
-			AuthConfig: &options.Auth{
-				Username: "foo",
-				Password: "bar",
-			},
-		},
-	}
-	_, err := fp.ParseURL(ctx, server.URL, opts)
-	assert.Contains(t, err.Error(), ctx.Err().Error())
-}
-
 // to detect race conditions, run with go test -race
 func TestParser_Concurrent(t *testing.T) {
 	feedTests := []string{
@@ -228,26 +125,6 @@ func TestParser_Concurrent(t *testing.T) {
 	wg.Wait()
 }
 
-// Test Helpers
-
-func mockServerResponse(code int, body string, delay time.Duration) (*httptest.Server, *http.Client) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		time.Sleep(delay)
-		w.WriteHeader(code)
-		w.Header().Set("Content-Type", "application/xml")
-		io.WriteString(w, body)
-	}))
-
-	transport := &http.Transport{
-		Proxy: func(req *http.Request) (*url.URL, error) {
-			return url.Parse(server.URL)
-		},
-	}
-
-	client := &http.Client{Transport: transport}
-	return server, client
-}
-
 // Examples
 
 func ExampleParser_Parse() {
@@ -264,15 +141,6 @@ func ExampleParser_Parse() {
 	fmt.Println(feed.Title)
 }
 
-func ExampleParser_ParseURL() {
-	fp := gofeed.NewParser()
-	feed, err := fp.ParseURL(context.Background(), "http://feeds.twit.tv/twit.xml", nil)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(feed.Title)
-}
-
 func ExampleParser_ParseString() {
 	feedData := `<rss version="2.0">
 <channel>
@@ -281,23 +149,6 @@ func ExampleParser_ParseString() {
 </rss>`
 	fp := gofeed.NewParser()
 	feed, err := fp.ParseString(feedData, nil)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(feed.Title)
-}
-
-func ExampleParser_ParseURL_withAuth() {
-	fp := gofeed.NewParser()
-	opts := &options.ParseOptions{
-		RequestOptions: options.RequestOptions{
-			AuthConfig: &options.Auth{
-				Username: "foo",
-				Password: "bar",
-			},
-		},
-	}
-	feed, err := fp.ParseURL(context.Background(), "http://feeds.twit.tv/twit.xml", opts)
 	if err != nil {
 		panic(err)
 	}
