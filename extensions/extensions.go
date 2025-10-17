@@ -37,9 +37,9 @@ func parseTextArrayExtension(name string, extensions map[string][]Extension,
 		return nil
 	}
 
-	values := []string{}
+	values := make([]string, len(matches))
 	for i := range matches {
-		values = append(values, matches[i].Value)
+		values[i] = matches[i].Value
 	}
 	return values
 }
