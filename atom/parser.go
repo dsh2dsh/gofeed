@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/xml"
 	"fmt"
+	"html"
 	"io"
 	"strings"
 
@@ -733,11 +734,11 @@ func (ap *Parser) parseAtomText(p *xpp.XMLPullParser) (string, error) {
 		case lowerType == "text" ||
 			strings.HasPrefix(lowerType, "text/") ||
 			(lowerType == "" && lowerMode == ""):
-			result, err = shared.DecodeEntities(result)
+			result = html.UnescapeString(result)
 		case strings.Contains(lowerType, "xhtml"):
 		// do nothing
 		case lowerType == "html":
-			result, _ = shared.DecodeEntities(result)
+			result = html.UnescapeString(result)
 		default:
 			decodedStr, err := base64.StdEncoding.DecodeString(result)
 			if err == nil {
@@ -754,8 +755,7 @@ func (ap *Parser) parseAtomText(p *xpp.XMLPullParser) (string, error) {
 			result = resolved.String()
 		}
 	}
-
-	return result, err
+	return result, nil
 }
 
 func (ap *Parser) parseLanguage(p *xpp.XMLPullParser) string {

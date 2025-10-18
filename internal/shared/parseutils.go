@@ -1,7 +1,6 @@
 package shared
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"html"
@@ -65,13 +64,14 @@ func ParseText(p *xpp.XMLPullParser) (string, error) {
 		return StripCDATA(result), nil
 	}
 
-	return DecodeEntities(result)
+	return html.UnescapeString(result), nil
 }
 
 // StripCDATA removes CDATA tags from the string
 // content outside of CDATA tags is passed via DecodeEntities
 func StripCDATA(str string) string {
-	buf := bytes.NewBuffer([]byte{})
+	var buf strings.Builder
+	buf.Grow(len(str))
 
 	curr := 0
 
@@ -80,99 +80,23 @@ func StripCDATA(str string) string {
 		start := indexAt(str, CDATA_START, curr)
 
 		if start == -1 {
-			dec, _ := DecodeEntities(str[curr:])
-			buf.Write([]byte(dec))
+			buf.WriteString(html.UnescapeString(str[curr:]))
 			return buf.String()
 		}
 
 		end := indexAt(str, CDATA_END, start)
 
 		if end == -1 {
-			dec, _ := DecodeEntities(str[curr:])
-			buf.Write([]byte(dec))
+			buf.WriteString(html.UnescapeString(str[curr:]))
 			return buf.String()
 		}
 
-		buf.Write([]byte(str[start+len(CDATA_START) : end]))
+		buf.WriteString(str[start+len(CDATA_START) : end])
 
 		curr = curr + end + len(CDATA_END)
 	}
 
 	return buf.String()
-}
-
-// DecodeEntities decodes escaped XML entities
-// in a string and returns the unescaped string
-func DecodeEntities(str string) (string, error) {
-	data := []byte(str)
-	buf := bytes.NewBuffer([]byte{})
-
-	for len(data) > 0 {
-		// Find the next entity
-		idx := bytes.IndexByte(data, '&')
-		if idx == -1 {
-			buf.Write(data)
-			break
-		}
-
-		buf.Write(data[:idx])
-		data = data[idx:]
-
-		// If there is only the '&' left here
-		if len(data) == 1 {
-			buf.Write(data)
-			return buf.String(), nil
-		}
-
-		// Find the end of the entity
-		end := bytes.IndexByte(data, ';')
-		if end == -1 {
-			// it's not an entitiy. just a plain old '&' possibly with extra bytes
-			buf.Write(data)
-			return buf.String(), nil
-		}
-
-		// Check if there is a space somewhere within the 'entitiy'.
-		// If there is then skip the whole thing since it's not a real entity.
-		if strings.Contains(string(data[1:end]), " ") {
-			buf.Write(data)
-			return buf.String(), nil
-		} else {
-			buf.WriteString(html.UnescapeString(string(data[0 : end+1])))
-		}
-
-		// Skip the entity
-		data = data[end+1:]
-	}
-
-	return buf.String(), nil
-}
-
-// ParseNameAddress parses name/email strings commonly
-// found in RSS feeds of the format "Example Name (example@site.com)"
-// and other variations of this format.
-func ParseNameAddress(nameAddressText string) (name, address string) {
-	if nameAddressText == "" {
-		return name, address
-	}
-
-	switch {
-	case emailNameRgx.MatchString(nameAddressText):
-		result := emailNameRgx.FindStringSubmatch(nameAddressText)
-		address = result[1]
-		name = result[2]
-	case nameEmailRgx.MatchString(nameAddressText):
-		result := nameEmailRgx.FindStringSubmatch(nameAddressText)
-		name = result[1]
-		address = result[2]
-	case nameOnlyRgx.MatchString(nameAddressText):
-		result := nameOnlyRgx.FindStringSubmatch(nameAddressText)
-		name = result[1]
-	case emailOnlyRgx.MatchString(nameAddressText):
-		result := emailOnlyRgx.FindStringSubmatch(nameAddressText)
-		address = result[1]
-	}
-	return name, address
 }
 
 func indexAt(str, substr string, start int) int {
@@ -181,4 +105,30 @@ func indexAt(str, substr string, start int) int {
 		idx += start
 	}
 	return idx
+}
+
+// ParseNameAddress parses name/email strings commonly
+// found in RSS feeds of the format "Example Name (example@site.com)"
+// and other variations of this format.
+func ParseNameAddress(nameAddressText string) (name, address string) {
+	if nameAddressText == "" {
+		return "", ""
+	}
+
+	if m := emailNameRgx.FindStringSubmatch(nameAddressText); m != nil {
+		return m[2], m[1]
+	}
+
+	if m := nameEmailRgx.FindStringSubmatch(nameAddressText); m != nil {
+		return m[1], m[2]
+	}
+
+	if m := nameOnlyRgx.FindStringSubmatch(nameAddressText); m != nil {
+		return m[1], ""
+	}
+
+	if m := emailOnlyRgx.FindStringSubmatch(nameAddressText); m != nil {
+		return "", m[1]
+	}
+	return "", ""
 }

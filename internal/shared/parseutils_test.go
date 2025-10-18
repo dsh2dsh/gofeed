@@ -4,41 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
-
-func TestDecodeEntities(t *testing.T) {
-	tests := []struct {
-		str string
-		res string
-	}{
-		{"", ""},
-		{"foo", "foo"},
-		{"skip & normal & amps", "skip & normal & amps"},
-		{"not & entity;hello &ne xt;one", "not & entity;hello &ne xt;one"},
-
-		{"&lt;foo&gt;", "<foo>"},
-		{"a &quot;b&quot; &apos;c&apos;", "a \"b\" 'c'"},
-		{"foo &amp;&amp; bar", "foo && bar"},
-
-		{"&#34;foo&#34;", "\"foo\""},
-		{"&#x61;&#x062;&#x0063;", "abc"},
-		{"r&#xe9;sum&#x00E9;", "résumé"},
-		{"r&eacute;sum&eacute;", "résumé"},
-		{"&", "&"},
-		{"&foo", "&foo"},
-		{"&lt", "&lt"},
-		{"&#", "&#"},
-	}
-
-	for _, test := range tests {
-		res, err := DecodeEntities(test.str)
-		require.NoError(t, err, "cannot decode %q", test.str)
-		assert.Equal(t, res, test.res,
-			"%q was decoded to %q instead of %q",
-			test.str, res, test.res)
-	}
-}
 
 func TestStripCDATA(t *testing.T) {
 	tests := []struct {
