@@ -12,11 +12,11 @@ import (
 // List of xml attributes that contain URIs to be resolved relative to
 // xml:base
 // From the Atom spec https://tools.ietf.org/html/rfc4287
-var uriAttrs = map[string]bool{
-	"href":   true,
-	"scheme": true,
-	"src":    true,
-	"uri":    true,
+var uriAttrs = map[string]struct{}{
+	"href":   {},
+	"scheme": {},
+	"src":    {},
+	"uri":    {},
 }
 
 // XMLBase.NextTag iterates through the tokens until it reaches a StartTag or
@@ -25,47 +25,39 @@ var uriAttrs = map[string]bool{
 // NextTag is similar to goxpp's NextTag method except it wont throw an error
 // if the next immediate token isnt a Start/EndTag.  Instead, it will continue
 // to consume tokens until it hits a Start/EndTag or EndDocument.
-func NextTag(p *xpp.XMLPullParser) (event xpp.XMLEventType, err error) {
+func NextTag(p *xpp.XMLPullParser) (xpp.XMLEventType, error) {
 	for {
-		event, err = p.Next()
+		event, err := p.Next()
 		if err != nil {
 			return event, fmt.Errorf("gofeed/internal/shared: %w", err)
 		}
 
-		if event == xpp.EndTag {
-			break
+		switch event {
+		case xpp.EndTag:
+			return event, nil
+		case xpp.StartTag:
+			resolveAttrs(p)
+			return event, nil
+		case xpp.EndDocument:
+			return event, errors.New(
+				"failed to find NextTag before reaching the end of the document")
 		}
-
-		if event == xpp.StartTag {
-			err = resolveAttrs(p)
-			if err != nil {
-				return event, err
-			}
-
-			break
-		}
-
-		if event == xpp.EndDocument {
-			return event, errors.New("failed to find NextTag before reaching the end of the document")
-		}
-
 	}
-	return event, nil
 }
 
 // resolve relative URI attributes according to xml:base
-func resolveAttrs(p *xpp.XMLPullParser) error {
-	for i, attr := range p.Attrs {
+func resolveAttrs(p *xpp.XMLPullParser) {
+	for i := range p.Attrs {
+		attr := &p.Attrs[i]
 		lowerName := strings.ToLower(attr.Name.Local)
-		if uriAttrs[lowerName] {
+		if _, ok := uriAttrs[lowerName]; ok {
 			absURL, err := XmlBaseResolveUrl(p.BaseStack.Top(), attr.Value)
-			if err == nil && absURL != nil {
-				p.Attrs[i].Value = absURL.String()
+			if err == nil {
+				attr.Value = absURL.String()
 			}
 			// Continue processing even if URL resolution fails (e.g., for non-HTTP URIs like at://)
 		}
 	}
-	return nil
 }
 
 // resolve u relative to b
@@ -73,9 +65,7 @@ func XmlBaseResolveUrl(b *url.URL, u string) (*url.URL, error) {
 	relURL, err := url.Parse(u)
 	if err != nil {
 		return nil, fmt.Errorf("gofeed/internal/shared: %w", err)
-	}
-
-	if b == nil {
+	} else if b == nil {
 		return relURL, nil
 	}
 
@@ -84,6 +74,5 @@ func XmlBaseResolveUrl(b *url.URL, u string) (*url.URL, error) {
 		// didn't mean for it to be a directory
 		b.Path += "/"
 	}
-	absURL := b.ResolveReference(relURL)
-	return absURL, nil
+	return b.ResolveReference(relURL), nil
 }
