@@ -1,7 +1,6 @@
 package json
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -16,16 +15,10 @@ type Parser struct{}
 func NewParser() *Parser { return &Parser{} }
 
 // Parse parses an json feed into an json.Feed
-func (ap *Parser) Parse(feed io.Reader, opts ...options.Option) (*Feed, error) {
-	var buffer bytes.Buffer
-	if _, err := buffer.ReadFrom(feed); err != nil {
-		return nil, fmt.Errorf("gofeed/json: %w", err)
-	}
-
-	jsonFeed := &Feed{}
-	err := json.Unmarshal(buffer.Bytes(), jsonFeed)
-	if err != nil {
+func (ap *Parser) Parse(r io.Reader, opts ...options.Option) (*Feed, error) {
+	feed := &Feed{}
+	if err := json.NewDecoder(r).Decode(feed); err != nil {
 		return nil, fmt.Errorf("gofeed/json: unable unmarshal feed: %w", err)
 	}
-	return jsonFeed, nil
+	return feed, nil
 }
