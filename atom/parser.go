@@ -271,11 +271,16 @@ func (ap *Parser) nextTag() (xpp.XMLEventType, error) {
 
 // resolveAttrs resolves relative URI attributes according to xml:base.
 func (ap *Parser) resolveAttrs() {
+	base := ap.p.BaseStack.Top()
+	if base == nil {
+		return
+	}
+
 	for i := range ap.p.Attrs {
 		attr := &ap.p.Attrs[i]
 		lowerName := strings.ToLower(attr.Name.Local)
 		if _, ok := atomUriAttrs[lowerName]; ok {
-			absURL, err := xmlBaseResolveUrl(ap.p.BaseStack.Top(), attr.Value)
+			absURL, err := xmlBaseResolveUrl(base, attr.Value)
 			if err == nil {
 				attr.Value = absURL.String()
 			}
@@ -812,7 +817,7 @@ func (ap *Parser) parseAtomText() (string, error) {
 
 	// resolve relative URIs in URI-containing elements according to xml:base
 	name := strings.ToLower(ap.p.Name)
-	if _, ok := atomUriElements[name]; ok {
+	if _, ok := atomUriElements[name]; ok && base != nil {
 		resolved, err := xmlBaseResolveUrl(base, result)
 		if resolved != nil && err == nil {
 			result = resolved.String()
