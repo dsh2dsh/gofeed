@@ -8,6 +8,7 @@ import (
 	"html"
 	"io"
 	"strings"
+	"time"
 
 	xpp "github.com/mmcdole/goxpp"
 
@@ -58,15 +59,11 @@ func (ap *Parser) parseRoot() (*Feed, error) {
 		return nil, err
 	}
 
-	atom := &Feed{}
-	atom.Entries = []*Entry{}
-	atom.Version = ap.parseVersion()
-	atom.Language = ap.parseLanguage()
-
-	contributors := []*Person{}
-	authors := []*Person{}
-	categories := []*Category{}
-	links := []*Link{}
+	atom := &Feed{
+		Language: ap.parseLanguage(),
+		Entries:  []*Entry{},
+		Version:  ap.parseVersion(),
+	}
 	extensions := ext.Extensions{}
 
 	for {
@@ -91,82 +88,62 @@ func (ap *Parser) parseRoot() (*Feed, error) {
 				}
 				extensions = e
 			case name == "title":
-				result, err := ap.parseAtomText()
-				if err != nil {
+				if err := ap.parseAtomTextTo(&atom.Title); err != nil {
 					return nil, err
 				}
-				atom.Title = result
 			case name == "id":
-				result, err := ap.parseAtomText()
-				if err != nil {
+				if err := ap.parseAtomTextTo(&atom.ID); err != nil {
 					return nil, err
 				}
-				atom.ID = result
 			case name == "updated" || name == "modified":
-				result, err := ap.parseAtomText()
+				err := ap.parseAtomDateTo(&atom.Updated, &atom.UpdatedParsed)
 				if err != nil {
 					return nil, err
-				}
-				atom.Updated = result
-				date, err := shared.ParseDate(result)
-				if err == nil {
-					utcDate := date.UTC()
-					atom.UpdatedParsed = &utcDate
 				}
 			case name == "subtitle" || name == "tagline":
-				result, err := ap.parseAtomText()
-				if err != nil {
+				if err := ap.parseAtomTextTo(&atom.Subtitle); err != nil {
 					return nil, err
 				}
-				atom.Subtitle = result
 			case name == "link":
 				result, err := ap.parseLink()
 				if err != nil {
 					return nil, err
 				}
-				links = append(links, result)
+				atom.Links = append(atom.Links, result)
 			case name == "generator":
-				result, err := ap.parseGenerator()
-				if err != nil {
+				if err := ap.parseGeneratorTo(&atom.Generator); err != nil {
 					return nil, err
 				}
-				atom.Generator = result
 			case name == "icon":
-				result, err := ap.parseAtomText()
-				if err != nil {
+				if err := ap.parseAtomTextTo(&atom.Icon); err != nil {
 					return nil, err
 				}
-				atom.Icon = result
 			case name == "logo":
-				result, err := ap.parseAtomText()
-				if err != nil {
+				if err := ap.parseAtomTextTo(&atom.Logo); err != nil {
 					return nil, err
 				}
-				atom.Logo = result
 			case name == "rights" || name == "copyright":
-				result, err := ap.parseAtomText()
-				if err != nil {
+				if err := ap.parseAtomTextTo(&atom.Rights); err != nil {
 					return nil, err
 				}
-				atom.Rights = result
 			case name == "contributor":
 				result, err := ap.parsePerson("contributor")
 				if err != nil {
 					return nil, err
 				}
-				contributors = append(contributors, result)
+				atom.Contributors = append(atom.Contributors, result)
 			case name == "author":
 				result, err := ap.parsePerson("author")
 				if err != nil {
 					return nil, err
 				}
-				authors = append(authors, result)
+				atom.Authors = append(atom.Authors, result)
 			case name == "category":
 				result, err := ap.parseCategory()
 				if err != nil {
 					return nil, err
 				}
-				categories = append(categories, result)
+				atom.Categories = append(atom.Categories, result)
 			case name == "entry":
 				result, err := ap.parseEntry()
 				if err != nil {
@@ -176,53 +153,13 @@ func (ap *Parser) parseRoot() (*Feed, error) {
 			default:
 				// For non-standard Atom feed elements, add them to extensions
 				// under a special "_custom" namespace prefix
-				customExt := ext.Extension{
-					Name:  ap.p.Name,
-					Attrs: make(map[string]string),
-				}
-
-				// Copy attributes
-				for _, attr := range ap.p.Attrs {
-					customExt.Attrs[attr.Name.Local] = attr.Value
-				}
-
-				// Parse the text content
-				result, err := shared.ParseText(ap.p)
-				if err != nil {
-					ap.p.Skip() //nolint:errcheck // upstream ignores err
+				extensitons2, ok := ap.parseCustomExtInto(extensions)
+				if !ok {
 					continue
 				}
-				customExt.Value = result
-
-				// Initialize extensions map if needed
-				if extensions == nil {
-					extensions = make(ext.Extensions)
-				}
-				if extensions["_custom"] == nil {
-					extensions["_custom"] = make(map[string][]ext.Extension)
-				}
-
-				// Add to extensions
-				extensions["_custom"][ap.p.Name] = append(
-					extensions["_custom"][ap.p.Name], customExt)
+				extensions = extensitons2
 			}
 		}
-	}
-
-	if len(categories) > 0 {
-		atom.Categories = categories
-	}
-
-	if len(authors) > 0 {
-		atom.Authors = authors
-	}
-
-	if len(contributors) > 0 {
-		atom.Contributors = contributors
-	}
-
-	if len(links) > 0 {
-		atom.Links = links
 	}
 
 	if len(extensions) > 0 {
@@ -232,7 +169,6 @@ func (ap *Parser) parseRoot() (*Feed, error) {
 	if err := ap.expect(xpp.EndTag, "feed"); err != nil {
 		return nil, err
 	}
-
 	return atom, nil
 }
 
@@ -294,12 +230,8 @@ func (ap *Parser) parseEntry() (*Entry, error) {
 	if err := ap.expect(xpp.StartTag, "entry"); err != nil {
 		return nil, err
 	}
-	entry := &Entry{}
 
-	contributors := []*Person{}
-	authors := []*Person{}
-	categories := []*Category{}
-	links := []*Link{}
+	entry := &Entry{}
 	extensions := ext.Extensions{}
 
 	for {
@@ -324,80 +256,59 @@ func (ap *Parser) parseEntry() (*Entry, error) {
 				}
 				extensions = e
 			case name == "title":
-				result, err := ap.parseAtomText()
-				if err != nil {
+				if err := ap.parseAtomTextTo(&entry.Title); err != nil {
 					return nil, err
 				}
-				entry.Title = result
 			case name == "id":
-				result, err := ap.parseAtomText()
-				if err != nil {
+				if err := ap.parseAtomTextTo(&entry.ID); err != nil {
 					return nil, err
 				}
-				entry.ID = result
 			case name == "rights" || name == "copyright":
-				result, err := ap.parseAtomText()
-				if err != nil {
+				if err := ap.parseAtomTextTo(&entry.Rights); err != nil {
 					return nil, err
 				}
-				entry.Rights = result
 			case name == "summary":
-				result, err := ap.parseAtomText()
+				err := ap.parseAtomTextTo(&entry.Summary)
 				if err != nil {
 					return nil, err
 				}
-				entry.Summary = result
 			case name == "source":
-				result, err := ap.parseSource()
-				if err != nil {
+				if err := ap.parseSourceTo(&entry.Source); err != nil {
 					return nil, err
 				}
-				entry.Source = result
 			case name == "updated" || name == "modified":
-				result, err := ap.parseAtomText()
+				err := ap.parseAtomDateTo(&entry.Updated, &entry.UpdatedParsed)
 				if err != nil {
 					return nil, err
-				}
-				entry.Updated = result
-				date, err := shared.ParseDate(result)
-				if err == nil {
-					utcDate := date.UTC()
-					entry.UpdatedParsed = &utcDate
 				}
 			case name == "contributor":
 				result, err := ap.parsePerson("contributor")
 				if err != nil {
 					return nil, err
 				}
-				contributors = append(contributors, result)
+				entry.Contributors = append(entry.Contributors, result)
 			case name == "author":
 				result, err := ap.parsePerson("author")
 				if err != nil {
 					return nil, err
 				}
-				authors = append(authors, result)
+				entry.Authors = append(entry.Authors, result)
 			case name == "category":
 				result, err := ap.parseCategory()
 				if err != nil {
 					return nil, err
 				}
-				categories = append(categories, result)
+				entry.Categories = append(entry.Categories, result)
 			case name == "link":
 				result, err := ap.parseLink()
 				if err != nil {
 					return nil, err
 				}
-				links = append(links, result)
+				entry.Links = append(entry.Links, result)
 			case name == "published" || name == "issued":
-				result, err := ap.parseAtomText()
+				err := ap.parseAtomDateTo(&entry.Published, &entry.PublishedParsed)
 				if err != nil {
 					return nil, err
-				}
-				entry.Published = result
-				date, err := shared.ParseDate(result)
-				if err == nil {
-					utcDate := date.UTC()
-					entry.PublishedParsed = &utcDate
 				}
 			case name == "content":
 				result, err := ap.parseContent()
@@ -408,53 +319,13 @@ func (ap *Parser) parseEntry() (*Entry, error) {
 			default:
 				// For non-standard Atom entry elements, add them to extensions
 				// under a special "_custom" namespace prefix
-				customExt := ext.Extension{
-					Name:  ap.p.Name,
-					Attrs: make(map[string]string),
-				}
-
-				// Copy attributes
-				for _, attr := range ap.p.Attrs {
-					customExt.Attrs[attr.Name.Local] = attr.Value
-				}
-
-				// Parse the text content
-				result, err := shared.ParseText(ap.p)
-				if err != nil {
-					ap.p.Skip() //nolint:errcheck // upstream ignores err
+				extensions2, ok := ap.parseCustomExtInto(extensions)
+				if !ok {
 					continue
 				}
-				customExt.Value = result
-
-				// Initialize extensions map if needed
-				if extensions == nil {
-					extensions = make(ext.Extensions)
-				}
-				if extensions["_custom"] == nil {
-					extensions["_custom"] = make(map[string][]ext.Extension)
-				}
-
-				// Add to extensions
-				extensions["_custom"][ap.p.Name] = append(
-					extensions["_custom"][ap.p.Name], customExt)
+				extensions = extensions2
 			}
 		}
-	}
-
-	if len(categories) > 0 {
-		entry.Categories = categories
-	}
-
-	if len(authors) > 0 {
-		entry.Authors = authors
-	}
-
-	if len(links) > 0 {
-		entry.Links = links
-	}
-
-	if len(contributors) > 0 {
-		entry.Contributors = contributors
 	}
 
 	if len(extensions) > 0 {
@@ -464,8 +335,16 @@ func (ap *Parser) parseEntry() (*Entry, error) {
 	if err := ap.expect(xpp.EndTag, "entry"); err != nil {
 		return nil, err
 	}
-
 	return entry, nil
+}
+
+func (ap *Parser) parseSourceTo(ref **Source) error {
+	src, err := ap.parseSource()
+	if err != nil {
+		return err
+	}
+	*ref = src
+	return nil
 }
 
 func (ap *Parser) parseSource() (*Source, error) {
@@ -474,11 +353,6 @@ func (ap *Parser) parseSource() (*Source, error) {
 	}
 
 	source := &Source{}
-
-	contributors := []*Person{}
-	authors := []*Person{}
-	categories := []*Category{}
-	links := []*Link{}
 	extensions := ext.Extensions{}
 
 	for {
@@ -503,105 +377,68 @@ func (ap *Parser) parseSource() (*Source, error) {
 				}
 				extensions = e
 			case name == "title":
-				result, err := ap.parseAtomText()
-				if err != nil {
+				if err := ap.parseAtomTextTo(&source.Title); err != nil {
 					return nil, err
 				}
-				source.Title = result
 			case name == "id":
-				result, err := ap.parseAtomText()
-				if err != nil {
+				if err := ap.parseAtomTextTo(&source.ID); err != nil {
 					return nil, err
 				}
-				source.ID = result
 			case name == "updated" || name == "modified":
-				result, err := ap.parseAtomText()
+				err := ap.parseAtomDateTo(&source.Updated, &source.UpdatedParsed)
 				if err != nil {
 					return nil, err
-				}
-				source.Updated = result
-				date, err := shared.ParseDate(result)
-				if err == nil {
-					utcDate := date.UTC()
-					source.UpdatedParsed = &utcDate
 				}
 			case name == "subtitle" || name == "tagline":
-				result, err := ap.parseAtomText()
-				if err != nil {
+				if err := ap.parseAtomTextTo(&source.Subtitle); err != nil {
 					return nil, err
 				}
-				source.Subtitle = result
 			case name == "link":
 				result, err := ap.parseLink()
 				if err != nil {
 					return nil, err
 				}
-				links = append(links, result)
+				source.Links = append(source.Links, result)
 			case name == "generator":
-				result, err := ap.parseGenerator()
-				if err != nil {
+				if err := ap.parseGeneratorTo(&source.Generator); err != nil {
 					return nil, err
 				}
-				source.Generator = result
 			case name == "icon":
-				result, err := ap.parseAtomText()
-				if err != nil {
+				if err := ap.parseAtomTextTo(&source.Icon); err != nil {
 					return nil, err
 				}
-				source.Icon = result
 			case name == "logo":
-				result, err := ap.parseAtomText()
-				if err != nil {
+				if err := ap.parseAtomTextTo(&source.Logo); err != nil {
 					return nil, err
 				}
-				source.Logo = result
 			case name == "rights" || name == "copyright":
-				result, err := ap.parseAtomText()
-				if err != nil {
+				if err := ap.parseAtomTextTo(&source.Rights); err != nil {
 					return nil, err
 				}
-				source.Rights = result
 			case name == "contributor":
 				result, err := ap.parsePerson("contributor")
 				if err != nil {
 					return nil, err
 				}
-				contributors = append(contributors, result)
+				source.Contributors = append(source.Contributors, result)
 			case name == "author":
 				result, err := ap.parsePerson("author")
 				if err != nil {
 					return nil, err
 				}
-				authors = append(authors, result)
+				source.Authors = append(source.Authors, result)
 			case name == "category":
 				result, err := ap.parseCategory()
 				if err != nil {
 					return nil, err
 				}
-				categories = append(categories, result)
+				source.Categories = append(source.Categories, result)
 			default:
-				err := ap.p.Skip()
-				if err != nil {
+				if err := ap.p.Skip(); err != nil {
 					return nil, fmt.Errorf("gofeed/atom: %w", err)
 				}
 			}
 		}
-	}
-
-	if len(categories) > 0 {
-		source.Categories = categories
-	}
-
-	if len(authors) > 0 {
-		source.Authors = authors
-	}
-
-	if len(contributors) > 0 {
-		source.Contributors = contributors
-	}
-
-	if len(links) > 0 {
-		source.Links = links
 	}
 
 	if len(extensions) > 0 {
@@ -611,21 +448,18 @@ func (ap *Parser) parseSource() (*Source, error) {
 	if err := ap.expect(xpp.EndTag, "source"); err != nil {
 		return nil, err
 	}
-
 	return source, nil
 }
 
 func (ap *Parser) parseContent() (*Content, error) {
-	c := &Content{}
-	c.Type = ap.p.Attribute("type")
-	c.Src = ap.p.Attribute("src")
+	c := &Content{
+		Type: ap.p.Attribute("type"),
+		Src:  ap.p.Attribute("src"),
+	}
 
-	text, err := ap.parseAtomText()
-	if err != nil {
+	if err := ap.parseAtomTextTo(&c.Value); err != nil {
 		return nil, err
 	}
-	c.Value = text
-
 	return c, nil
 }
 
@@ -652,26 +486,19 @@ func (ap *Parser) parsePerson(name string) (*Person, error) {
 
 			switch name {
 			case "name":
-				result, err := ap.parseAtomText()
-				if err != nil {
+				if err := ap.parseAtomTextTo(&person.Name); err != nil {
 					return nil, err
 				}
-				person.Name = result
 			case "email":
-				result, err := ap.parseAtomText()
-				if err != nil {
+				if err := ap.parseAtomTextTo(&person.Email); err != nil {
 					return nil, err
 				}
-				person.Email = result
 			case "uri", "url", "homepage":
-				result, err := ap.parseAtomText()
-				if err != nil {
+				if err := ap.parseAtomTextTo(&person.URI); err != nil {
 					return nil, err
 				}
-				person.URI = result
 			default:
-				err := ap.p.Skip()
-				if err != nil {
+				if err := ap.p.Skip(); err != nil {
 					return nil, fmt.Errorf("gofeed/atom: %w", err)
 				}
 			}
@@ -681,7 +508,6 @@ func (ap *Parser) parsePerson(name string) (*Person, error) {
 	if err := ap.expect(xpp.EndTag, name); err != nil {
 		return nil, err
 	}
-
 	return person, nil
 }
 
@@ -690,13 +516,14 @@ func (ap *Parser) parseLink() (*Link, error) {
 		return nil, err
 	}
 
-	l := &Link{}
-	l.Href = ap.p.Attribute("href")
-	l.Hreflang = ap.p.Attribute("hreflang")
-	l.Type = ap.p.Attribute("type")
-	l.Length = ap.p.Attribute("length")
-	l.Title = ap.p.Attribute("title")
-	l.Rel = ap.p.Attribute("rel")
+	l := &Link{
+		Href:     ap.p.Attribute("href"),
+		Hreflang: ap.p.Attribute("hreflang"),
+		Type:     ap.p.Attribute("type"),
+		Length:   ap.p.Attribute("length"),
+		Title:    ap.p.Attribute("title"),
+		Rel:      ap.p.Attribute("rel"),
+	}
 	if l.Rel == "" {
 		l.Rel = "alternate"
 	}
@@ -716,10 +543,11 @@ func (ap *Parser) parseCategory() (*Category, error) {
 		return nil, err
 	}
 
-	c := &Category{}
-	c.Term = ap.p.Attribute("term")
-	c.Scheme = ap.p.Attribute("scheme")
-	c.Label = ap.p.Attribute("label")
+	c := &Category{
+		Term:   ap.p.Attribute("term"),
+		Scheme: ap.p.Attribute("scheme"),
+		Label:  ap.p.Attribute("label"),
+	}
 
 	if err := ap.p.Skip(); err != nil {
 		return nil, fmt.Errorf("gofeed/atom: %w", err)
@@ -731,36 +559,47 @@ func (ap *Parser) parseCategory() (*Category, error) {
 	return c, nil
 }
 
+func (ap *Parser) parseGeneratorTo(ref **Generator) error {
+	g, err := ap.parseGenerator()
+	if err != nil {
+		return err
+	}
+	*ref = g
+	return nil
+}
+
 func (ap *Parser) parseGenerator() (*Generator, error) {
 	if err := ap.expect(xpp.StartTag, "generator"); err != nil {
 		return nil, err
 	}
 
-	g := &Generator{}
-
-	uri := ap.p.Attribute("uri") // Atom 1.0
-	url := ap.p.Attribute("url") // Atom 0.3
-
-	if uri != "" {
-		g.URI = uri
-	} else if url != "" {
-		g.URI = url
+	g := &Generator{
+		Version: ap.p.Attribute("version"),
 	}
 
-	g.Version = ap.p.Attribute("version")
+	if uri := ap.p.Attribute("uri"); uri != "" {
+		g.URI = uri // Atom 1.0
+	} else if url := ap.p.Attribute("url"); url != "" {
+		g.URI = url // Atom 0.3
+	}
 
-	result, err := ap.parseAtomText()
-	if err != nil {
+	if err := ap.parseAtomTextTo(&g.Value); err != nil {
 		return nil, err
 	}
-
-	g.Value = result
 
 	if err := ap.expect(xpp.EndTag, "generator"); err != nil {
 		return nil, err
 	}
-
 	return g, nil
+}
+
+func (ap *Parser) parseAtomTextTo(ref *string) error {
+	s, err := ap.parseAtomText()
+	if err != nil {
+		return err
+	}
+	*ref = s
+	return nil
 }
 
 func (ap *Parser) parseAtomText() (string, error) {
@@ -829,19 +668,64 @@ func (ap *Parser) parseAtomText() (string, error) {
 func (ap *Parser) parseLanguage() string { return ap.p.Attribute("lang") }
 
 func (ap *Parser) parseVersion() string {
-	ver := ap.p.Attribute("version")
-	if ver != "" {
+	if ver := ap.p.Attribute("version"); ver != "" {
 		return ver
 	}
 
-	ns := ap.p.Attribute("xmlns")
-	if ns == "http://purl.org/atom/ns#" {
+	if ns := ap.p.Attribute("xmlns"); ns == "http://purl.org/atom/ns#" {
 		return "0.3"
-	}
-
-	if ns == "http://www.w3.org/2005/Atom" {
+	} else if ns == "http://www.w3.org/2005/Atom" {
 		return "1.0"
 	}
-
 	return ""
+}
+
+func (ap *Parser) parseAtomDateTo(strRef *string, dtRef **time.Time) error {
+	if err := ap.parseAtomTextTo(strRef); err != nil {
+		return err
+	}
+
+	date, err := shared.ParseDate(*strRef)
+	if err != nil {
+		return err
+	}
+
+	utcDate := date.UTC()
+	*dtRef = &utcDate
+	return nil
+}
+
+func (ap *Parser) parseCustomExtInto(extensions ext.Extensions) (ext.Extensions,
+	bool,
+) {
+	custom := ext.Extension{
+		Name:  ap.p.Name,
+		Attrs: make(map[string]string),
+	}
+
+	// Copy attributes
+	for _, attr := range ap.p.Attrs {
+		custom.Attrs[attr.Name.Local] = attr.Value
+	}
+
+	// Parse the text content
+	result, err := shared.ParseText(ap.p)
+	if err != nil {
+		ap.p.Skip() //nolint:errcheck // upstream ignores err
+		return nil, false
+	}
+	custom.Value = result
+
+	// Initialize extensions map if needed
+	if extensions == nil {
+		extensions = make(ext.Extensions, 1)
+	}
+	if extensions["_custom"] == nil {
+		extensions["_custom"] = make(map[string][]ext.Extension, 1)
+	}
+
+	// Add to extensions
+	extensions["_custom"][ap.p.Name] = append(extensions["_custom"][ap.p.Name],
+		custom)
+	return extensions, true
 }
