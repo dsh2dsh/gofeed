@@ -63,7 +63,6 @@ func ParseText(p *xpp.XMLPullParser) (string, error) {
 	if strings.Contains(result, CDATA_START) {
 		return StripCDATA(result), nil
 	}
-
 	return html.UnescapeString(result), nil
 }
 
