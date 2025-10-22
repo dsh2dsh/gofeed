@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"strings"
+	"unicode"
 
 	xpp "github.com/mmcdole/goxpp"
 
@@ -31,23 +32,25 @@ const (
 // by looking for specific xml elements unique to the
 // various feed types.
 func DetectFeedType(feed io.Reader) FeedType {
-	buffer := new(bytes.Buffer)
+	var buffer bytes.Buffer
 	buffer.ReadFrom(feed) //nolint:errcheck // upstream ignores err
+	return detectFeedBytes(buffer.Bytes())
+}
 
+func detectFeedBytes(b []byte) FeedType {
 	var firstChar byte
 loop:
-	for {
-		ch, err := buffer.ReadByte()
-		if err != nil {
-			return FeedTypeUnknown
-		}
+	for i, ch := range b {
 		// ignore leading whitespace & byte order marks
+		if unicode.IsSpace(rune(ch)) {
+			continue
+		}
+
 		switch ch {
-		case ' ', '\r', '\n', '\t':
 		case 0xFE, 0xFF, 0x00, 0xEF, 0xBB, 0xBF: // utf 8-16-32 bom
 		default:
 			firstChar = ch
-			buffer.UnreadByte() //nolint:errcheck // upstream ignores err
+			b = b[i:]
 			break loop
 		}
 	}
@@ -55,27 +58,21 @@ loop:
 	switch firstChar {
 	case '<':
 		// Check if it's an XML based feed
-		p := xpp.NewXMLPullParser(bytes.NewReader(buffer.Bytes()), false, shared.NewReaderLabel)
+		p := xpp.NewXMLPullParser(bytes.NewReader(b), false, shared.NewReaderLabel)
 
-		_, err := shared.FindRoot(p)
-		if err != nil {
+		if _, err := shared.FindRoot(p); err != nil {
 			return FeedTypeUnknown
 		}
 
-		name := strings.ToLower(p.Name)
-		switch name {
-		case "rdf":
-			return FeedTypeRSS
-		case "rss":
+		switch strings.ToLower(p.Name) {
+		case "rdf", "rss":
 			return FeedTypeRSS
 		case "feed":
 			return FeedTypeAtom
-		default:
-			return FeedTypeUnknown
 		}
 	case '{':
 		// Check if document is valid JSON
-		if json.Valid(buffer.Bytes()) {
+		if json.Valid(b) {
 			return FeedTypeJSON
 		}
 	}

@@ -35,26 +35,19 @@ func NewParser() *Parser { return &Parser{} }
 func (f *Parser) Parse(feed io.Reader, opts ...options.Option) (*Feed, error) {
 	f.opts = options.Default().Apply(opts...)
 
-	// Wrap the feed io.Reader in a io.TeeReader
-	// so we can capture all the bytes read by the
-	// DetectFeedType function and construct a new
-	// reader with those bytes intact for when we
-	// attempt to parse the feeds.
 	var buf bytes.Buffer
-	tee := io.TeeReader(feed, &buf)
-	feedType := DetectFeedType(tee)
-
-	// Glue the read bytes from the detect function
-	// back into a new reader
-	r := io.MultiReader(&buf, feed)
+	if _, err := buf.ReadFrom(feed); err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrFeedTypeNotDetected, err)
+	}
+	feedType := detectFeedBytes(buf.Bytes())
 
 	switch feedType {
 	case FeedTypeAtom:
-		return f.parseAtomFeed(r)
+		return f.parseAtomFeed(&buf)
 	case FeedTypeRSS:
-		return f.parseRSSFeed(r)
+		return f.parseRSSFeed(&buf)
 	case FeedTypeJSON:
-		return f.parseJSONFeed(r)
+		return f.parseJSONFeed(&buf)
 	}
 	return nil, ErrFeedTypeNotDetected
 }
