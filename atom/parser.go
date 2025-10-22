@@ -175,8 +175,7 @@ func (ap *Parser) nextTag() (xpp.XMLEventType, error) {
 
 // resolveAttrs resolves relative URI attributes according to xml:base.
 func (ap *Parser) resolveAttrs() {
-	base := ap.p.BaseStack.Top()
-	if base == nil {
+	if ap.p.BaseStack.Top() == nil {
 		return
 	}
 
@@ -184,8 +183,8 @@ func (ap *Parser) resolveAttrs() {
 		attr := &ap.p.Attrs[i]
 		lowerName := strings.ToLower(attr.Name.Local)
 		if _, ok := atomUriAttrs[lowerName]; ok {
-			absURL, err := xmlBaseResolveUrl(base, attr.Value)
-			if err == nil {
+			absURL, err := ap.p.XmlBaseResolveUrl(attr.Value)
+			if err == nil && absURL != nil {
 				attr.Value = absURL.String()
 			}
 			// Continue processing even if URL resolution fails (e.g., for non-HTTP
@@ -548,7 +547,6 @@ func (ap *Parser) parseAtomText() (string, error) {
 	}
 
 	lowerType := strings.ToLower(text.Type)
-	lowerMode := strings.ToLower(text.Mode)
 
 	var result string
 	xhtmlType := strings.Contains(lowerType, "xhtml") || lowerType == "html"
@@ -566,7 +564,7 @@ func (ap *Parser) parseAtomText() (string, error) {
 		switch {
 		case lowerType == "text" ||
 			strings.HasPrefix(lowerType, "text/") ||
-			(lowerType == "" && lowerMode == ""):
+			(lowerType == "" && text.Mode == ""):
 			result = html.UnescapeString(result)
 		case strings.Contains(lowerType, "xhtml"):
 		// do nothing
@@ -581,12 +579,14 @@ func (ap *Parser) parseAtomText() (string, error) {
 	}
 
 	// resolve relative URIs in URI-containing elements according to xml:base
-	name := strings.ToLower(ap.p.Name)
-	if _, ok := atomUriElements[name]; ok && base != nil {
-		resolved, err := xmlBaseResolveUrl(base, result)
-		if resolved != nil && err == nil {
-			result = resolved.String()
-		}
+	if base == nil {
+		return result, nil
+	} else if _, ok := atomUriElements[strings.ToLower(ap.p.Name)]; !ok {
+		return result, nil
+	}
+
+	if u, err := xmlBaseResolveUrl(base, result); err == nil && u != nil {
+		return u.String(), nil
 	}
 	return result, nil
 }
