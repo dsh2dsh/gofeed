@@ -58,9 +58,14 @@ func (f *Parser) parseAtomFeed(feed io.Reader) (*Feed, error) {
 		return nil, err
 	}
 
-	result, err := f.atomTrans().Translate(af, f.opts)
+	tr := f.AtomTranslator
+	if tr == nil {
+		tr = &DefaultAtomTranslator{}
+	}
+
+	result, err := tr.Translate(af, f.opts)
 	if err != nil {
-		return nil, fmt.Errorf("gofeed: atom translation failed: %w", err)
+		return nil, fmt.Errorf("gofeed: translate atom: %w", err)
 	}
 
 	if f.keepOriginalFeed() {
@@ -77,9 +82,14 @@ func (f *Parser) parseRSSFeed(feed io.Reader) (*Feed, error) {
 		return nil, err
 	}
 
-	result, err := f.rssTrans().Translate(rf, f.opts)
+	tr := f.RSSTranslator
+	if tr == nil {
+		tr = &DefaultRSSTranslator{}
+	}
+
+	result, err := tr.Translate(rf, f.opts)
 	if err != nil {
-		return nil, fmt.Errorf("gofeed: rss translation failed: %w", err)
+		return nil, fmt.Errorf("gofeed: translate rss: %w", err)
 	}
 
 	if f.keepOriginalFeed() {
@@ -94,34 +104,18 @@ func (f *Parser) parseJSONFeed(feed io.Reader) (*Feed, error) {
 		return nil, err
 	}
 
-	result, err := f.jsonTrans().Translate(jf, f.opts)
+	tr := f.JSONTranslator
+	if tr == nil {
+		tr = &DefaultJSONTranslator{}
+	}
+
+	result, err := tr.Translate(jf, f.opts)
 	if err != nil {
-		return nil, fmt.Errorf("gofeed: json translation failed: %w", err)
+		return nil, fmt.Errorf("gofeed: translate json: %w", err)
 	}
 
 	if f.keepOriginalFeed() {
 		result.OriginalFeed = jf
 	}
 	return result, nil
-}
-
-func (f *Parser) atomTrans() Translator {
-	if f.AtomTranslator != nil {
-		return f.AtomTranslator
-	}
-	return &DefaultAtomTranslator{}
-}
-
-func (f *Parser) rssTrans() Translator {
-	if f.RSSTranslator != nil {
-		return f.RSSTranslator
-	}
-	return &DefaultRSSTranslator{}
-}
-
-func (f *Parser) jsonTrans() Translator {
-	if f.JSONTranslator != nil {
-		return f.JSONTranslator
-	}
-	return &DefaultJSONTranslator{}
 }
