@@ -28,16 +28,18 @@ const (
 	FeedTypeJSON
 )
 
-// DetectFeedType attempts to determine the type of feed
-// by looking for specific xml elements unique to the
-// various feed types.
+// DetectFeedType attempts to determine the type of feed by looking for specific
+// xml elements, unique to the various feed types. Internally just reads
+// everything and calls [DetectFeedBytes].
 func DetectFeedType(feed io.Reader) FeedType {
 	var buffer bytes.Buffer
 	buffer.ReadFrom(feed) //nolint:errcheck // upstream ignores err
-	return detectFeedBytes(buffer.Bytes())
+	return DetectFeedBytes(buffer.Bytes())
 }
 
-func detectFeedBytes(b []byte) FeedType {
+// DetectFeedBytes attempts to determine the type of feed by looking for
+// specific xml elements, unique to the various feed types.
+func DetectFeedBytes(b []byte) FeedType {
 	var firstChar byte
 loop:
 	for i, ch := range b {

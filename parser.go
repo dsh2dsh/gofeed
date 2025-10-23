@@ -39,7 +39,7 @@ func (f *Parser) Parse(feed io.Reader, opts ...options.Option) (*Feed, error) {
 	if _, err := buf.ReadFrom(feed); err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrFeedTypeNotDetected, err)
 	}
-	feedType := detectFeedBytes(buf.Bytes())
+	feedType := DetectFeedBytes(buf.Bytes())
 
 	switch feedType {
 	case FeedTypeAtom:
