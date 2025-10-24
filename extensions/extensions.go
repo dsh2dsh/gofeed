@@ -1,5 +1,9 @@
 package ext
 
+import (
+	"iter"
+)
+
 // Extensions is the generic extension map for Feeds and Items.
 // The first map is for the element namespace prefix (e.g., itunes).
 // The second map is for the element name (e.g., author).
@@ -42,4 +46,20 @@ func parseTextArrayExtension(name string, extensions map[string][]Extension,
 		values[i] = matches[i].Value
 	}
 	return values
+}
+
+func ElementsSeq(extensions Extensions, keys ...string,
+) iter.Seq[map[string][]Extension] {
+	return func(yield func(map[string][]Extension) bool) {
+		if extensions == nil {
+			return
+		}
+		for _, key := range keys {
+			if match, ok := extensions[key]; ok {
+				if !yield(match) {
+					return
+				}
+			}
+		}
+	}
 }

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/dsh2dsh/gofeed/v2/atom"
-	ext "github.com/dsh2dsh/gofeed/v2/extensions"
 	"github.com/dsh2dsh/gofeed/v2/internal/shared"
 	"github.com/dsh2dsh/gofeed/v2/json"
 	"github.com/dsh2dsh/gofeed/v2/options"
@@ -36,465 +35,124 @@ func (t *DefaultRSSTranslator) Translate(feed any, opts *options.Parse) (*Feed, 
 		return nil, errors.New("Feed did not match expected type of *rss.Feed")
 	}
 
-	result := &Feed{}
-	result.Title = t.translateFeedTitle(rss)
-	result.Description = t.translateFeedDescription(rss)
-	result.Link = t.translateFeedLink(rss)
-	result.Links = t.translateFeedLinks(rss)
-	result.FeedLink = t.translateFeedFeedLink(rss)
-	result.Updated = t.translateFeedUpdated(rss)
-	result.UpdatedParsed = t.translateFeedUpdatedParsed(rss)
-	result.Published = t.translateFeedPublished(rss)
-	result.PublishedParsed = t.translateFeedPublishedParsed(rss)
-	result.Author = t.translateFeedAuthor(rss)
-	result.Authors = t.translateFeedAuthors(rss)
-	result.Language = t.translateFeedLanguage(rss)
-	result.Image = t.translateFeedImage(rss)
-	result.Copyright = t.translateFeedCopyright(rss)
-	result.Generator = t.translateFeedGenerator(rss)
-	result.Categories = t.translateFeedCategories(rss)
-	result.Items = t.translateFeedItems(rss)
-	result.ITunesExt = rss.ITunesExt
-	result.DublinCoreExt = rss.DublinCoreExt
-	result.Extensions = rss.Extensions
-	result.FeedVersion = rss.Version
-	result.FeedType = "rss"
-	return result, nil
+	return &Feed{
+		Title:           rss.GetTitle(),
+		Description:     rss.GetDescription(),
+		Link:            rss.GetLink(),
+		Links:           rss.GetLinks(),
+		FeedLink:        rss.GetFeedLink(),
+		Updated:         rss.GetUpdated(),
+		UpdatedParsed:   rss.GetUpdatedParsed(),
+		Published:       rss.PubDate,
+		PublishedParsed: rss.PubDateParsed,
+		Author:          t.feedAuthor(rss),
+		Authors:         t.feedAuthors(rss),
+		Language:        rss.GetLanguage(),
+		Image:           t.feedImage(rss),
+		Copyright:       rss.GetCopyright(),
+		Generator:       rss.Generator,
+		Categories:      rss.GetCategories(),
+		Items:           t.feedItems(rss),
+		ITunesExt:       rss.ITunesExt,
+		DublinCoreExt:   rss.DublinCoreExt,
+		Extensions:      rss.Extensions,
+		FeedVersion:     rss.Version,
+		FeedType:        "rss",
+	}, nil
 }
 
-func (t *DefaultRSSTranslator) translateFeedItem(rssItem *rss.Item) (item *Item) {
-	item = &Item{}
-	item.Title = t.translateItemTitle(rssItem)
-	item.Description = t.translateItemDescription(rssItem)
-	item.Content = t.translateItemContent(rssItem)
-	item.Link = t.translateItemLink(rssItem)
-	item.Links = t.translateItemLinks(rssItem)
-	item.Published = t.translateItemPublished(rssItem)
-	item.PublishedParsed = t.translateItemPublishedParsed(rssItem)
-	item.Author = t.translateItemAuthor(rssItem)
-	item.Authors = t.translateItemAuthors(rssItem)
-	item.GUID = t.translateItemGUID(rssItem)
-	item.Image = t.translateItemImage(rssItem)
-	item.Categories = t.translateItemCategories(rssItem)
-	item.Enclosures = t.translateItemEnclosures(rssItem)
-	item.DublinCoreExt = rssItem.DublinCoreExt
-	item.ITunesExt = rssItem.ITunesExt
-	item.Extensions = rssItem.Extensions
-	return item
-}
-
-func (t *DefaultRSSTranslator) translateFeedTitle(rss *rss.Feed) (title string) {
-	if rss.Title != "" {
-		title = rss.Title
-	} else if rss.DublinCoreExt != nil && rss.DublinCoreExt.Title != nil {
-		title = t.firstEntry(rss.DublinCoreExt.Title)
+func (t *DefaultRSSTranslator) translateFeedItem(rssItem *rss.Item) *Item {
+	return &Item{
+		Title:           rssItem.GetTitle(),
+		Description:     rssItem.GetDescription(),
+		Content:         rssItem.Content,
+		Link:            rssItem.Link,
+		Links:           rssItem.GetLinks(),
+		Published:       rssItem.GetPublished(),
+		PublishedParsed: rssItem.GetPublishedParsed(),
+		Author:          t.itemAuthor(rssItem),
+		Authors:         t.itemAuthors(rssItem),
+		GUID:            rssItem.GetGUID(),
+		Image:           t.itemImage(rssItem),
+		Categories:      rssItem.GetCategories(),
+		Enclosures:      t.itemEnclosures(rssItem),
+		DublinCoreExt:   rssItem.DublinCoreExt,
+		ITunesExt:       rssItem.ITunesExt,
+		Extensions:      rssItem.Extensions,
 	}
-	return title
 }
 
-func (t *DefaultRSSTranslator) translateFeedDescription(rss *rss.Feed) (desc string) {
-	if rss.Description != "" {
-		desc = rss.Description
-	} else if rss.ITunesExt != nil && rss.ITunesExt.Summary != "" {
-		desc = rss.ITunesExt.Summary
-	}
-	return desc
-}
-
-func (t *DefaultRSSTranslator) translateFeedLink(rss *rss.Feed) (link string) {
-	if rss.Link != "" {
-		link = rss.Link
-	} else if rss.ITunesExt != nil && rss.ITunesExt.Subtitle != "" {
-		link = rss.ITunesExt.Subtitle
-	}
-	return link
-}
-
-func (t *DefaultRSSTranslator) translateFeedFeedLink(rss *rss.Feed) (link string) {
-	atomExtensions := t.extensionsForKeys([]string{"atom", "atom10", "atom03"}, rss.Extensions)
-	for _, ex := range atomExtensions {
-		if links, ok := ex["link"]; ok {
-			for _, l := range links {
-				if l.Attrs["rel"] == "self" {
-					link = l.Attrs["href"]
-				}
-			}
-		}
-	}
-	return link
-}
-
-func (t *DefaultRSSTranslator) translateFeedLinks(rss *rss.Feed) (links []string) {
-	if len(rss.Links) > 0 {
-		links = append(links, rss.Links...)
-	}
-	atomExtensions := t.extensionsForKeys([]string{"atom", "atom10", "atom03"}, rss.Extensions)
-	for _, ex := range atomExtensions {
-		if lks, ok := ex["link"]; ok {
-			for _, l := range lks {
-				if l.Attrs["rel"] == "" || l.Attrs["rel"] == "alternate" || l.Attrs["rel"] == "self" {
-					links = append(links, l.Attrs["href"])
-				}
-			}
-		}
-	}
-	return links
-}
-
-func (t *DefaultRSSTranslator) translateFeedUpdated(rss *rss.Feed) (updated string) {
-	if rss.LastBuildDate != "" {
-		updated = rss.LastBuildDate
-	} else if rss.DublinCoreExt != nil && rss.DublinCoreExt.Date != nil {
-		updated = t.firstEntry(rss.DublinCoreExt.Date)
-	}
-	return updated
-}
-
-func (t *DefaultRSSTranslator) translateFeedUpdatedParsed(rss *rss.Feed) (updated *time.Time) {
-	if rss.LastBuildDateParsed != nil {
-		updated = rss.LastBuildDateParsed
-	} else if rss.DublinCoreExt != nil && rss.DublinCoreExt.Date != nil {
-		dateText := t.firstEntry(rss.DublinCoreExt.Date)
-		date, err := shared.ParseDate(dateText)
-		if err == nil {
-			updated = &date
-		}
-	}
-	return updated
-}
-
-func (t *DefaultRSSTranslator) translateFeedPublished(rss *rss.Feed) (published string) {
-	return rss.PubDate
-}
-
-func (t *DefaultRSSTranslator) translateFeedPublishedParsed(rss *rss.Feed) (published *time.Time) {
-	return rss.PubDateParsed
-}
-
-func (t *DefaultRSSTranslator) translateFeedAuthor(rss *rss.Feed) (author *Person) {
-	switch {
-	case rss.ManagingEditor != "":
-		name, address := shared.ParseNameAddress(rss.ManagingEditor)
-		author = &Person{}
-		author.Name = name
-		author.Email = address
-	case rss.WebMaster != "":
-		name, address := shared.ParseNameAddress(rss.WebMaster)
-		author = &Person{}
-		author.Name = name
-		author.Email = address
-	case rss.DublinCoreExt != nil && rss.DublinCoreExt.Author != nil:
-		dcAuthor := t.firstEntry(rss.DublinCoreExt.Author)
-		name, address := shared.ParseNameAddress(dcAuthor)
-		author = &Person{}
-		author.Name = name
-		author.Email = address
-	case rss.DublinCoreExt != nil && rss.DublinCoreExt.Creator != nil:
-		dcCreator := t.firstEntry(rss.DublinCoreExt.Creator)
-		name, address := shared.ParseNameAddress(dcCreator)
-		author = &Person{}
-		author.Name = name
-		author.Email = address
-	case rss.ITunesExt != nil && rss.ITunesExt.Author != "":
-		name, address := shared.ParseNameAddress(rss.ITunesExt.Author)
-		author = &Person{}
-		author.Name = name
-		author.Email = address
-	}
-	return author
-}
-
-func (t *DefaultRSSTranslator) translateFeedAuthors(rss *rss.Feed) (authors []*Person) {
-	if author := t.translateFeedAuthor(rss); author != nil {
-		authors = []*Person{author}
-	}
-	return authors
-}
-
-func (t *DefaultRSSTranslator) translateFeedLanguage(rss *rss.Feed) (language string) {
-	if rss.Language != "" {
-		language = rss.Language
-	} else if rss.DublinCoreExt != nil && rss.DublinCoreExt.Language != nil {
-		language = t.firstEntry(rss.DublinCoreExt.Language)
-	}
-	return language
-}
-
-func (t *DefaultRSSTranslator) translateFeedImage(rss *rss.Feed) *Image {
-	if rss.Image != nil {
-		return &Image{
-			Title: rss.Image.Title,
-			URL:   rss.Image.URL,
-		}
-	}
-
-	if rss.ITunesExt != nil && rss.ITunesExt.Image != "" {
-		return &Image{URL: rss.ITunesExt.Image}
-	}
-
-	if media, ok := rss.Extensions["media"]; ok {
-		if content, ok := media["content"]; ok {
-			for _, c := range content {
-				hasImage := strings.HasPrefix(c.Attrs["type"], "image/") ||
-					c.Attrs["medium"] == "image"
-				if hasImage {
-					return &Image{URL: c.Attrs["url"]}
-				}
-			}
+func (t *DefaultRSSTranslator) feedAuthor(rss *rss.Feed) *Person {
+	if name, address, ok := rss.GetAuthor(); ok {
+		return &Person{
+			Name:  name,
+			Email: address,
 		}
 	}
 	return nil
 }
 
-func (t *DefaultRSSTranslator) translateFeedCopyright(rss *rss.Feed) (rights string) {
-	if rss.Copyright != "" {
-		rights = rss.Copyright
-	} else if rss.DublinCoreExt != nil && rss.DublinCoreExt.Rights != nil {
-		rights = t.firstEntry(rss.DublinCoreExt.Rights)
+func (t *DefaultRSSTranslator) feedAuthors(rss *rss.Feed) []*Person {
+	if author := t.feedAuthor(rss); author != nil {
+		return []*Person{author}
 	}
-	return rights
+	return nil
 }
 
-func (t *DefaultRSSTranslator) translateFeedGenerator(rss *rss.Feed) (generator string) {
-	return rss.Generator
+func (t *DefaultRSSTranslator) feedImage(rss *rss.Feed) *Image {
+	if img := rss.GetImage(); img != nil {
+		return &Image{Title: img.Title, URL: img.URL}
+	}
+	return nil
 }
 
-func (t *DefaultRSSTranslator) translateFeedCategories(rss *rss.Feed) (categories []string) {
-	var cats []string
-	if rss.Categories != nil {
-		cats = make([]string, 0, len(rss.Categories))
-		for _, c := range rss.Categories {
-			cats = append(cats, c.Value)
-		}
-	}
-
-	if rss.ITunesExt != nil && rss.ITunesExt.Keywords != "" {
-		keywords := strings.Split(rss.ITunesExt.Keywords, ",")
-		cats = append(cats, keywords...)
-	}
-
-	if rss.ITunesExt != nil && rss.ITunesExt.Categories != nil {
-		for _, c := range rss.ITunesExt.Categories {
-			cats = append(cats, c.Text)
-			if c.Subcategory != nil {
-				cats = append(cats, c.Subcategory.Text)
-			}
-		}
-	}
-
-	if rss.DublinCoreExt != nil && rss.DublinCoreExt.Subject != nil {
-		cats = append(cats, rss.DublinCoreExt.Subject...)
-	}
-
-	if len(cats) > 0 {
-		categories = cats
-	}
-
-	return categories
-}
-
-func (t *DefaultRSSTranslator) translateFeedItems(rss *rss.Feed) (items []*Item) {
-	items = make([]*Item, 0, len(rss.Items))
-	for _, i := range rss.Items {
-		items = append(items, t.translateFeedItem(i))
+func (t *DefaultRSSTranslator) feedItems(rss *rss.Feed) []*Item {
+	items := make([]*Item, len(rss.Items))
+	for i, item := range rss.Items {
+		items[i] = t.translateFeedItem(item)
 	}
 	return items
 }
 
-func (t *DefaultRSSTranslator) translateItemTitle(rssItem *rss.Item) (title string) {
-	if rssItem.Title != "" {
-		title = rssItem.Title
-	} else if rssItem.DublinCoreExt != nil && rssItem.DublinCoreExt.Title != nil {
-		title = t.firstEntry(rssItem.DublinCoreExt.Title)
-	}
-	return title
-}
-
-func (t *DefaultRSSTranslator) translateItemDescription(rssItem *rss.Item) (desc string) {
-	switch {
-	case rssItem.Description != "":
-		desc = rssItem.Description
-	case rssItem.DublinCoreExt != nil && rssItem.DublinCoreExt.Description != nil:
-		desc = t.firstEntry(rssItem.DublinCoreExt.Description)
-	case rssItem.ITunesExt != nil && rssItem.ITunesExt.Summary != "":
-		desc = rssItem.ITunesExt.Summary
-	}
-	return desc
-}
-
-func (t *DefaultRSSTranslator) translateItemContent(rssItem *rss.Item) (content string) {
-	return rssItem.Content
-}
-
-func (t *DefaultRSSTranslator) translateItemLink(rssItem *rss.Item) (link string) {
-	return rssItem.Link
-}
-
-func (t *DefaultRSSTranslator) translateItemLinks(rssItem *rss.Item) (links []string) {
-	if len(rssItem.Links) > 0 {
-		links = append(links, rssItem.Links...)
-	}
-	return links
-}
-
-func (t *DefaultRSSTranslator) translateItemPublished(rssItem *rss.Item) (pubDate string) {
-	if rssItem.PubDate != "" {
-		return rssItem.PubDate
-	} else if rssItem.DublinCoreExt != nil && rssItem.DublinCoreExt.Date != nil {
-		return t.firstEntry(rssItem.DublinCoreExt.Date)
-	}
-	return pubDate
-}
-
-func (t *DefaultRSSTranslator) translateItemPublishedParsed(rssItem *rss.Item) (pubDate *time.Time) {
-	if rssItem.PubDateParsed != nil {
-		return rssItem.PubDateParsed
-	} else if rssItem.DublinCoreExt != nil && rssItem.DublinCoreExt.Date != nil {
-		pubDateText := t.firstEntry(rssItem.DublinCoreExt.Date)
-		pubDateParsed, err := shared.ParseDate(pubDateText)
-		if err == nil {
-			pubDate = &pubDateParsed
-		}
-	}
-	return pubDate
-}
-
-func (t *DefaultRSSTranslator) translateItemAuthor(rssItem *rss.Item) (author *Person) {
-	switch {
-	case rssItem.Author != "":
-		name, address := shared.ParseNameAddress(rssItem.Author)
-		author = &Person{}
-		author.Name = name
-		author.Email = address
-	case rssItem.DublinCoreExt != nil && rssItem.DublinCoreExt.Author != nil:
-		dcAuthor := t.firstEntry(rssItem.DublinCoreExt.Author)
-		name, address := shared.ParseNameAddress(dcAuthor)
-		author = &Person{}
-		author.Name = name
-		author.Email = address
-	case rssItem.DublinCoreExt != nil && rssItem.DublinCoreExt.Creator != nil:
-		dcCreator := t.firstEntry(rssItem.DublinCoreExt.Creator)
-		name, address := shared.ParseNameAddress(dcCreator)
-		author = &Person{}
-		author.Name = name
-		author.Email = address
-	case rssItem.ITunesExt != nil && rssItem.ITunesExt.Author != "":
-		name, address := shared.ParseNameAddress(rssItem.ITunesExt.Author)
-		author = &Person{}
-		author.Name = name
-		author.Email = address
-	}
-	return author
-}
-
-func (t *DefaultRSSTranslator) translateItemAuthors(rssItem *rss.Item) (authors []*Person) {
-	if author := t.translateItemAuthor(rssItem); author != nil {
-		authors = []*Person{author}
-	}
-	return authors
-}
-
-func (t *DefaultRSSTranslator) translateItemGUID(rssItem *rss.Item) (guid string) {
-	if rssItem.GUID != nil {
-		guid = rssItem.GUID.Value
-	}
-	return guid
-}
-
-func (t *DefaultRSSTranslator) translateItemImage(rssItem *rss.Item) *Image {
-	if rssItem.ITunesExt != nil && rssItem.ITunesExt.Image != "" {
-		return &Image{URL: rssItem.ITunesExt.Image}
-	}
-
-	if media, ok := rssItem.Extensions["media"]; ok {
-		if content, ok := media["content"]; ok {
-			for _, c := range content {
-				hasImage := strings.Contains(c.Attrs["type"], "image") ||
-					strings.Contains(c.Attrs["medium"], "image")
-				if hasImage {
-					return &Image{URL: c.Attrs["url"]}
-				}
-			}
-		}
-	}
-
-	for _, enc := range rssItem.Enclosures {
-		if strings.HasPrefix(enc.Type, "image/") {
-			return &Image{URL: enc.URL}
+func (t *DefaultRSSTranslator) itemAuthor(rssItem *rss.Item) *Person {
+	if name, address, ok := rssItem.GetAuthor(); ok {
+		return &Person{
+			Name:  name,
+			Email: address,
 		}
 	}
 	return nil
 }
 
-func (t *DefaultRSSTranslator) translateItemCategories(rssItem *rss.Item) (categories []string) {
-	var cats []string
-	if rssItem.Categories != nil {
-		cats = make([]string, 0, len(rssItem.Categories))
-		for _, c := range rssItem.Categories {
-			cats = append(cats, c.Value)
-		}
+func (t *DefaultRSSTranslator) itemAuthors(rssItem *rss.Item) []*Person {
+	if author := t.itemAuthor(rssItem); author != nil {
+		return []*Person{author}
 	}
-
-	if rssItem.ITunesExt != nil && rssItem.ITunesExt.Keywords != "" {
-		keywords := strings.Split(rssItem.ITunesExt.Keywords, ",")
-		cats = append(cats, keywords...)
-	}
-
-	if rssItem.DublinCoreExt != nil && rssItem.DublinCoreExt.Subject != nil {
-		cats = append(cats, rssItem.DublinCoreExt.Subject...)
-	}
-
-	if len(cats) > 0 {
-		categories = cats
-	}
-
-	return categories
+	return nil
 }
 
-func (t *DefaultRSSTranslator) translateItemEnclosures(rssItem *rss.Item) (enclosures []*Enclosure) {
-	if len(rssItem.Enclosures) > 0 {
-		// Accumulate the enclosures
-		for _, enc := range rssItem.Enclosures {
-			e := &Enclosure{}
-			e.URL = enc.URL
-			e.Type = enc.Type
-			e.Length = enc.Length
-			enclosures = append(enclosures, e)
+func (t *DefaultRSSTranslator) itemImage(rssItem *rss.Item) *Image {
+	if s := rssItem.ImageURL(); s != "" {
+		return &Image{URL: s}
+	}
+	return nil
+}
+
+func (t *DefaultRSSTranslator) itemEnclosures(rssItem *rss.Item) []*Enclosure {
+	if len(rssItem.Enclosures) == 0 {
+		return nil
+	}
+
+	// Accumulate the enclosures
+	enclosures := make([]*Enclosure, len(rssItem.Enclosures))
+	for i, enc := range rssItem.Enclosures {
+		enclosures[i] = &Enclosure{
+			URL:    enc.URL,
+			Type:   enc.Type,
+			Length: enc.Length,
 		}
 	}
-
-	if len(enclosures) == 0 {
-		enclosures = nil
-	}
-
 	return enclosures
-}
-
-func (t *DefaultRSSTranslator) extensionsForKeys(keys []string, extensions ext.Extensions) (matches []map[string][]ext.Extension) {
-	matches = []map[string][]ext.Extension{}
-
-	if extensions == nil {
-		return matches
-	}
-
-	for _, key := range keys {
-		if match, ok := extensions[key]; ok {
-			matches = append(matches, match)
-		}
-	}
-	return matches
-}
-
-func (t *DefaultRSSTranslator) firstEntry(entries []string) (value string) {
-	if entries == nil {
-		return value
-	}
-
-	if len(entries) == 0 {
-		return value
-	}
-
-	return entries[0]
 }
 
 // DefaultAtomTranslator converts an atom.Feed struct
