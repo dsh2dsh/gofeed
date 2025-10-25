@@ -1,6 +1,11 @@
 package json
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"time"
+
+	"github.com/dsh2dsh/gofeed/v2/internal/shared"
+)
 
 // Feed describes the structure for JSON Feed v1.0
 // https://www.jsonfeed.org/version/1/
@@ -25,9 +30,47 @@ type Feed struct {
 	Language string    `json:"language,omitempty"`
 }
 
-func (f Feed) String() string {
-	json, _ := json.MarshalIndent(f, "", "    ")
+func (self Feed) String() string {
+	json, _ := json.MarshalIndent(self, "", "    ")
 	return string(json)
+}
+
+func (self *Feed) GetLinks() (links []string) {
+	if self.HomePageURL != "" {
+		links = append(links, self.HomePageURL)
+	}
+	if self.FeedURL != "" {
+		links = append(links, self.FeedURL)
+	}
+	return links
+}
+
+func (self *Feed) GetUpdated() string {
+	if len(self.Items) > 0 {
+		return self.Items[0].DateModified
+	}
+	return ""
+}
+
+func (self *Feed) GetUpdatedParsed() (updated *time.Time) {
+	if len(self.Items) > 0 {
+		return self.Items[0].UpdatedParsed()
+	}
+	return nil
+}
+
+func (self *Feed) GetPublished() string {
+	if len(self.Items) > 0 {
+		return self.Items[0].DatePublished
+	}
+	return ""
+}
+
+func (self *Feed) GetPublishedParsed() *time.Time {
+	if len(self.Items) > 0 {
+		return self.Items[0].PublishedParsed()
+	}
+	return nil
 }
 
 // Item defines an item in the feed
@@ -68,4 +111,56 @@ type Attachments struct {
 	Title             string `json:"title,omitempty"`               // title (optional, string) is a name for the attachment. Important: if there are multiple attachments, and two or more have the exact same title (when title is present), then they are considered as alternate representations of the same thing. In this way a podcaster, for instance, might provide an audio recording in different formats.
 	SizeInBytes       int64  `json:"size_in_bytes,omitempty"`       // size_in_bytes (optional, number) specifies how large the file is.
 	DurationInSeconds int64  `json:"duration_in_seconds,omitempty"` // duration_in_seconds (optional, number) specifies how long it takes to listen to or watch, when played at normal speed.
+}
+
+func (self *Item) Content() string {
+	if self.ContentHTML != "" {
+		return self.ContentHTML
+	} else if self.ContentText != "" {
+		return self.ContentText
+	}
+	return ""
+}
+
+func (self *Item) Links() (links []string) {
+	if self.URL != "" {
+		links = append(links, self.URL)
+	}
+	if self.ExternalURL != "" {
+		links = append(links, self.ExternalURL)
+	}
+	return links
+}
+
+func (self *Item) UpdatedParsed() *time.Time {
+	if self.DateModified == "" {
+		return nil
+	}
+
+	updatedTime, err := shared.ParseDate(self.DateModified)
+	if err != nil {
+		return nil
+	}
+	return &updatedTime
+}
+
+func (self *Item) PublishedParsed() *time.Time {
+	if self.DatePublished == "" {
+		return nil
+	}
+
+	publishTime, err := shared.ParseDate(self.DatePublished)
+	if err != nil {
+		return nil
+	}
+	return &publishTime
+}
+
+func (self *Item) ImageURL() string {
+	if self.Image != "" {
+		return self.Image
+	} else if self.BannerImage != "" {
+		return self.BannerImage
+	}
+	return ""
 }

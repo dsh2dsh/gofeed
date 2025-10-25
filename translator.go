@@ -3,7 +3,6 @@ package gofeed
 import (
 	"errors"
 	"strconv"
-	"time"
 
 	"github.com/dsh2dsh/gofeed/v2/atom"
 	"github.com/dsh2dsh/gofeed/v2/internal/shared"
@@ -303,313 +302,157 @@ func (t *DefaultJSONTranslator) Translate(feed any, opts *options.Parse) (*Feed,
 		return nil, errors.New("Feed did not match expected type of *json.Feed")
 	}
 
-	result := &Feed{}
-	result.FeedVersion = json.Version
-	result.Title = t.translateFeedTitle(json)
-	result.Link = t.translateFeedLink(json)
-	result.FeedLink = t.translateFeedFeedLink(json)
-	result.Links = t.translateFeedLinks(json)
-	result.Description = t.translateFeedDescription(json)
-	result.Image = t.translateFeedImage(json)
-	result.Author = t.translateFeedAuthor(json)
-	result.Authors = t.translateFeedAuthors(json)
-	result.Language = t.translateFeedLanguage(json)
-	result.Items = t.translateFeedItems(json)
-	result.Updated = t.translateFeedUpdated(json)
-	result.UpdatedParsed = t.translateFeedUpdatedParsed(json)
-	result.Published = t.translateFeedPublished(json)
-	result.PublishedParsed = t.translateFeedPublishedParsed(json)
-	result.FeedType = "json"
-	// TODO UserComment is missing in global Feed
-	// TODO NextURL is missing in global Feed
-	// TODO Favicon is missing in global Feed
-	// TODO Exipred is missing in global Feed
-	// TODO Hubs is not supported in json.Feed
-	// TODO Extensions is not supported in json.Feed
-	return result, nil
+	return &Feed{
+		FeedVersion:     json.Version,
+		Title:           json.Title,
+		Link:            json.HomePageURL,
+		FeedLink:        json.FeedURL,
+		Links:           json.GetLinks(),
+		Description:     json.Description,
+		Image:           t.feedImage(json),
+		Author:          t.feedAuthor(json),
+		Authors:         t.feedAuthors(json),
+		Language:        json.Language,
+		Items:           t.feedItems(json),
+		Updated:         json.GetUpdated(),
+		UpdatedParsed:   json.GetUpdatedParsed(),
+		Published:       json.GetPublished(),
+		PublishedParsed: json.GetPublishedParsed(),
+		FeedType:        "json",
+
+		// TODO UserComment is missing in global Feed
+		// TODO NextURL is missing in global Feed
+		// TODO Favicon is missing in global Feed
+		// TODO Exipred is missing in global Feed
+		// TODO Hubs is not supported in json.Feed
+		// TODO Extensions is not supported in json.Feed
+	}, nil
 }
 
-func (t *DefaultJSONTranslator) translateFeedItem(jsonItem *json.Item) (item *Item) {
-	item = &Item{}
-	item.GUID = t.translateItemGUID(jsonItem)
-	item.Link = t.translateItemLink(jsonItem)
-	item.Links = t.translateItemLinks(jsonItem)
-	item.Title = t.translateItemTitle(jsonItem)
-	item.Content = t.translateItemContent(jsonItem)
-	item.Description = t.translateItemDescription(jsonItem)
-	item.Image = t.translateItemImage(jsonItem)
-	item.Published = t.translateItemPublished(jsonItem)
-	item.PublishedParsed = t.translateItemPublishedParsed(jsonItem)
-	item.Updated = t.translateItemUpdated(jsonItem)
-	item.UpdatedParsed = t.translateItemUpdatedParsed(jsonItem)
-	item.Author = t.translateItemAuthor(jsonItem)
-	item.Authors = t.translateItemAuthors(jsonItem)
-	item.Categories = t.translateItemCategories(jsonItem)
-	item.Enclosures = t.translateItemEnclosures(jsonItem)
-	// TODO ExternalURL is missing in global Feed
-	// TODO BannerImage is missing in global Feed
-	return item
-}
+func (t *DefaultJSONTranslator) feedItem(jsonItem *json.Item) *Item {
+	return &Item{
+		GUID:            jsonItem.ID,
+		Link:            jsonItem.URL,
+		Links:           jsonItem.Links(),
+		Title:           jsonItem.Title,
+		Content:         jsonItem.Content(),
+		Description:     jsonItem.Summary,
+		Image:           t.itemImage(jsonItem),
+		Published:       jsonItem.DatePublished,
+		PublishedParsed: jsonItem.PublishedParsed(),
+		Updated:         jsonItem.DateModified,
+		UpdatedParsed:   jsonItem.UpdatedParsed(),
+		Author:          t.itemAuthor(jsonItem),
+		Authors:         t.itemAuthors(jsonItem),
+		Categories:      jsonItem.Tags,
+		Enclosures:      t.itemEnclosures(jsonItem),
 
-func (t *DefaultJSONTranslator) translateFeedTitle(json *json.Feed) (title string) {
-	if json.Title != "" {
-		title = json.Title
+		// TODO ExternalURL is missing in global Feed
+		// TODO BannerImage is missing in global Feed
 	}
-	return title
 }
 
-func (t *DefaultJSONTranslator) translateFeedDescription(json *json.Feed) (desc string) {
-	return json.Description
-}
+func (t *DefaultJSONTranslator) feedAuthor(json *json.Feed) *Person {
+	if json.Author == nil {
+		return nil
+	}
 
-func (t *DefaultJSONTranslator) translateFeedLink(json *json.Feed) (link string) {
-	if json.HomePageURL != "" {
-		link = json.HomePageURL
-	}
-	return link
-}
-
-func (t *DefaultJSONTranslator) translateFeedFeedLink(json *json.Feed) (link string) {
-	if json.FeedURL != "" {
-		link = json.FeedURL
-	}
-	return link
-}
-
-func (t *DefaultJSONTranslator) translateFeedLinks(json *json.Feed) (links []string) {
-	if json.HomePageURL != "" {
-		links = append(links, json.HomePageURL)
-	}
-	if json.FeedURL != "" {
-		links = append(links, json.FeedURL)
-	}
-	return links
-}
-
-func (t *DefaultJSONTranslator) translateFeedUpdated(json *json.Feed) (updated string) {
-	if len(json.Items) > 0 {
-		updated = json.Items[0].DateModified
-	}
-	return updated
-}
-
-func (t *DefaultJSONTranslator) translateFeedUpdatedParsed(json *json.Feed) (updated *time.Time) {
-	if len(json.Items) > 0 {
-		updateTime, err := shared.ParseDate(json.Items[0].DateModified)
-		if err == nil {
-			updated = &updateTime
-		}
-	}
-	return updated
-}
-
-func (t *DefaultJSONTranslator) translateFeedPublished(json *json.Feed) (published string) {
-	if len(json.Items) > 0 {
-		published = json.Items[0].DatePublished
-	}
-	return published
-}
-
-func (t *DefaultJSONTranslator) translateFeedPublishedParsed(json *json.Feed) (published *time.Time) {
-	if len(json.Items) > 0 {
-		publishTime, err := shared.ParseDate(json.Items[0].DatePublished)
-		if err == nil {
-			published = &publishTime
-		}
-	}
-	return published
-}
-
-func (t *DefaultJSONTranslator) translateFeedAuthor(json *json.Feed) (author *Person) {
-	if json.Author != nil {
-		name, address := shared.ParseNameAddress(json.Author.Name)
-		author = &Person{}
-		author.Name = name
-		author.Email = address
-	}
+	name, address := shared.ParseNameAddress(json.Author.Name)
 	// Author.URL is missing in global feed
 	// Author.Avatar is missing in global feed
-	return author
+	return &Person{Name: name, Email: address}
 }
 
-func (t *DefaultJSONTranslator) translateFeedAuthors(json *json.Feed) (authors []*Person) {
+func (t *DefaultJSONTranslator) feedAuthors(json *json.Feed) []*Person {
 	if json.Authors != nil {
-		authors = make([]*Person, 0, len(json.Authors))
-		for _, a := range json.Authors {
+		authors := make([]*Person, len(json.Authors))
+		for i, a := range json.Authors {
 			name, address := shared.ParseNameAddress(a.Name)
-			author := &Person{}
-			author.Name = name
-			author.Email = address
-
-			authors = append(authors, author)
+			authors[i] = &Person{Name: name, Email: address}
 		}
-	} else if author := t.translateFeedAuthor(json); author != nil {
-		authors = []*Person{author}
+		return authors
 	}
+
+	if author := t.feedAuthor(json); author != nil {
+		return []*Person{author}
+	}
+
 	// Author.URL is missing in global feed
 	// Author.Avatar is missing in global feed
-	return authors
+	return nil
 }
 
-func (t *DefaultJSONTranslator) translateFeedLanguage(json *json.Feed) string {
-	return json.Language
-}
-
-func (t *DefaultJSONTranslator) translateFeedImage(json *json.Feed) (image *Image) {
+func (t *DefaultJSONTranslator) feedImage(json *json.Feed) *Image {
 	// Using the Icon rather than the image
-	// icon (optional, string) is the URL of an image for the feed suitable to be used in a timeline. It should be square and relatively large — such as 512 x 512
+	//
+	// icon (optional, string) is the URL of an image for the feed suitable to be
+	// used in a timeline. It should be square and relatively large — such as 512
+	// x 512
 	if json.Icon != "" {
-		image = &Image{}
-		image.URL = json.Icon
+		return &Image{URL: json.Icon}
 	}
-	return image
+	return nil
 }
 
-func (t *DefaultJSONTranslator) translateFeedItems(json *json.Feed) (items []*Item) {
-	items = make([]*Item, 0, len(json.Items))
-	for _, i := range json.Items {
-		items = append(items, t.translateFeedItem(i))
+func (t *DefaultJSONTranslator) feedItems(json *json.Feed) []*Item {
+	items := make([]*Item, len(json.Items))
+	for i, it := range json.Items {
+		items[i] = t.feedItem(it)
 	}
 	return items
 }
 
-func (t *DefaultJSONTranslator) translateItemTitle(jsonItem *json.Item) (title string) {
-	if jsonItem.Title != "" {
-		title = jsonItem.Title
+func (t *DefaultJSONTranslator) itemAuthor(jsonItem *json.Item) *Person {
+	if jsonItem.Author == nil {
+		return nil
 	}
-	return title
-}
 
-func (t *DefaultJSONTranslator) translateItemDescription(jsonItem *json.Item) (desc string) {
-	if jsonItem.Summary != "" {
-		desc = jsonItem.Summary
-	}
-	return desc
-}
-
-func (t *DefaultJSONTranslator) translateItemContent(jsonItem *json.Item) (content string) {
-	if jsonItem.ContentHTML != "" {
-		content = jsonItem.ContentHTML
-	} else if jsonItem.ContentText != "" {
-		content = jsonItem.ContentText
-	}
-	return content
-}
-
-func (t *DefaultJSONTranslator) translateItemLink(jsonItem *json.Item) string {
-	return jsonItem.URL
-}
-
-func (t *DefaultJSONTranslator) translateItemLinks(jsonItem *json.Item) (links []string) {
-	if jsonItem.URL != "" {
-		links = append(links, jsonItem.URL)
-	}
-	if jsonItem.ExternalURL != "" {
-		links = append(links, jsonItem.ExternalURL)
-	}
-	return links
-}
-
-func (t *DefaultJSONTranslator) translateItemUpdated(jsonItem *json.Item) (updated string) {
-	if jsonItem.DateModified != "" {
-		updated = jsonItem.DateModified
-	}
-	return updated
-}
-
-func (t *DefaultJSONTranslator) translateItemUpdatedParsed(jsonItem *json.Item) (updated *time.Time) {
-	if jsonItem.DateModified != "" {
-		updatedTime, err := shared.ParseDate(jsonItem.DateModified)
-		if err == nil {
-			updated = &updatedTime
-		}
-	}
-	return updated
-}
-
-func (t *DefaultJSONTranslator) translateItemPublished(jsonItem *json.Item) (pubDate string) {
-	if jsonItem.DatePublished != "" {
-		pubDate = jsonItem.DatePublished
-	}
-	return pubDate
-}
-
-func (t *DefaultJSONTranslator) translateItemPublishedParsed(jsonItem *json.Item) (pubDate *time.Time) {
-	if jsonItem.DatePublished != "" {
-		publishTime, err := shared.ParseDate(jsonItem.DatePublished)
-		if err == nil {
-			pubDate = &publishTime
-		}
-	}
-	return pubDate
-}
-
-func (t *DefaultJSONTranslator) translateItemAuthor(jsonItem *json.Item) (author *Person) {
-	if jsonItem.Author != nil {
-		name, address := shared.ParseNameAddress(jsonItem.Author.Name)
-		author = &Person{}
-		author.Name = name
-		author.Email = address
-	}
+	name, address := shared.ParseNameAddress(jsonItem.Author.Name)
 	// Author.URL is missing in global feed
 	// Author.Avatar is missing in global feed
-	return author
+	return &Person{Name: name, Email: address}
 }
 
-func (t *DefaultJSONTranslator) translateItemAuthors(jsonItem *json.Item) (authors []*Person) {
+func (t *DefaultJSONTranslator) itemAuthors(jsonItem *json.Item) []*Person {
 	if jsonItem.Authors != nil {
-		authors = make([]*Person, 0, len(jsonItem.Authors))
-		for _, a := range jsonItem.Authors {
+		authors := make([]*Person, len(jsonItem.Authors))
+		for i, a := range jsonItem.Authors {
 			name, address := shared.ParseNameAddress(a.Name)
-			author := &Person{}
-			author.Name = name
-			author.Email = address
-
-			authors = append(authors, author)
+			authors[i] = &Person{Name: name, Email: address}
 		}
-	} else if author := t.translateItemAuthor(jsonItem); author != nil {
-		authors = []*Person{author}
+		return authors
+	}
+
+	if author := t.itemAuthor(jsonItem); author != nil {
+		return []*Person{author}
 	}
 	// Author.URL is missing in global feed
 	// Author.Avatar is missing in global feed
-	return authors
+	return nil
 }
 
-func (t *DefaultJSONTranslator) translateItemGUID(jsonItem *json.Item) (guid string) {
-	if jsonItem.ID != "" {
-		guid = jsonItem.ID
+func (t *DefaultJSONTranslator) itemImage(jsonItem *json.Item) *Image {
+	if s := jsonItem.ImageURL(); s != "" {
+		return &Image{URL: s}
 	}
-	return guid
+	return nil
 }
 
-func (t *DefaultJSONTranslator) translateItemImage(jsonItem *json.Item) (image *Image) {
-	if jsonItem.Image != "" {
-		image = &Image{}
-		image.URL = jsonItem.Image
-	} else if jsonItem.BannerImage != "" {
-		image = &Image{}
-		image.URL = jsonItem.BannerImage
+func (t *DefaultJSONTranslator) itemEnclosures(jsonItem *json.Item) []*Enclosure {
+	if jsonItem.Attachments == nil {
+		return nil
+	} else if len(*jsonItem.Attachments) == 0 {
+		return nil
 	}
-	return image
-}
 
-func (t *DefaultJSONTranslator) translateItemCategories(jsonItem *json.Item) (categories []string) {
-	if len(jsonItem.Tags) > 0 {
-		categories = jsonItem.Tags
-	}
-	return categories
-}
-
-func (t *DefaultJSONTranslator) translateItemEnclosures(jsonItem *json.Item) (enclosures []*Enclosure) {
-	if jsonItem.Attachments != nil {
-		for _, attachment := range *jsonItem.Attachments {
-			e := &Enclosure{}
-			e.URL = attachment.URL
-			e.Type = attachment.MimeType
-			e.Length = strconv.FormatInt(attachment.DurationInSeconds, 10)
-			// Title is not defined in global enclosure
-			// SizeInBytes is not defined in global enclosure
-			enclosures = append(enclosures, e)
+	enclosures := make([]*Enclosure, len(*jsonItem.Attachments))
+	for i, attachment := range *jsonItem.Attachments {
+		// Title is not defined in global enclosure
+		// SizeInBytes is not defined in global enclosure
+		enclosures[i] = &Enclosure{
+			URL:    attachment.URL,
+			Type:   attachment.MimeType,
+			Length: strconv.FormatInt(attachment.DurationInSeconds, 10),
 		}
 	}
 	return enclosures
