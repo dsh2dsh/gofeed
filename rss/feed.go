@@ -347,14 +347,6 @@ func (self *Item) GetDescription() string {
 	return ""
 }
 
-func (self *Item) GetLinks() []string {
-	if n := len(self.Links); n > 0 {
-		links := make([]string, 0, n)
-		return append(links, self.Links...)
-	}
-	return nil
-}
-
 func (self *Item) GetPublished() string {
 	if self.PubDate != "" {
 		return self.PubDate
