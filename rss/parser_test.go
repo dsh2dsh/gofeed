@@ -10,9 +10,20 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/dsh2dsh/gofeed/v2/rss"
 )
+
+func BenchmarkParse(b *testing.B) {
+	data, err := os.ReadFile("testdata/bench/large_rss.xml")
+	require.NoError(b, err)
+
+	b.ReportAllocs()
+	for b.Loop() {
+		rss.NewParser().Parse(bytes.NewReader(data), nil)
+	}
+}
 
 func TestParser_Parse(t *testing.T) {
 	files, _ := filepath.Glob("testdata/*.xml")

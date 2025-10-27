@@ -10,9 +10,20 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/dsh2dsh/gofeed/v2/atom"
 )
+
+func BenchmarkParse(b *testing.B) {
+	data, err := os.ReadFile("testdata/bench/large_atom.xml")
+	require.NoError(b, err)
+
+	b.ReportAllocs()
+	for b.Loop() {
+		atom.NewParser().Parse(bytes.NewReader(data), nil)
+	}
+}
 
 // Tests
 
