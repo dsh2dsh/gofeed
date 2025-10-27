@@ -4,7 +4,7 @@ go 1.25
 
 require (
 	github.com/mmcdole/goxpp v1.1.1-0.20240225020742-a0c311522b23
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	golang.org/x/net v0.17.0
 	golang.org/x/sync v0.17.0
 )
