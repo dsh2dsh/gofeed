@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	xpp "github.com/mmcdole/goxpp"
+	xpp "github.com/dsh2dsh/goxpp/v2"
 
 	ext "github.com/dsh2dsh/gofeed/v2/extensions"
 )
@@ -52,6 +52,7 @@ func parseExtensionElement(p *xpp.XMLPullParser) (e ext.Extension, err error) {
 		e.Attrs[attr.Name.Local] = attr.Value
 	}
 
+	var textValue strings.Builder
 	for {
 		tok, err := p.Next()
 		if err != nil {
@@ -70,11 +71,11 @@ func parseExtensionElement(p *xpp.XMLPullParser) (e ext.Extension, err error) {
 			}
 			e.Children[child.Name] = append(e.Children[child.Name], child)
 		case xpp.Text:
-			e.Value += p.Text
+			textValue.WriteString(p.Text())
 		}
 	}
 
-	e.Value = strings.TrimSpace(e.Value)
+	e.Value = strings.TrimSpace(textValue.String())
 
 	if err = p.Expect(xpp.EndTag, e.Name); err != nil {
 		return e, fmt.Errorf("gofeed/internal/shared: %w", err)

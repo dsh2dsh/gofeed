@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	xpp "github.com/mmcdole/goxpp"
+	xpp "github.com/dsh2dsh/goxpp/v2"
 )
 
 var (

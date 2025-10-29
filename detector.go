@@ -7,7 +7,7 @@ import (
 	"strings"
 	"unicode"
 
-	xpp "github.com/mmcdole/goxpp"
+	xpp "github.com/dsh2dsh/goxpp/v2"
 
 	"github.com/dsh2dsh/gofeed/v2/internal/shared"
 )
