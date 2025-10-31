@@ -33,6 +33,10 @@ func ParseExtension(fe ext.Extensions, p *xpp.XMLPullParser) (ext.Extensions, er
 		return nil, err
 	}
 
+	if fe == nil {
+		fe = make(ext.Extensions, 1)
+	}
+
 	// Ensure the extension prefix map exists
 	if m, ok := fe[prefix]; ok {
 		m[p.Name] = append(m[p.Name], result)

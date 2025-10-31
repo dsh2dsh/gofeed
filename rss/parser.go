@@ -21,6 +21,25 @@ type Parser struct {
 	err error
 }
 
+const (
+	categoryTag  = "category"
+	channelTag   = "channel"
+	cloudTag     = "cloud"
+	customKey    = "_custom"
+	dcKey        = "dc"
+	enclosureTag = "enclosure"
+	guidTag      = "guid"
+	imageTag     = "image"
+	itemTag      = "item"
+	itunesKey    = "itunes"
+	skipDaysTag  = "skipdays"
+	skipHoursTag = "skiphours"
+	sourceTag    = "source"
+	textInputTag = "textinput"
+)
+
+var emptyAttrs = map[string]string{}
+
 // NewParser creates a new RSS parser
 func NewParser() *Parser { return &Parser{} }
 
@@ -64,14 +83,14 @@ func (rp *Parser) parseRoot() (*Feed, error) {
 			}
 
 			switch strings.ToLower(rp.p.Name) {
-			case "channel":
-				rp.parseChannelTo(&channel)
-			case "item":
-				items = rp.parseItemTo(items)
-			case "textinput":
-				rp.parseTextInputTo(&textinput)
-			case "image":
-				rp.parseImageTo(&image)
+			case channelTag:
+				channel = rp.channel()
+			case itemTag:
+				items = rp.appendItem(items)
+			case textInputTag:
+				textinput = rp.textInput()
+			case imageTag:
+				image = rp.image()
 			default:
 				rp.p.Skip() //nolint:errcheck // upstream ignores err
 			}
@@ -86,7 +105,7 @@ func (rp *Parser) parseRoot() (*Feed, error) {
 		channel = &Feed{Items: make([]*Item, 0, len(items))}
 	}
 
-	if n := len(items); n > 0 {
+	if n := len(items); n != 0 {
 		channel.Items = append(slices.Grow(channel.Items, n), items...)
 	}
 
@@ -146,24 +165,21 @@ func (rp *Parser) nextTag() (xpp.XMLEventType, error) {
 	}
 }
 
-func (rp *Parser) parseChannelTo(ref **Feed) {
+func (rp *Parser) channel() *Feed {
 	channel, err := rp.parseChannel()
 	if err != nil {
 		rp.err = err
-		return
+		return nil
 	}
-	*ref = channel
+	return channel
 }
 
 func (rp *Parser) parseChannel() (rss *Feed, err error) {
-	if err = rp.expect(xpp.StartTag, "channel"); err != nil {
+	if err = rp.expect(xpp.StartTag, channelTag); err != nil {
 		return nil, err
 	}
 
-	rss = &Feed{
-		Items: []*Item{},
-	}
-	extensions := ext.Extensions{}
+	rss = &Feed{Items: []*Item{}}
 
 	for {
 		tok, err := rp.nextTag()
@@ -177,55 +193,55 @@ func (rp *Parser) parseChannel() (rss *Feed, err error) {
 
 		if tok == xpp.StartTag {
 			if shared.IsExtension(rp.p) {
-				ext, err := shared.ParseExtension(extensions, rp.p)
+				e, err := shared.ParseExtension(rss.Extensions, rp.p)
 				if err != nil {
 					return nil, err
 				}
-				extensions = ext
+				rss.Extensions = e
 				continue
 			}
 
 			switch strings.ToLower(rp.p.Name) {
 			case "title":
-				rp.parseTextTo(&rss.Title)
+				rss.Title = rp.text()
 			case "description":
-				rp.parseTextTo(&rss.Description)
+				rss.Description = rp.text()
 			case "link":
-				rss.Links = rp.parseLinkTo(&rss.Link, rss.Links)
+				rss.Link, rss.Links = rp.appendLink(rss.Link, rss.Links)
 			case "language":
-				rp.parseTextTo(&rss.Language)
+				rss.Language = rp.text()
 			case "copyright":
-				rp.parseTextTo(&rss.Copyright)
+				rss.Copyright = rp.text()
 			case "managingeditor":
-				rp.parseTextTo(&rss.ManagingEditor)
+				rss.ManagingEditor = rp.text()
 			case "webmaster":
-				rp.parseTextTo(&rss.WebMaster)
+				rss.WebMaster = rp.text()
 			case "pubdate":
-				rp.parseDateTo(&rss.PubDate, &rss.PubDateParsed)
+				rss.PubDate, rss.PubDateParsed = rp.parseDate()
 			case "lastbuilddate":
-				rp.parseDateTo(&rss.LastBuildDate, &rss.LastBuildDateParsed)
+				rss.LastBuildDate, rss.LastBuildDateParsed = rp.parseDate()
 			case "generator":
-				rp.parseTextTo(&rss.Generator)
+				rss.Generator = rp.text()
 			case "docs":
-				rp.parseTextTo(&rss.Docs)
+				rss.Docs = rp.text()
 			case "ttl":
-				rp.parseTextTo(&rss.TTL)
+				rss.TTL = rp.text()
 			case "rating":
-				rp.parseTextTo(&rss.Rating)
-			case "skiphours":
-				rss.SkipHours = rp.parseSkipHoursTo(rss.SkipHours)
-			case "skipdays":
-				rss.SkipDays = rp.parseSkipDaysTo(rss.SkipDays)
-			case "item":
-				rss.Items = rp.parseItemTo(rss.Items)
-			case "cloud":
-				rp.parseCloudTo(&rss.Cloud)
-			case "category":
-				rss.Categories = rp.parseCategoryTo(rss.Categories)
-			case "image":
-				rp.parseImageTo(&rss.Image)
-			case "textinput":
-				rp.parseTextInputTo(&rss.TextInput)
+				rss.Rating = rp.text()
+			case skipHoursTag:
+				rss.SkipHours = rp.appendSkipHours(rss.SkipHours)
+			case skipDaysTag:
+				rss.SkipDays = rp.appendSkipDays(rss.SkipDays)
+			case itemTag:
+				rss.Items = rp.appendItem(rss.Items)
+			case cloudTag:
+				rss.Cloud = rp.cloud()
+			case categoryTag:
+				rss.Categories = rp.appendCategory(rss.Categories)
+			case imageTag:
+				rss.Image = rp.image()
+			case textInputTag:
+				rss.TextInput = rp.textInput()
 			case "items":
 				// Skip RDF items element - it's a structural element
 				// that contains item references, not actual content
@@ -233,41 +249,38 @@ func (rp *Parser) parseChannel() (rss *Feed, err error) {
 			default:
 				// For non-standard RSS channel elements, add them to extensions
 				// under a special "_custom" namespace prefix
-				extensitons2, ok := rp.parseCustomExtInto(extensions)
-				if !ok {
-					continue
+				if e, ok := rp.parseCustomExtInto(rss.Extensions); ok {
+					rss.Extensions = e
 				}
-				extensions = extensitons2
 			}
 		}
 	}
 
-	if err = rp.expect(xpp.EndTag, "channel"); err != nil {
+	if err = rp.expect(xpp.EndTag, channelTag); err != nil {
 		return nil, err
 	}
 
-	if len(extensions) > 0 {
-		rss.Extensions = extensions
-		if itunes, ok := rss.Extensions["itunes"]; ok {
+	if len(rss.Extensions) != 0 {
+		if itunes, ok := rss.Extensions[itunesKey]; ok {
 			rss.ITunesExt = ext.NewITunesFeedExtension(itunes)
 		}
-		if dc, ok := rss.Extensions["dc"]; ok {
+		if dc, ok := rss.Extensions[dcKey]; ok {
 			rss.DublinCoreExt = ext.NewDublinCoreExtension(dc)
 		}
 	}
 	return rss, nil
 }
 
-func (rp *Parser) parseTextTo(ref *string) {
+func (rp *Parser) text() string {
 	result, err := shared.ParseText(rp.p)
 	if err != nil {
 		rp.err = err
-		return
+		return ""
 	}
-	*ref = result
+	return result
 }
 
-func (rp *Parser) parseItemTo(items []*Item) []*Item {
+func (rp *Parser) appendItem(items []*Item) []*Item {
 	item, err := rp.parseItem()
 	if err != nil {
 		rp.err = err
@@ -277,12 +290,11 @@ func (rp *Parser) parseItemTo(items []*Item) []*Item {
 }
 
 func (rp *Parser) parseItem() (item *Item, err error) {
-	if err = rp.expect(xpp.StartTag, "item"); err != nil {
+	if err = rp.expect(xpp.StartTag, itemTag); err != nil {
 		return nil, err
 	}
 
-	item = &Item{}
-	extensions := ext.Extensions{}
+	item = new(Item)
 
 	for {
 		tok, err := rp.nextTag()
@@ -296,76 +308,80 @@ func (rp *Parser) parseItem() (item *Item, err error) {
 
 		if tok == xpp.StartTag {
 			if shared.IsExtension(rp.p) {
-				ext, err := shared.ParseExtension(extensions, rp.p)
+				e, err := shared.ParseExtension(item.Extensions, rp.p)
 				if err != nil {
 					return nil, err
 				}
-				item.Extensions = ext
+				item.Extensions = e
 				continue
 			}
 
 			switch strings.ToLower(rp.p.Name) {
 			case "title":
-				rp.parseTextTo(&item.Title)
+				item.Title = rp.text()
 			case "description":
-				rp.parseTextTo(&item.Description)
+				item.Description = rp.text()
 			case "encoded":
 				prefix := shared.PrefixForNamespace(rp.p.Space, rp.p)
 				if prefix == "content" {
-					rp.parseTextTo(&item.Content)
+					item.Content = rp.text()
 				}
 			case "link":
-				item.Links = rp.parseLinkTo(&item.Link, item.Links)
+				item.Link, item.Links = rp.appendLink(item.Link, item.Links)
 			case "author":
-				rp.parseTextTo(&item.Author)
+				item.Author = rp.text()
 			case "comments":
-				rp.parseTextTo(&item.Comments)
+				item.Comments = rp.text()
 			case "pubdate":
-				rp.parseDateTo(&item.PubDate, &item.PubDateParsed)
-			case "source":
-				rp.parseSourceTo(&item.Source)
-			case "enclosure":
-				item.Enclosures = rp.parseEnclosureTo(&item.Enclosure, item.Enclosures)
-			case "guid":
-				rp.parseGUIDTo(&item.GUID)
-			case "category":
-				item.Categories = rp.parseCategoryTo(item.Categories)
+				item.PubDate, item.PubDateParsed = rp.parseDate()
+			case sourceTag:
+				item.Source = rp.source()
+			case enclosureTag:
+				item.Enclosure, item.Enclosures = rp.appendEnclosure(item.Enclosure,
+					item.Enclosures)
+			case guidTag:
+				item.GUID = rp.guid()
+			case categoryTag:
+				item.Categories = rp.appendCategory(item.Categories)
 			default:
 				// For non-standard RSS elements, add them to extensions
 				// under a special "_custom" namespace prefix
-				extensitons2, ok := rp.parseCustomExtInto(extensions)
-				if !ok {
-					continue
+				if e, ok := rp.parseCustomExtInto(item.Extensions); ok {
+					item.Extensions = e
 				}
-				extensions = extensitons2
 			}
 		}
 	}
 
-	if err = rp.expect(xpp.EndTag, "item"); err != nil {
+	if err = rp.expect(xpp.EndTag, itemTag); err != nil {
 		return nil, err
 	}
 
-	if len(extensions) > 0 {
-		item.Extensions = extensions
-		if itunes, ok := item.Extensions["itunes"]; ok {
+	if len(item.Extensions) != 0 {
+		if itunes, ok := item.Extensions[itunesKey]; ok {
 			item.ITunesExt = ext.NewITunesItemExtension(itunes)
 		}
-		if dc, ok := item.Extensions["dc"]; ok {
+		if dc, ok := item.Extensions[dcKey]; ok {
 			item.DublinCoreExt = ext.NewDublinCoreExtension(dc)
 		}
+
 	}
 	return item, nil
 }
 
-func (rp *Parser) parseLinkTo(ref *string, links []string) []string {
+func (rp *Parser) appendLink(firstLink string, links []string,
+) (string, []string) {
 	result, err := rp.parseLink()
 	if err != nil {
 		rp.err = err
-		return links
+		return firstLink, links
 	}
-	*ref = result
-	return append(links, result)
+
+	links = append(links, result)
+	if firstLink == "" {
+		firstLink = result
+	}
+	return firstLink, links
 }
 
 func (rp *Parser) parseLink() (string, error) {
@@ -376,46 +392,42 @@ func (rp *Parser) parseLink() (string, error) {
 	}
 
 	if url == "" && href != "" {
-		return href, nil
+		url = href
 	}
 	return url, nil
 }
 
-func (rp *Parser) parseDateTo(strRef *string, dtRef **time.Time) {
+func (rp *Parser) parseDate() (string, *time.Time) {
 	result, err := shared.ParseText(rp.p)
 	if err != nil {
 		rp.err = err
-		return
+		return "", nil
 	}
-	*strRef = result
 
 	date, err := shared.ParseDate(result)
 	if err != nil {
-		rp.err = err
-		return
+		return result, nil
 	}
 
 	utcDate := date.UTC()
-	*dtRef = &utcDate
+	return result, &utcDate
 }
 
-func (rp *Parser) parseSourceTo(ref **Source) {
+func (rp *Parser) source() *Source {
 	result, err := rp.parseSource()
 	if err != nil {
 		rp.err = err
-		return
+		return nil
 	}
-	*ref = result
+	return result
 }
 
 func (rp *Parser) parseSource() (source *Source, err error) {
-	if err = rp.expect(xpp.StartTag, "source"); err != nil {
+	if err = rp.expect(xpp.StartTag, sourceTag); err != nil {
 		return nil, err
 	}
 
-	source = &Source{
-		URL: rp.p.Attribute("url"),
-	}
+	source = &Source{URL: rp.p.Attribute("url")}
 
 	result, err := shared.ParseText(rp.p)
 	if err != nil {
@@ -423,32 +435,43 @@ func (rp *Parser) parseSource() (source *Source, err error) {
 	}
 	source.Title = result
 
-	if err = rp.expect(xpp.EndTag, "source"); err != nil {
+	if err = rp.expect(xpp.EndTag, sourceTag); err != nil {
 		return nil, err
 	}
 	return source, nil
 }
 
-func (rp *Parser) parseEnclosureTo(ref **Enclosure, enclosures []*Enclosure,
-) []*Enclosure {
+func (rp *Parser) appendEnclosure(firstEnclosure *Enclosure,
+	enclosures []*Enclosure,
+) (*Enclosure, []*Enclosure) {
 	result, err := rp.parseEnclosure()
 	if err != nil {
 		rp.err = err
-		return enclosures
+		return nil, nil
 	}
-	*ref = result
-	return append(enclosures, result)
+
+	enclosures = append(enclosures, result)
+	if firstEnclosure == nil {
+		firstEnclosure = result
+	}
+	return firstEnclosure, enclosures
 }
 
 func (rp *Parser) parseEnclosure() (enclosure *Enclosure, err error) {
-	if err = rp.expect(xpp.StartTag, "enclosure"); err != nil {
+	if err = rp.expect(xpp.StartTag, enclosureTag); err != nil {
 		return nil, err
 	}
 
-	enclosure = &Enclosure{
-		URL:    rp.p.Attribute("url"),
-		Length: rp.p.Attribute("length"),
-		Type:   rp.p.Attribute("type"),
+	enclosure = new(Enclosure)
+	for _, attr := range rp.p.Attrs {
+		switch v := attr.Name.Local; v {
+		case "url":
+			enclosure.URL = attr.Value
+		case "length":
+			enclosure.Length = attr.Value
+		case "type":
+			enclosure.Type = attr.Value
+		}
 	}
 
 	// Ignore any enclosure tag
@@ -456,28 +479,28 @@ func (rp *Parser) parseEnclosure() (enclosure *Enclosure, err error) {
 		_, err := rp.p.Next()
 		if err != nil {
 			return nil, fmt.Errorf("gofeed/rss: %w", err)
-		} else if rp.p.Event == xpp.EndTag && rp.p.Name == "enclosure" {
+		} else if rp.p.Event == xpp.EndTag && rp.p.Name == enclosureTag {
 			break
 		}
 	}
 	return enclosure, nil
 }
 
-func (rp *Parser) parseImageTo(ref **Image) {
+func (rp *Parser) image() *Image {
 	img, err := rp.parseImage()
 	if err != nil {
 		rp.err = err
-		return
+		return nil
 	}
-	*ref = img
+	return img
 }
 
 func (rp *Parser) parseImage() (image *Image, err error) {
-	if err = rp.expect(xpp.StartTag, "image"); err != nil {
+	if err = rp.expect(xpp.StartTag, imageTag); err != nil {
 		return nil, err
 	}
 
-	image = &Image{}
+	image = new(Image)
 
 	for {
 		tok, err := rp.nextTag()
@@ -492,40 +515,40 @@ func (rp *Parser) parseImage() (image *Image, err error) {
 		if tok == xpp.StartTag {
 			switch strings.ToLower(rp.p.Name) {
 			case "url":
-				rp.parseTextTo(&image.URL)
+				image.URL = rp.text()
 			case "title":
-				rp.parseTextTo(&image.Title)
+				image.Title = rp.text()
 			case "link":
-				rp.parseTextTo(&image.Link)
+				image.Link = rp.text()
 			case "width":
-				rp.parseTextTo(&image.Width)
+				image.Width = rp.text()
 			case "height":
-				rp.parseTextTo(&image.Height)
+				image.Height = rp.text()
 			case "description":
-				rp.parseTextTo(&image.Description)
+				image.Description = rp.text()
 			default:
 				rp.p.Skip() //nolint:errcheck // upstream ignores err
 			}
 		}
 	}
 
-	if err = rp.expect(xpp.EndTag, "image"); err != nil {
+	if err = rp.expect(xpp.EndTag, imageTag); err != nil {
 		return nil, err
 	}
 	return image, nil
 }
 
-func (rp *Parser) parseGUIDTo(ref **GUID) {
+func (rp *Parser) guid() *GUID {
 	result, err := rp.parseGUID()
 	if err != nil {
 		rp.err = err
-		return
+		return nil
 	}
-	*ref = result
+	return result
 }
 
 func (rp *Parser) parseGUID() (guid *GUID, err error) {
-	if err = rp.expect(xpp.StartTag, "guid"); err != nil {
+	if err = rp.expect(xpp.StartTag, guidTag); err != nil {
 		return nil, err
 	}
 
@@ -537,13 +560,13 @@ func (rp *Parser) parseGUID() (guid *GUID, err error) {
 	}
 	guid.Value = result
 
-	if err = rp.expect(xpp.EndTag, "guid"); err != nil {
+	if err = rp.expect(xpp.EndTag, guidTag); err != nil {
 		return nil, err
 	}
 	return guid, nil
 }
 
-func (rp *Parser) parseCategoryTo(cats []*Category) []*Category {
+func (rp *Parser) appendCategory(cats []*Category) []*Category {
 	cat, err := rp.parseCategory()
 	if err != nil {
 		rp.err = err
@@ -553,7 +576,7 @@ func (rp *Parser) parseCategoryTo(cats []*Category) []*Category {
 }
 
 func (rp *Parser) parseCategory() (cat *Category, err error) {
-	if err = rp.expect(xpp.StartTag, "category"); err != nil {
+	if err = rp.expect(xpp.StartTag, categoryTag); err != nil {
 		return nil, err
 	}
 
@@ -565,27 +588,27 @@ func (rp *Parser) parseCategory() (cat *Category, err error) {
 	}
 	cat.Value = result
 
-	if err = rp.expect(xpp.EndTag, "category"); err != nil {
+	if err = rp.expect(xpp.EndTag, categoryTag); err != nil {
 		return nil, err
 	}
 	return cat, nil
 }
 
-func (rp *Parser) parseTextInputTo(ref **TextInput) {
+func (rp *Parser) textInput() *TextInput {
 	ti, err := rp.parseTextInput()
 	if err != nil {
 		rp.err = err
-		return
+		return nil
 	}
-	*ref = ti
+	return ti
 }
 
 func (rp *Parser) parseTextInput() (*TextInput, error) {
-	if err := rp.expect(xpp.StartTag, "textinput"); err != nil {
+	if err := rp.expect(xpp.StartTag, textInputTag); err != nil {
 		return nil, err
 	}
 
-	ti := &TextInput{}
+	ti := new(TextInput)
 
 	for {
 		tok, err := rp.nextTag()
@@ -600,27 +623,27 @@ func (rp *Parser) parseTextInput() (*TextInput, error) {
 		if tok == xpp.StartTag {
 			switch strings.ToLower(rp.p.Name) {
 			case "title":
-				rp.parseTextTo(&ti.Title)
+				ti.Title = rp.text()
 			case "description":
-				rp.parseTextTo(&ti.Description)
+				ti.Description = rp.text()
 			case "name":
-				rp.parseTextTo(&ti.Name)
+				ti.Name = rp.text()
 			case "link":
-				rp.parseTextTo(&ti.Link)
+				ti.Link = rp.text()
 			default:
 				rp.p.Skip() //nolint:errcheck // upstream ignores err
 			}
 		}
 	}
 
-	if err := rp.expect(xpp.EndTag, "textinput"); err != nil {
+	if err := rp.expect(xpp.EndTag, textInputTag); err != nil {
 		return nil, err
 	}
 	return ti, nil
 }
 
-func (rp *Parser) parseSkipHoursTo(hours []string) []string {
-	skipHours, err := rp.parseSkipHours()
+func (rp *Parser) appendSkipHours(hours []string) []string {
+	skipHours, err := rp.parseSkipSomething(skipHoursTag, "hour")
 	if err != nil {
 		rp.err = err
 		return hours
@@ -628,8 +651,8 @@ func (rp *Parser) parseSkipHoursTo(hours []string) []string {
 	return append(slices.Grow(hours, len(skipHours)), skipHours...)
 }
 
-func (rp *Parser) parseSkipHours() ([]string, error) {
-	if err := rp.expect(xpp.StartTag, "skiphours"); err != nil {
+func (rp *Parser) parseSkipSomething(tag, unit string) ([]string, error) {
+	if err := rp.expect(xpp.StartTag, tag); err != nil {
 		return nil, err
 	}
 
@@ -648,7 +671,7 @@ func (rp *Parser) parseSkipHours() ([]string, error) {
 		}
 
 		name := strings.ToLower(rp.p.Name)
-		if name != "hour" {
+		if name != unit {
 			rp.p.Skip() //nolint:errcheck // upstream ignores err
 			continue
 		}
@@ -660,14 +683,14 @@ func (rp *Parser) parseSkipHours() ([]string, error) {
 		hours = append(hours, result)
 	}
 
-	if err := rp.expect(xpp.EndTag, "skiphours"); err != nil {
+	if err := rp.expect(xpp.EndTag, tag); err != nil {
 		return nil, err
 	}
 	return hours, nil
 }
 
-func (rp *Parser) parseSkipDaysTo(days []string) []string {
-	skipDays, err := rp.parseSkipDays()
+func (rp *Parser) appendSkipDays(days []string) []string {
+	skipDays, err := rp.parseSkipSomething(skipDaysTag, "day")
 	if err != nil {
 		rp.err = err
 		return days
@@ -675,69 +698,38 @@ func (rp *Parser) parseSkipDaysTo(days []string) []string {
 	return append(slices.Grow(days, len(skipDays)), skipDays...)
 }
 
-func (rp *Parser) parseSkipDays() ([]string, error) {
-	if err := rp.expect(xpp.StartTag, "skipdays"); err != nil {
-		return nil, err
-	}
-
-	days := []string{}
-
-	for {
-		tok, err := rp.nextTag()
-		if err != nil {
-			return nil, err
-		}
-
-		if tok == xpp.EndTag {
-			break
-		} else if tok != xpp.StartTag {
-			continue
-		}
-
-		name := strings.ToLower(rp.p.Name)
-		if name != "day" {
-			rp.p.Skip() //nolint:errcheck // upstream ignores err
-			continue
-		}
-
-		result, err := shared.ParseText(rp.p)
-		if err != nil {
-			return nil, err
-		}
-		days = append(days, result)
-	}
-
-	if err := rp.expect(xpp.EndTag, "skipdays"); err != nil {
-		return nil, err
-	}
-	return days, nil
-}
-
-func (rp *Parser) parseCloudTo(ref **Cloud) {
+func (rp *Parser) cloud() *Cloud {
 	result, err := rp.parseCloud()
 	if err != nil {
 		rp.err = err
-		return
+		return nil
 	}
-	*ref = result
+	return result
 }
 
 func (rp *Parser) parseCloud() (*Cloud, error) {
-	if err := rp.expect(xpp.StartTag, "cloud"); err != nil {
+	if err := rp.expect(xpp.StartTag, cloudTag); err != nil {
 		return nil, err
 	}
 
-	cloud := &Cloud{
-		Domain:            rp.p.Attribute("domain"),
-		Port:              rp.p.Attribute("port"),
-		Path:              rp.p.Attribute("path"),
-		RegisterProcedure: rp.p.Attribute("registerProcedure"),
-		Protocol:          rp.p.Attribute("protocol"),
+	cloud := new(Cloud)
+	for _, attr := range rp.p.Attrs {
+		switch v := attr.Name.Local; v {
+		case "domain":
+			cloud.Domain = attr.Value
+		case "port":
+			cloud.Port = attr.Value
+		case "path":
+			cloud.Path = attr.Value
+		case "registerProcedure":
+			cloud.RegisterProcedure = attr.Value
+		case "protocol":
+			cloud.Protocol = attr.Value
+		}
 	}
-
 	rp.nextTag() //nolint:errcheck // upstream ignores err
 
-	if err := rp.expect(xpp.EndTag, "cloud"); err != nil {
+	if err := rp.expect(xpp.EndTag, cloudTag); err != nil {
 		return nil, err
 	}
 	return cloud, nil
@@ -765,12 +757,15 @@ func (rp *Parser) parseCustomExtInto(extensions ext.Extensions) (ext.Extensions,
 ) {
 	custom := ext.Extension{
 		Name:  rp.p.Name,
-		Attrs: make(map[string]string),
+		Attrs: emptyAttrs,
 	}
 
 	// Copy attributes
-	for _, attr := range rp.p.Attrs {
-		custom.Attrs[attr.Name.Local] = attr.Value
+	if n := len(rp.p.Attrs); n != 0 {
+		custom.Attrs = make(map[string]string, n)
+		for _, attr := range rp.p.Attrs {
+			custom.Attrs[attr.Name.Local] = attr.Value
+		}
 	}
 
 	// Parse the text content
@@ -783,14 +778,11 @@ func (rp *Parser) parseCustomExtInto(extensions ext.Extensions) (ext.Extensions,
 
 	// Initialize extensions map if needed
 	if extensions == nil {
-		extensions = make(ext.Extensions)
+		extensions = ext.Extensions{customKey: {rp.p.Name: {custom}}}
+	} else if m, ok := extensions[customKey]; !ok {
+		extensions[customKey] = map[string][]ext.Extension{rp.p.Name: {custom}}
+	} else {
+		m[rp.p.Name] = append(m[rp.p.Name], custom)
 	}
-	if extensions["_custom"] == nil {
-		extensions["_custom"] = make(map[string][]ext.Extension)
-	}
-
-	// Add to extensions
-	extensions["_custom"][rp.p.Name] = append(
-		extensions["_custom"][rp.p.Name], custom)
 	return extensions, true
 }
