@@ -9,12 +9,16 @@ import (
 	ext "github.com/dsh2dsh/gofeed/v2/extensions"
 )
 
+var (
+	emptyAttrs    = map[string]string{}
+	emptyChildren = map[string][]ext.Extension{}
+)
+
 // IsExtension returns whether or not the current
 // XML element is an extension element (if it has a
 // non empty prefix)
 func IsExtension(p *xpp.XMLPullParser) bool {
-	space := strings.TrimSpace(p.Space)
-	prefix := PrefixForNamespace(space, p)
+	prefix := PrefixForNamespace(p.Space, p)
 	return prefix != "" && prefix != "rss" && prefix != "rdf" && prefix != "content"
 }
 
@@ -30,10 +34,11 @@ func ParseExtension(fe ext.Extensions, p *xpp.XMLPullParser) (ext.Extensions, er
 	}
 
 	// Ensure the extension prefix map exists
-	if _, ok := fe[prefix]; !ok {
-		fe[prefix] = map[string][]ext.Extension{}
+	if m, ok := fe[prefix]; ok {
+		m[p.Name] = append(m[p.Name], result)
+	} else {
+		fe[prefix] = map[string][]ext.Extension{p.Name: {result}}
 	}
-	fe[prefix][p.Name] = append(fe[prefix][p.Name], result)
 	return fe, nil
 }
 
@@ -43,13 +48,16 @@ func parseExtensionElement(p *xpp.XMLPullParser) (e ext.Extension, err error) {
 	}
 
 	e.Name = p.Name
-	e.Children = map[string][]ext.Extension{}
+	e.Attrs = emptyAttrs
+	e.Children = emptyChildren
 
-	e.Attrs = make(map[string]string, len(p.Attrs))
-	for _, attr := range p.Attrs {
-		// TODO: Alright that we are stripping
-		// namespace information from attributes ?
-		e.Attrs[attr.Name.Local] = attr.Value
+	if n := len(p.Attrs); n != 0 {
+		e.Attrs = make(map[string]string, n)
+		for _, attr := range p.Attrs {
+			// TODO: Alright that we are stripping
+			// namespace information from attributes ?
+			e.Attrs[attr.Name.Local] = attr.Value
+		}
 	}
 
 	var textValue strings.Builder
@@ -69,18 +77,20 @@ func parseExtensionElement(p *xpp.XMLPullParser) (e ext.Extension, err error) {
 			if err != nil {
 				return e, err
 			}
-			e.Children[child.Name] = append(e.Children[child.Name], child)
+			if len(e.Children) == 0 {
+				e.Children = map[string][]ext.Extension{child.Name: {child}}
+			} else {
+				e.Children[child.Name] = append(e.Children[child.Name], child)
+			}
 		case xpp.Text:
 			textValue.WriteString(p.Text())
 		}
 	}
-
 	e.Value = strings.TrimSpace(textValue.String())
 
 	if err = p.Expect(xpp.EndTag, e.Name); err != nil {
 		return e, fmt.Errorf("gofeed/internal/shared: %w", err)
 	}
-
 	return e, nil
 }
 

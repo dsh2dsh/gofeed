@@ -310,8 +310,7 @@ func (rp *Parser) parseItem() (item *Item, err error) {
 			case "description":
 				rp.parseTextTo(&item.Description)
 			case "encoded":
-				space := strings.TrimSpace(rp.p.Space)
-				prefix := shared.PrefixForNamespace(space, rp.p)
+				prefix := shared.PrefixForNamespace(rp.p.Space, rp.p)
 				if prefix == "content" {
 					rp.parseTextTo(&item.Content)
 				}
