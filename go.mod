@@ -3,7 +3,7 @@ module github.com/dsh2dsh/gofeed/v2
 go 1.25
 
 require (
-	github.com/dsh2dsh/goxpp/v2 v2.0.2
+	github.com/dsh2dsh/goxpp/v2 v2.0.3
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/net v0.17.0
 	golang.org/x/sync v0.17.0
@@ -15,3 +15,5 @@ require (
 	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/dsh2dsh/goxpp/v2 => ../goxpp

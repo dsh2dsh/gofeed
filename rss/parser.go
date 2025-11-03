@@ -11,6 +11,7 @@ import (
 	xpp "github.com/dsh2dsh/goxpp/v2"
 
 	ext "github.com/dsh2dsh/gofeed/v2/extensions"
+	"github.com/dsh2dsh/gofeed/v2/internal/dublincore"
 	"github.com/dsh2dsh/gofeed/v2/internal/shared"
 	"github.com/dsh2dsh/gofeed/v2/options"
 )
@@ -192,12 +193,7 @@ func (rp *Parser) parseChannel() (rss *Feed, err error) {
 		}
 
 		if tok == xpp.StartTag {
-			if shared.IsExtension(rp.p) {
-				e, err := shared.ParseExtension(rss.Extensions, rp.p)
-				if err != nil {
-					return nil, err
-				}
-				rss.Extensions = e
+			if rp.parseChannelExt(rss) {
 				continue
 			}
 
@@ -264,9 +260,6 @@ func (rp *Parser) parseChannel() (rss *Feed, err error) {
 		if itunes, ok := rss.Extensions[itunesKey]; ok {
 			rss.ITunesExt = ext.NewITunesFeedExtension(itunes)
 		}
-		if dc, ok := rss.Extensions[dcKey]; ok {
-			rss.DublinCoreExt = ext.NewDublinCoreExtension(dc)
-		}
 	}
 	return rss, nil
 }
@@ -307,12 +300,7 @@ func (rp *Parser) parseItem() (item *Item, err error) {
 		}
 
 		if tok == xpp.StartTag {
-			if shared.IsExtension(rp.p) {
-				e, err := shared.ParseExtension(item.Extensions, rp.p)
-				if err != nil {
-					return nil, err
-				}
-				item.Extensions = e
+			if rp.parseItemExt(item) {
 				continue
 			}
 
@@ -361,10 +349,6 @@ func (rp *Parser) parseItem() (item *Item, err error) {
 		if itunes, ok := item.Extensions[itunesKey]; ok {
 			item.ITunesExt = ext.NewITunesItemExtension(itunes)
 		}
-		if dc, ok := item.Extensions[dcKey]; ok {
-			item.DublinCoreExt = ext.NewDublinCoreExtension(dc)
-		}
-
 	}
 	return item, nil
 }
@@ -785,4 +769,49 @@ func (rp *Parser) parseCustomExtInto(extensions ext.Extensions) (ext.Extensions,
 		m[rp.p.Name] = append(m[rp.p.Name], custom)
 	}
 	return extensions, true
+}
+
+func (rp *Parser) parseChannelExt(rss *Feed) bool {
+	switch shared.PrefixForNamespace(rp.p.Space, rp.p) {
+	case "", "rss", "rdf", "content":
+		return false
+	case dcKey:
+		rss.DublinCoreExt = rp.dublinCore(rss.DublinCoreExt)
+	case itunesKey:
+		rss.Extensions = rp.extensions(rss.Extensions)
+	default:
+		rss.Extensions = rp.extensions(rss.Extensions)
+	}
+	return true
+}
+
+func (rp *Parser) dublinCore(dc *ext.DublinCoreExtension,
+) *ext.DublinCoreExtension {
+	dc, err := dublincore.Parse(rp.p, dc)
+	if err != nil {
+		rp.err = err
+	}
+	return dc
+}
+
+func (rp *Parser) extensions(e ext.Extensions) ext.Extensions {
+	e, err := shared.ParseExtension(e, rp.p)
+	if err != nil {
+		rp.err = err
+	}
+	return e
+}
+
+func (rp *Parser) parseItemExt(item *Item) bool {
+	switch shared.PrefixForNamespace(rp.p.Space, rp.p) {
+	case "", "rss", "rdf", "content":
+		return false
+	case dcKey:
+		item.DublinCoreExt = rp.dublinCore(item.DublinCoreExt)
+	case itunesKey:
+		item.Extensions = rp.extensions(item.Extensions)
+	default:
+		item.Extensions = rp.extensions(item.Extensions)
+	}
+	return true
 }

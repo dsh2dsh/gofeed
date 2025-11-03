@@ -30,24 +30,6 @@ func parseTextExtension(name string, extensions map[string][]Extension) string {
 	return matches[0].Value
 }
 
-func parseTextArrayExtension(name string, extensions map[string][]Extension,
-) []string {
-	if extensions == nil {
-		return nil
-	}
-
-	matches, ok := extensions[name]
-	if !ok || len(matches) == 0 {
-		return nil
-	}
-
-	values := make([]string, len(matches))
-	for i := range matches {
-		values[i] = matches[i].Value
-	}
-	return values
-}
-
 func ElementsSeq(extensions Extensions, keys ...string,
 ) iter.Seq[map[string][]Extension] {
 	return func(yield func(map[string][]Extension) bool) {

@@ -84,30 +84,30 @@ func (self Feed) String() string {
 }
 
 func (self *Feed) GetTitle() string {
-	if self.Title != "" {
+	switch {
+	case self.Title != "":
 		return self.Title
-	}
-	if self.DublinCoreExt != nil && len(self.DublinCoreExt.Title) != 0 {
-		return firstItem(self.DublinCoreExt.Title)
+	case self.DublinCoreExt != nil:
+		return self.DublinCoreExt.Title
 	}
 	return ""
 }
 
 func (self *Feed) GetDescription() string {
-	if self.Description != "" {
+	switch {
+	case self.Description != "":
 		return self.Description
-	}
-	if self.ITunesExt != nil && self.ITunesExt.Summary != "" {
+	case self.ITunesExt != nil && self.ITunesExt.Summary != "":
 		return self.ITunesExt.Summary
 	}
 	return ""
 }
 
 func (self *Feed) GetLink() string {
-	if self.Link != "" {
+	switch {
+	case self.Link != "":
 		return self.Link
-	}
-	if self.ITunesExt != nil && self.ITunesExt.Subtitle != "" {
+	case self.ITunesExt != nil && self.ITunesExt.Subtitle != "":
 		return self.ITunesExt.Subtitle
 	}
 	return ""
@@ -120,12 +120,12 @@ func (self *Feed) GetFeedLink() (link string) {
 			for i := range links {
 				l := &links[i]
 				if l.Attrs["rel"] == "self" {
-					link = l.Attrs["href"]
+					return l.Attrs["href"]
 				}
 			}
 		}
 	}
-	return link
+	return ""
 }
 
 func (self *Feed) GetLinks() (links []string) {
@@ -151,11 +151,11 @@ func (self *Feed) GetLinks() (links []string) {
 }
 
 func (self *Feed) GetUpdated() string {
-	if self.LastBuildDate != "" {
+	switch {
+	case self.LastBuildDate != "":
 		return self.LastBuildDate
-	}
-	if self.DublinCoreExt != nil && len(self.DublinCoreExt.Date) != 0 {
-		return firstItem(self.DublinCoreExt.Date)
+	case self.DublinCoreExt != nil:
+		return self.DublinCoreExt.Date
 	}
 	return ""
 }
@@ -164,11 +164,13 @@ func (self *Feed) GetUpdatedParsed() *time.Time {
 	if self.LastBuildDateParsed != nil {
 		return self.LastBuildDateParsed
 	}
-	if self.DublinCoreExt != nil && len(self.DublinCoreExt.Date) != 0 {
-		date, err := shared.ParseDate(firstItem(self.DublinCoreExt.Date))
-		if err == nil {
-			return &date
-		}
+
+	if self.DublinCoreExt == nil || self.DublinCoreExt.Date == "" {
+		return nil
+	}
+
+	if date, err := shared.ParseDate(self.DublinCoreExt.Date); err == nil {
+		return &date
 	}
 	return nil
 }
@@ -181,11 +183,11 @@ func (self *Feed) GetAuthor() (name, address string, ok bool) {
 	case self.WebMaster != "":
 		name, address = shared.ParseNameAddress(self.WebMaster)
 		return name, address, true
-	case self.DublinCoreExt != nil && len(self.DublinCoreExt.Author) != 0:
-		name, address = shared.ParseNameAddress(firstItem(self.DublinCoreExt.Author))
+	case self.DublinCoreExt != nil && self.DublinCoreExt.Author != "":
+		name, address = shared.ParseNameAddress(self.DublinCoreExt.Author)
 		return name, address, true
-	case self.DublinCoreExt != nil && len(self.DublinCoreExt.Creator) != 0:
-		name, address = shared.ParseNameAddress(firstItem(self.DublinCoreExt.Creator))
+	case self.DublinCoreExt != nil && self.DublinCoreExt.Creator != "":
+		name, address = shared.ParseNameAddress(self.DublinCoreExt.Creator)
 		return name, address, true
 	case self.ITunesExt != nil && self.ITunesExt.Author != "":
 		name, address = shared.ParseNameAddress(self.ITunesExt.Author)
@@ -195,11 +197,11 @@ func (self *Feed) GetAuthor() (name, address string, ok bool) {
 }
 
 func (self *Feed) GetLanguage() string {
-	if self.Language != "" {
+	switch {
+	case self.Language != "":
 		return self.Language
-	}
-	if self.DublinCoreExt != nil && len(self.DublinCoreExt.Language) != 0 {
-		return firstItem(self.DublinCoreExt.Language)
+	case self.DublinCoreExt != nil:
+		return self.DublinCoreExt.Language
 	}
 	return ""
 }
@@ -235,11 +237,11 @@ func (self *Feed) GetImage() *Image {
 }
 
 func (self *Feed) GetCopyright() string {
-	if self.Copyright != "" {
+	switch {
+	case self.Copyright != "":
 		return self.Copyright
-	}
-	if self.DublinCoreExt != nil && len(self.DublinCoreExt.Rights) != 0 {
-		return firstItem(self.DublinCoreExt.Rights)
+	case self.DublinCoreExt != nil:
+		return self.DublinCoreExt.Rights
 	}
 	return ""
 }
@@ -269,18 +271,10 @@ func (self *Feed) GetCategories() []string {
 		}
 	}
 
-	if self.DublinCoreExt != nil && len(self.DublinCoreExt.Subject) != 0 {
-		cats = slices.Grow(cats, len(self.DublinCoreExt.Subject))
-		cats = append(cats, self.DublinCoreExt.Subject...)
+	if self.DublinCoreExt != nil && self.DublinCoreExt.Subject != "" {
+		cats = append(cats, self.DublinCoreExt.Subject)
 	}
 	return cats
-}
-
-func firstItem(items []string) string {
-	if len(items) == 0 {
-		return ""
-	}
-	return items[0]
 }
 
 // Item is an RSS Item
@@ -326,11 +320,11 @@ type Source struct {
 }
 
 func (self *Item) GetTitle() string {
-	if self.Title != "" {
+	switch {
+	case self.Title != "":
 		return self.Title
-	}
-	if self.DublinCoreExt != nil && len(self.DublinCoreExt.Title) != 0 {
-		return firstItem(self.DublinCoreExt.Title)
+	case self.DublinCoreExt != nil:
+		return self.DublinCoreExt.Title
 	}
 	return ""
 }
@@ -339,8 +333,8 @@ func (self *Item) GetDescription() string {
 	switch {
 	case self.Description != "":
 		return self.Description
-	case self.DublinCoreExt != nil && len(self.DublinCoreExt.Description) != 0:
-		return firstItem(self.DublinCoreExt.Description)
+	case self.DublinCoreExt != nil && self.DublinCoreExt.Description != "":
+		return self.DublinCoreExt.Description
 	case self.ITunesExt != nil && self.ITunesExt.Summary != "":
 		return self.ITunesExt.Summary
 	}
@@ -348,11 +342,11 @@ func (self *Item) GetDescription() string {
 }
 
 func (self *Item) GetPublished() string {
-	if self.PubDate != "" {
+	switch {
+	case self.PubDate != "":
 		return self.PubDate
-	}
-	if self.DublinCoreExt != nil && len(self.DublinCoreExt.Date) != 0 {
-		return firstItem(self.DublinCoreExt.Date)
+	case self.DublinCoreExt != nil:
+		return self.DublinCoreExt.Date
 	}
 	return ""
 }
@@ -361,11 +355,14 @@ func (self *Item) GetPublishedParsed() *time.Time {
 	if self.PubDateParsed != nil {
 		return self.PubDateParsed
 	}
-	if self.DublinCoreExt != nil && len(self.DublinCoreExt.Date) != 0 {
-		pubDateParsed, err := shared.ParseDate(firstItem(self.DublinCoreExt.Date))
-		if err == nil {
-			return &pubDateParsed
-		}
+
+	if self.DublinCoreExt == nil || self.DublinCoreExt.Date == "" {
+		return nil
+	}
+
+	pubDateParsed, err := shared.ParseDate(self.DublinCoreExt.Date)
+	if err == nil {
+		return &pubDateParsed
 	}
 	return nil
 }
@@ -375,13 +372,11 @@ func (self *Item) GetAuthor() (name, address string, ok bool) {
 	case self.Author != "":
 		name, address = shared.ParseNameAddress(self.Author)
 		return name, address, true
-	case self.DublinCoreExt != nil && len(self.DublinCoreExt.Author) != 0:
-		name, address = shared.ParseNameAddress(firstItem(
-			self.DublinCoreExt.Author))
+	case self.DublinCoreExt != nil && self.DublinCoreExt.Author != "":
+		name, address = shared.ParseNameAddress(self.DublinCoreExt.Author)
 		return name, address, true
-	case self.DublinCoreExt != nil && len(self.DublinCoreExt.Creator) != 0:
-		name, address = shared.ParseNameAddress(firstItem(
-			self.DublinCoreExt.Creator))
+	case self.DublinCoreExt != nil && self.DublinCoreExt.Creator != "":
+		name, address = shared.ParseNameAddress(self.DublinCoreExt.Creator)
 		return name, address, true
 	case self.ITunesExt != nil && self.ITunesExt.Author != "":
 		name, address = shared.ParseNameAddress(self.ITunesExt.Author)
@@ -437,9 +432,8 @@ func (self *Item) GetCategories() []string {
 			self.ITunesExt.Keywords, ","))
 	}
 
-	if self.DublinCoreExt != nil && len(self.DublinCoreExt.Subject) != 0 {
-		cats = slices.Grow(cats, len(self.DublinCoreExt.Subject))
-		cats = append(cats, self.DublinCoreExt.Subject...)
+	if self.DublinCoreExt != nil && self.DublinCoreExt.Subject != "" {
+		cats = append(cats, self.DublinCoreExt.Subject)
 	}
 	return cats
 }

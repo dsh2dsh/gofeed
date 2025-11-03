@@ -48,7 +48,6 @@ func FindRoot(p *xpp.XMLPullParser) (event xpp.XMLEventType, err error) {
 // an element.
 func ParseText(p *xpp.XMLPullParser) (string, error) {
 	var text struct {
-		Type     string `xml:"type,attr"`
 		InnerXML string `xml:",innerxml"`
 	}
 

@@ -1,0 +1,8 @@
+<rss version="2.0">
+  <channel>
+    <item>
+      <author>Item Author</author>
+      <dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">DC Creator</dc:creator>
+    </item>
+  </channel>
+</rss>
