@@ -31,30 +31,27 @@ func TestParser_Parse(t *testing.T) {
 		base := filepath.Base(f)
 		name := strings.TrimSuffix(base, filepath.Ext(base))
 
-		t.Logf("Testing %s... ", name)
+		t.Run(name, func(t *testing.T) {
+			t.Logf("Testing %s... ", name)
 
-		// Get actual source feed
-		f, err := os.ReadFile(fmt.Sprintf("testdata/%s.xml", name))
-		require.NoError(t, err)
+			// Get actual source feed
+			f, err := os.ReadFile(fmt.Sprintf("testdata/%s.xml", name))
+			require.NoError(t, err)
 
-		// Parse actual feed
-		actual, err := rss.NewParser().Parse(bytes.NewReader(f))
-		require.NoError(t, err)
+			// Parse actual feed
+			actual, err := rss.NewParser().Parse(bytes.NewReader(f))
+			require.NoError(t, err)
 
-		// Get json encoded expected feed result
-		e, err := os.ReadFile(fmt.Sprintf("testdata/%s.json", name))
-		require.NoError(t, err)
+			// Get json encoded expected feed result
+			e, err := os.ReadFile(fmt.Sprintf("testdata/%s.json", name))
+			require.NoError(t, err)
 
-		// Unmarshal expected feed
-		var expected rss.Feed
-		require.NoError(t, json.Unmarshal(e, &expected))
+			// Unmarshal expected feed
+			var expected rss.Feed
+			require.NoError(t, json.Unmarshal(e, &expected))
 
-		ok := assert.Equal(t, &expected, actual,
-			"Feed file %s.xml did not match expected output %s.json", name, name)
-		if ok {
-			fmt.Printf("OK\n")
-		} else {
-			fmt.Printf("Failed\n")
-		}
+			assert.Equal(t, &expected, actual,
+				"Feed file %s.xml did not match expected output %s.json", name, name)
+		})
 	}
 }
