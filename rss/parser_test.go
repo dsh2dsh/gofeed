@@ -15,6 +15,15 @@ import (
 	"github.com/dsh2dsh/gofeed/v2/rss"
 )
 
+func TestParse(t *testing.T) {
+	data, err := os.ReadFile("testdata/bench/large_rss.xml")
+	require.NoError(t, err)
+
+	feed, err := rss.NewParser().Parse(bytes.NewReader(data), nil)
+	require.NoError(t, err)
+	assert.NotNil(t, feed)
+}
+
 func BenchmarkParse(b *testing.B) {
 	data, err := os.ReadFile("testdata/bench/large_rss.xml")
 	require.NoError(b, err)
@@ -32,7 +41,19 @@ func TestParser_Parse(t *testing.T) {
 		name := strings.TrimSuffix(base, filepath.Ext(base))
 
 		t.Run(name, func(t *testing.T) {
-			t.Logf("Testing %s... ", name)
+			t.Logf("Testing %s ... ", base)
+
+			// Get json encoded expected feed result
+			e, err := os.ReadFile(fmt.Sprintf("testdata/%s.json", name))
+			require.NoError(t, err)
+
+			// Unmarshal expected feed
+			var expected struct {
+				rss.Feed
+
+				ErrorContains string `json:"errorContains"`
+			}
+			require.NoError(t, json.Unmarshal(e, &expected))
 
 			// Get actual source feed
 			f, err := os.ReadFile(fmt.Sprintf("testdata/%s.xml", name))
@@ -40,17 +61,15 @@ func TestParser_Parse(t *testing.T) {
 
 			// Parse actual feed
 			actual, err := rss.NewParser().Parse(bytes.NewReader(f))
+
+			if expected.ErrorContains != "" {
+				t.Log(err)
+				require.ErrorContains(t, err, expected.ErrorContains)
+				return
+			}
+
 			require.NoError(t, err)
-
-			// Get json encoded expected feed result
-			e, err := os.ReadFile(fmt.Sprintf("testdata/%s.json", name))
-			require.NoError(t, err)
-
-			// Unmarshal expected feed
-			var expected rss.Feed
-			require.NoError(t, json.Unmarshal(e, &expected))
-
-			assert.Equal(t, &expected, actual,
+			assert.Equal(t, &expected.Feed, actual,
 				"Feed file %s.xml did not match expected output %s.json", name, name)
 		})
 	}
