@@ -60,11 +60,10 @@ func (t *DefaultRSSTranslator) Translate(feed any, opts *options.Parse) (*Feed, 
 }
 
 func (t *DefaultRSSTranslator) translateFeedItem(rssItem *rss.Item) *Item {
-	return &Item{
+	item := &Item{
 		Title:           rssItem.GetTitle(),
 		Description:     rssItem.GetDescription(),
 		Content:         rssItem.Content,
-		Link:            rssItem.Link,
 		Links:           rssItem.Links,
 		Published:       rssItem.GetPublished(),
 		PublishedParsed: rssItem.GetPublishedParsed(),
@@ -78,6 +77,11 @@ func (t *DefaultRSSTranslator) translateFeedItem(rssItem *rss.Item) *Item {
 		ITunesExt:       rssItem.ITunesExt,
 		Extensions:      rssItem.Extensions,
 	}
+
+	if len(item.Links) != 0 {
+		item.Link = item.Links[0]
+	}
+	return item
 }
 
 func (t *DefaultRSSTranslator) feedAuthor(rss *rss.Feed) *Person {

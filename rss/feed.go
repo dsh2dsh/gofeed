@@ -13,7 +13,6 @@ import (
 // Feed is an RSS Feed
 type Feed struct {
 	Title               string                   `json:"title,omitempty"`
-	Link                string                   `json:"link,omitempty"`
 	Links               []string                 `json:"links,omitempty"`
 	Description         string                   `json:"description,omitempty"`
 	Language            string                   `json:"language,omitempty"`
@@ -110,8 +109,8 @@ func (self *Feed) GetDescription() string {
 
 func (self *Feed) GetLink() string {
 	switch {
-	case self.Link != "":
-		return self.Link
+	case len(self.Links) != 0:
+		return self.Links[0]
 	case self.ITunesExt != nil && self.ITunesExt.Subtitle != "":
 		return self.ITunesExt.Subtitle
 	}
@@ -285,7 +284,6 @@ func (self *Feed) GetCategories() []string {
 // Item is an RSS Item
 type Item struct {
 	Title         string                   `json:"title,omitempty"`
-	Link          string                   `json:"link,omitempty"`
 	Links         []string                 `json:"links,omitempty"`
 	Description   string                   `json:"description,omitempty"`
 	Content       string                   `json:"content,omitempty"`

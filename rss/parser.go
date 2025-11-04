@@ -203,7 +203,7 @@ func (rp *Parser) parseChannel() (rss *Feed, err error) {
 			case "description":
 				rss.Description = rp.text()
 			case "link":
-				rss.Link, rss.Links = rp.appendLink(rss.Link, rss.Links)
+				rss.Links = rp.appendLink(rss.Links)
 			case "language":
 				rss.Language = rp.text()
 			case "copyright":
@@ -315,7 +315,7 @@ func (rp *Parser) parseItem() (item *Item, err error) {
 					item.Content = rp.text()
 				}
 			case "link":
-				item.Link, item.Links = rp.appendLink(item.Link, item.Links)
+				item.Links = rp.appendLink(item.Links)
 			case "author":
 				item.Author = rp.text()
 			case "comments":
@@ -353,18 +353,12 @@ func (rp *Parser) parseItem() (item *Item, err error) {
 	return item, nil
 }
 
-func (rp *Parser) appendLink(firstLink string, links []string,
-) (string, []string) {
+func (rp *Parser) appendLink(links []string) []string {
 	result := rp.parseLink()
 	if rp.err != nil {
-		return firstLink, links
+		return links
 	}
-
-	links = append(links, result)
-	if firstLink == "" {
-		firstLink = result
-	}
-	return firstLink, links
+	return append(links, result)
 }
 
 func (rp *Parser) parseLink() string {
