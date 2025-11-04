@@ -78,9 +78,14 @@ type Cloud struct {
 	Protocol          string `json:"protocol,omitempty"`
 }
 
-func (self Feed) String() string {
-	json, _ := json.MarshalIndent(self, "", "    ")
-	return string(json)
+func (self *Feed) String() string {
+	var b strings.Builder
+	enc := json.NewEncoder(&b)
+	enc.SetEscapeHTML(false)
+	enc.SetIndent("", "  ")
+
+	_ = enc.Encode(self)
+	return b.String()
 }
 
 func (self *Feed) GetTitle() string {
