@@ -355,9 +355,8 @@ func (rp *Parser) parseItem() (item *Item, err error) {
 
 func (rp *Parser) appendLink(firstLink string, links []string,
 ) (string, []string) {
-	result, err := rp.parseLink()
-	if err != nil {
-		rp.err = err
+	result := rp.parseLink()
+	if rp.err != nil {
 		return firstLink, links
 	}
 
@@ -368,23 +367,22 @@ func (rp *Parser) appendLink(firstLink string, links []string,
 	return firstLink, links
 }
 
-func (rp *Parser) parseLink() (string, error) {
+func (rp *Parser) parseLink() string {
 	href := rp.p.Attribute("href")
-	url, err := shared.ParseText(rp.p)
-	if err != nil {
-		return "", err
+	url := rp.text()
+	if rp.err != nil {
+		return ""
 	}
 
 	if url == "" && href != "" {
 		url = href
 	}
-	return url, nil
+	return url
 }
 
 func (rp *Parser) parseDate() (string, *time.Time) {
-	result, err := shared.ParseText(rp.p)
-	if err != nil {
-		rp.err = err
+	result := rp.text()
+	if rp.err != nil {
 		return "", nil
 	}
 
@@ -413,9 +411,9 @@ func (rp *Parser) parseSource() (source *Source, err error) {
 
 	source = &Source{URL: rp.p.Attribute("url")}
 
-	result, err := shared.ParseText(rp.p)
-	if err != nil {
-		return nil, err
+	result := rp.text()
+	if rp.err != nil {
+		return nil, rp.err
 	}
 	source.Title = result
 
@@ -538,9 +536,9 @@ func (rp *Parser) parseGUID() (guid *GUID, err error) {
 
 	guid = &GUID{IsPermalink: rp.p.Attribute("isPermalink")}
 
-	result, err := shared.ParseText(rp.p)
-	if err != nil {
-		return nil, err
+	result := rp.text()
+	if rp.err != nil {
+		return nil, rp.err
 	}
 	guid.Value = result
 
@@ -566,9 +564,9 @@ func (rp *Parser) parseCategory() (cat *Category, err error) {
 
 	cat = &Category{Domain: rp.p.Attribute("domain")}
 
-	result, err := shared.ParseText(rp.p)
-	if err != nil {
-		return nil, err
+	result := rp.text()
+	if rp.err != nil {
+		return nil, rp.err
 	}
 	cat.Value = result
 
@@ -660,9 +658,9 @@ func (rp *Parser) parseSkipSomething(tag, unit string) ([]string, error) {
 			continue
 		}
 
-		result, err := shared.ParseText(rp.p)
-		if err != nil {
-			return nil, err
+		result := rp.text()
+		if rp.err != nil {
+			return nil, rp.err
 		}
 		hours = append(hours, result)
 	}
@@ -753,9 +751,8 @@ func (rp *Parser) parseCustomExtInto(extensions ext.Extensions) (ext.Extensions,
 	}
 
 	// Parse the text content
-	result, err := shared.ParseText(rp.p)
-	if err != nil {
-		rp.p.Skip() //nolint:errcheck // upstream ignores err
+	result := rp.text()
+	if rp.err != nil {
 		return nil, false
 	}
 	custom.Value = result
