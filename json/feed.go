@@ -2,6 +2,7 @@ package json
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/dsh2dsh/gofeed/v2/internal/shared"
@@ -30,9 +31,14 @@ type Feed struct {
 	Language string    `json:"language,omitempty"`
 }
 
-func (self Feed) String() string {
-	json, _ := json.MarshalIndent(self, "", "    ")
-	return string(json)
+func (self *Feed) String() string {
+	var b strings.Builder
+	enc := json.NewEncoder(&b)
+	enc.SetEscapeHTML(false)
+	enc.SetIndent("", "  ")
+
+	_ = enc.Encode(self)
+	return b.String()
 }
 
 func (self *Feed) GetLinks() (links []string) {
