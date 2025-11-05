@@ -1,5 +1,3 @@
 {
-    "webMaster": "<p>Feed WebMaster</p>",
-    "items": [],
-    "version": "2.0"
+  "errorContains": "got event=StartTag name=p"
 }

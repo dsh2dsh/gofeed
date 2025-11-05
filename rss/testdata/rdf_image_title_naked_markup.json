@@ -1,7 +1,3 @@
 {
-    "image": {
-        "title": "<p>Image Title</p>"
-    },
-    "items": [],
-    "version": "1.0"
+  "errorContains": "got event=StartTag name=p"
 }

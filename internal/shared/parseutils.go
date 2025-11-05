@@ -42,27 +42,14 @@ func FindRoot(p *xpp.XMLPullParser) (event xpp.XMLEventType, err error) {
 	return event, nil
 }
 
-// ParseText is a helper function for parsing the text
-// from the current element of the XMLPullParser.
-// This function can handle parsing naked XML text from
-// an element.
+// ParseText is a helper function for parsing the text from the current element
+// of the XMLPullParser.
 func ParseText(p *xpp.XMLPullParser) (string, error) {
-	var text struct {
-		InnerXML string `xml:",innerxml"`
-	}
-
-	err := p.DecodeElement(&text)
+	s, err := p.NextText()
 	if err != nil {
-		return "", fmt.Errorf("gofeed/internal/shared: %w", err)
+		return "", fmt.Errorf("gofeed/shared: parse text: %w", err)
 	}
-
-	result := text.InnerXML
-	result = strings.TrimSpace(result)
-
-	if strings.Contains(result, CDATA_START) {
-		return StripCDATA(result), nil
-	}
-	return html.UnescapeString(result), nil
+	return strings.TrimSpace(s), nil
 }
 
 // StripCDATA removes CDATA tags from the string

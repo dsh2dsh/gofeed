@@ -1,5 +1,3 @@
 {
-    "rights": "<p>Feed Copyright</p>",
-    "entries": [],
-    "version": "0.3"
+  "errorContains": "event=StartTag name=p"
 }

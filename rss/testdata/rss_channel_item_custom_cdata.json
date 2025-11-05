@@ -13,7 +13,7 @@
           "script": [
             {
               "name": "script",
-              "value": "\n        function test() {\n          return \"Hello & <World>\";\n        }\n      ",
+              "value": "function test() {\n          return \"Hello & <World>\";\n        }",
               "attrs": {}
             }
           ]

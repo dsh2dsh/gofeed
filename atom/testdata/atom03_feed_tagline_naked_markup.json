@@ -1,5 +1,3 @@
 {
-    "subtitle": "<p>Feed Tagline</p>",
-    "entries": [],
-    "version": "0.3"
+  "errorContains": "event=StartTag name=p"
 }

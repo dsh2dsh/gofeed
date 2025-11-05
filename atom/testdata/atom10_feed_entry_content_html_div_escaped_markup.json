@@ -1,11 +1,3 @@
 {
-    "entries": [
-        {
-            "content": {
-                "type": "html",
-                "value": "<p>Entry Content</p>"
-            }
-        }
-    ],
-    "version": "1.0"
+  "errorContains": "event=StartTag name=div"
 }

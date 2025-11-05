@@ -1,7 +1,3 @@
 {
-    "textInput": {
-        "name": "<p>TextInput Name</p>"
-    },
-    "items": [],
-    "version": "1.0"
+  "errorContains": "got event=StartTag name=p"
 }

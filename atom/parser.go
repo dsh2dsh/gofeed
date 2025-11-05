@@ -5,7 +5,6 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"html"
 	"io"
 	"strings"
 	"time"
@@ -540,67 +539,62 @@ func (ap *Parser) text() string {
 }
 
 func (ap *Parser) parseAtomText() (string, error) {
-	var text struct {
-		Type     string `xml:"type,attr"`
-		Mode     string `xml:"mode,attr"`
-		InnerXML string `xml:",innerxml"`
+	attrs := ap.textAttributes()
+	if attrs.XHTML() {
+		return ap.xhtmlContent()
+	}
 
+	xmlBaseResolver := ap.p.XmlBaseResolver()
+
+	result, err := shared.ParseText(ap.p)
+	if err != nil {
+		return "", fmt.Errorf("gofeed/atom: extract text from %q type=%s: %w",
+			ap.p.Name, attrs.Type, err)
+	}
+
+	if attrs.Encoded() {
+		if b, err := base64.StdEncoding.DecodeString(result); err == nil {
+			return string(b), nil
+		}
+	}
+
+	// resolve relative URIs in URI-containing elements according to xml:base
+	if _, ok := atomUriElements[strings.ToLower(ap.p.Name)]; !ok {
+		return result, nil
+	}
+
+	if u, err := xmlBaseResolver(result); err == nil && u != nil {
+		return u.String(), nil
+	}
+	return result, nil
+}
+
+func (ap *Parser) textAttributes() textAttributes {
+	var attrs textAttributes
+	for _, attr := range ap.p.Attrs {
+		switch attr.Name.Local {
+		case "mode":
+			attrs.Mode = attr.Value
+		case "type":
+			attrs.Type = strings.ToLower(attr.Value)
+		}
+	}
+	return attrs
+}
+
+func (ap *Parser) xhtmlContent() (string, error) {
+	var xhtmlContent struct {
 		XHTML struct {
 			XMLName  xml.Name `xml:"div"`
 			InnerXML string   `xml:",innerxml"`
 		} `xml:"http://www.w3.org/1999/xhtml div"`
 	}
 
-	// get current base URL before it is clobbered by DecodeElement
-	base := ap.p.BaseStack.Top()
-	err := ap.p.DecodeElement(&text)
-	if err != nil {
-		return "", fmt.Errorf("gofeed/atom: %w", err)
+	if err := ap.p.DecodeElement(&xhtmlContent); err != nil {
+		return "", fmt.Errorf("gofeed/atom: extract xhtml text from %q: %w",
+			ap.p.Name, err)
 	}
-
-	lowerType := strings.ToLower(text.Type)
-
-	var result string
-	xhtmlType := strings.Contains(lowerType, "xhtml") || lowerType == "html"
-	if xhtmlType && text.XHTML.XMLName.Local == "div" {
-		result = strings.TrimSpace(text.XHTML.InnerXML)
-	} else {
-		result = strings.TrimSpace(text.InnerXML)
-	}
-
-	if strings.Contains(result, "<![CDATA[") {
-		result = shared.StripCDATA(result)
-	} else {
-		// decode non-CDATA contents depending on type
-
-		switch {
-		case lowerType == "text" ||
-			strings.HasPrefix(lowerType, "text/") ||
-			(lowerType == "" && text.Mode == ""):
-			result = html.UnescapeString(result)
-		case strings.Contains(lowerType, "xhtml"):
-		// do nothing
-		case lowerType == "html":
-			result = html.UnescapeString(result)
-		default:
-			decodedStr, err := base64.StdEncoding.DecodeString(result)
-			if err == nil {
-				result = string(decodedStr)
-			}
-		}
-	}
-
-	// resolve relative URIs in URI-containing elements according to xml:base
-	if base == nil {
-		return result, nil
-	} else if _, ok := atomUriElements[strings.ToLower(ap.p.Name)]; !ok {
-		return result, nil
-	}
-
-	if u, err := xmlBaseResolveUrl(base, result); err == nil && u != nil {
-		return u.String(), nil
-	}
-	return result, nil
+	return strings.TrimSpace(xhtmlContent.XHTML.InnerXML), nil
 }
 
 func (ap *Parser) language() string { return ap.p.Attribute("lang") }
