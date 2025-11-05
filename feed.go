@@ -1,11 +1,10 @@
 package gofeed
 
 import (
-	"encoding/json"
-	"strings"
 	"time"
 
 	ext "github.com/dsh2dsh/gofeed/v2/extensions"
+	intJson "github.com/dsh2dsh/gofeed/v2/internal/json"
 )
 
 // Feed is the universal Feed type that atom.Feed
@@ -43,13 +42,8 @@ type Feed struct {
 
 // String returns a JSON representation of the Feed for debugging purposes.
 func (f *Feed) String() string {
-	var b strings.Builder
-	enc := json.NewEncoder(&b)
-	enc.SetEscapeHTML(false)
-	enc.SetIndent("", "  ")
-
-	_ = enc.Encode(f)
-	return b.String()
+	s, _ := intJson.MarshalString(f)
+	return s
 }
 
 // GetExtension retrieves extension values by namespace and element name.

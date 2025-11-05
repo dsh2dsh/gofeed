@@ -1,11 +1,11 @@
 package atom
 
 import (
-	"encoding/json"
 	"strings"
 	"time"
 
 	ext "github.com/dsh2dsh/gofeed/v2/extensions"
+	intJson "github.com/dsh2dsh/gofeed/v2/internal/json"
 )
 
 // Feed is an Atom Feed
@@ -64,13 +64,8 @@ type Category struct {
 }
 
 func (self *Feed) String() string {
-	var b strings.Builder
-	enc := json.NewEncoder(&b)
-	enc.SetEscapeHTML(false)
-	enc.SetIndent("", "  ")
-
-	_ = enc.Encode(self)
-	return b.String()
+	s, _ := intJson.MarshalString(self)
+	return s
 }
 
 func (self *Feed) GetLink() string {
