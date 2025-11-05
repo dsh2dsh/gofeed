@@ -1,6 +1,7 @@
 package gofeed_test
 
 import (
+	"bytes"
 	jsonEncoding "encoding/json"
 	"fmt"
 	"os"
@@ -23,32 +24,42 @@ func TestDefaultRSSTranslator_Translate(t *testing.T) {
 		base := filepath.Base(f)
 		name := strings.TrimSuffix(base, filepath.Ext(base))
 
-		fmt.Printf("Testing %s... ", name)
+		t.Run(name, func(t *testing.T) {
+			t.Logf("Testing %s ... ", base)
 
-		// Get actual source feed
-		ff := fmt.Sprintf("testdata/translator/rss/%s.xml", name)
-		f, _ := os.Open(ff)
-		defer f.Close()
+			// Get json encoded expected feed result
+			e, err := os.ReadFile(fmt.Sprintf("testdata/translator/rss/%s.json", name))
+			require.NoError(t, err)
 
-		// Parse actual feed
-		translator := &gofeed.DefaultRSSTranslator{}
-		fp := rss.NewParser()
-		rssFeed, _ := fp.Parse(f, nil)
-		actual, _ := translator.Translate(rssFeed, nil)
+			// Unmarshal expected feed
+			var expected struct {
+				gofeed.Feed
 
-		// Get json encoded expected feed result
-		ef := fmt.Sprintf("testdata/translator/rss/%s.json", name)
-		e, _ := os.ReadFile(ef)
+				ErrorContains string `json:"errorContains"`
+			}
+			require.NoError(t, jsonEncoding.Unmarshal(e, &expected))
 
-		// Unmarshal expected feed
-		expected := &gofeed.Feed{}
-		jsonEncoding.Unmarshal(e, &expected)
+			// Get actual source feed
+			f, err := os.ReadFile(fmt.Sprintf("testdata/translator/rss/%s.xml", name))
+			require.NoError(t, err)
 
-		if assert.Equal(t, expected, actual, "Feed file %s.xml did not match expected output %s.json", name, name) {
-			fmt.Printf("OK\n")
-		} else {
-			fmt.Printf("Failed\n")
-		}
+			// Parse actual feed
+			rssFeed, err := rss.NewParser().Parse(bytes.NewReader(f), nil)
+			require.NoError(t, err)
+
+			var translator gofeed.DefaultRSSTranslator
+			actual, err := translator.Translate(rssFeed, nil)
+
+			if expected.ErrorContains != "" {
+				t.Log(err)
+				require.ErrorContains(t, err, expected.ErrorContains)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, &expected.Feed, actual,
+				"Feed file %s.xml did not match expected output %s.json", name, name)
+		})
 	}
 }
 
@@ -65,32 +76,42 @@ func TestDefaultAtomTranslator_Translate(t *testing.T) {
 		base := filepath.Base(f)
 		name := strings.TrimSuffix(base, filepath.Ext(base))
 
-		fmt.Printf("Testing %s... ", name)
+		t.Run(name, func(t *testing.T) {
+			t.Logf("Testing %s ... ", base)
 
-		// Get actual source feed
-		ff := fmt.Sprintf("testdata/translator/atom/%s.xml", name)
-		f, _ := os.Open(ff)
-		defer f.Close()
+			// Get json encoded expected feed result
+			e, err := os.ReadFile(fmt.Sprintf("testdata/translator/atom/%s.json", name))
+			require.NoError(t, err)
 
-		// Parse actual feed
-		translator := &gofeed.DefaultAtomTranslator{}
-		fp := atom.NewParser()
-		atomFeed, _ := fp.Parse(f, nil)
-		actual, _ := translator.Translate(atomFeed, nil)
+			// Unmarshal expected feed
+			var expected struct {
+				gofeed.Feed
 
-		// Get json encoded expected feed result
-		ef := fmt.Sprintf("testdata/translator/atom/%s.json", name)
-		e, _ := os.ReadFile(ef)
+				ErrorContains string `json:"errorContains"`
+			}
+			require.NoError(t, jsonEncoding.Unmarshal(e, &expected))
 
-		// Unmarshal expected feed
-		expected := &gofeed.Feed{}
-		jsonEncoding.Unmarshal(e, &expected)
+			// Get actual source feed
+			f, err := os.ReadFile(fmt.Sprintf("testdata/translator/atom/%s.xml", name))
+			require.NoError(t, err)
 
-		if assert.Equal(t, expected, actual, "Feed file %s.xml did not match expected output %s.json", name, name) {
-			fmt.Printf("OK\n")
-		} else {
-			fmt.Printf("Failed\n")
-		}
+			// Parse actual feed
+			atomFeed, err := atom.NewParser().Parse(bytes.NewReader(f), nil)
+			require.NoError(t, err)
+
+			var translator gofeed.DefaultAtomTranslator
+			actual, err := translator.Translate(atomFeed, nil)
+
+			if expected.ErrorContains != "" {
+				t.Log(err)
+				require.ErrorContains(t, err, expected.ErrorContains)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, &expected.Feed, actual,
+				"Feed file %s.xml did not match expected output %s.json", name, name)
+		})
 	}
 }
 

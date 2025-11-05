@@ -291,7 +291,6 @@ type Item struct {
 	Categories    []*Category              `json:"categories,omitempty"`
 	Comments      string                   `json:"comments,omitempty"`
 	Enclosure     *Enclosure               `json:"enclosure,omitempty"`
-	Enclosures    []*Enclosure             `json:"enclosures,omitempty"`
 	GUID          *GUID                    `json:"guid,omitempty"`
 	PubDate       string                   `json:"pubDate,omitempty"`
 	PubDateParsed *time.Time               `json:"pubDateParsed,omitempty"`
@@ -412,10 +411,9 @@ func (self *Item) ImageURL() string {
 		}
 	}
 
-	for _, enc := range self.Enclosures {
-		if strings.HasPrefix(enc.Type, "image/") {
-			return enc.URL
-		}
+	enc := self.Enclosure
+	if enc != nil && strings.HasPrefix(enc.Type, "image/") {
+		return enc.URL
 	}
 	return ""
 }

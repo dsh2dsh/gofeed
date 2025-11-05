@@ -325,8 +325,7 @@ func (rp *Parser) parseItem() (item *Item, err error) {
 			case sourceTag:
 				item.Source = rp.source()
 			case enclosureTag:
-				item.Enclosure, item.Enclosures = rp.appendEnclosure(item.Enclosure,
-					item.Enclosures)
+				item.Enclosure = rp.enclosure()
 			case guidTag:
 				item.GUID = rp.guid()
 			case categoryTag:
@@ -417,20 +416,13 @@ func (rp *Parser) parseSource() (source *Source, err error) {
 	return source, nil
 }
 
-func (rp *Parser) appendEnclosure(firstEnclosure *Enclosure,
-	enclosures []*Enclosure,
-) (*Enclosure, []*Enclosure) {
+func (rp *Parser) enclosure() *Enclosure {
 	result, err := rp.parseEnclosure()
 	if err != nil {
 		rp.err = err
-		return nil, nil
+		return nil
 	}
-
-	enclosures = append(enclosures, result)
-	if firstEnclosure == nil {
-		firstEnclosure = result
-	}
-	return firstEnclosure, enclosures
+	return result
 }
 
 func (rp *Parser) parseEnclosure() (enclosure *Enclosure, err error) {

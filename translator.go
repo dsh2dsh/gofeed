@@ -141,20 +141,18 @@ func (t *DefaultRSSTranslator) itemImage(rssItem *rss.Item) *Image {
 }
 
 func (t *DefaultRSSTranslator) itemEnclosures(rssItem *rss.Item) []*Enclosure {
-	if len(rssItem.Enclosures) == 0 {
+	enc := rssItem.Enclosure
+	if enc == nil {
 		return nil
 	}
 
-	// Accumulate the enclosures
-	enclosures := make([]*Enclosure, len(rssItem.Enclosures))
-	for i, enc := range rssItem.Enclosures {
-		enclosures[i] = &Enclosure{
+	return []*Enclosure{
+		{
 			URL:    enc.URL,
 			Type:   enc.Type,
 			Length: enc.Length,
-		}
+		},
 	}
-	return enclosures
 }
 
 // DefaultAtomTranslator converts an atom.Feed struct
