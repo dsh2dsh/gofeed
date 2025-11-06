@@ -456,20 +456,9 @@ func (self *Parser) appendSkip(name, unit string, values []string) []string {
 	return values
 }
 
-func (self *Parser) cloud(name string) (cloud *Cloud) {
-	err := self.p.ParsingElement(name,
-		func() error {
-			cloud = self.makeCloud()
-			return nil
-		},
-		func() error {
-			_, err := self.p.Next()
-			return err
-		})
-	if err != nil {
-		self.err = err
-		return nil
-	}
+func (self *Parser) cloud(name string) *Cloud {
+	cloud := self.makeCloud()
+	self.p.Skip(name)
 	return cloud
 }
 

@@ -11,7 +11,7 @@ import (
 )
 
 type itemParser struct {
-	xpp    *xml.Parser
+	p      *xml.Parser
 	itunes *ext.ITunesItemExtension
 
 	err error
@@ -23,64 +23,69 @@ func ParseItem(p *xml.Parser, itunes *ext.ITunesItemExtension,
 		itunes = &ext.ITunesItemExtension{}
 	}
 
-	self := itemParser{xpp: p, itunes: itunes}
+	self := itemParser{p: p, itunes: itunes}
 	return self.Parse()
 }
 
 func (self *itemParser) Parse() (*ext.ITunesItemExtension, error) {
-	name := strings.ToLower(self.xpp.Name)
-	switch name {
-	case "author":
-		self.itunes.Author = self.xpp.Text()
-	case "block":
-		self.itunes.Block = self.xpp.Text()
-	case "duration":
-		self.itunes.Duration = self.xpp.Text()
-	case "explicit":
-		self.itunes.Explicit = self.xpp.Text()
-	case "subtitle":
-		self.itunes.Subtitle = self.xpp.Text()
-	case "summary":
-		self.itunes.Summary = self.xpp.Text()
-	case "keywords":
-		self.itunes.Keywords = self.xpp.Text()
-	case "isClosedCaptioned":
-		self.itunes.IsClosedCaptioned = self.xpp.Text()
-	case "episode":
-		self.itunes.Episode = self.xpp.Text()
-	case "season":
-		self.itunes.Season = self.xpp.Text()
-	case "order":
-		self.itunes.Order = self.xpp.Text()
-	case "episodeType":
-		self.itunes.EpisodeType = self.xpp.Text()
-	case "image":
-		self.itunes.Image = self.image()
-	default:
-		self.xpp.Skip(name)
-	}
-
+	name := strings.ToLower(self.p.Name)
+	self.body(name)
 	if err := self.Err(); err != nil {
 		return nil, err
 	}
 
-	if err := self.xpp.Expect(xpp.EndTag, name); err != nil {
+	if err := self.p.Expect(xpp.EndTag, name); err != nil {
 		return nil, fmt.Errorf(
 			"gofeed/itunes: unexpected state at the end of item: %w", err)
 	}
 	return self.itunes, nil
 }
 
+func (self *itemParser) body(name string) {
+	switch name {
+	case "author":
+		self.itunes.Author = self.p.Text()
+	case "block":
+		self.itunes.Block = self.p.Text()
+	case "duration":
+		self.itunes.Duration = self.p.Text()
+	case "explicit":
+		self.itunes.Explicit = self.p.Text()
+	case "subtitle":
+		self.itunes.Subtitle = self.p.Text()
+	case "summary":
+		self.itunes.Summary = self.p.Text()
+	case "keywords":
+		self.itunes.Keywords = self.p.Text()
+	case "isClosedCaptioned":
+		self.itunes.IsClosedCaptioned = self.p.Text()
+	case "episode":
+		self.itunes.Episode = self.p.Text()
+	case "season":
+		self.itunes.Season = self.p.Text()
+	case "order":
+		self.itunes.Order = self.p.Text()
+	case "episodeType":
+		self.itunes.EpisodeType = self.p.Text()
+	case "image":
+		self.itunes.Image = self.image(name)
+	default:
+		self.p.Skip(name)
+	}
+}
+
 func (self *itemParser) Err() error {
 	switch {
 	case self.err != nil:
 		return self.err
-	case self.xpp.Err() != nil:
-		return fmt.Errorf("gofeed/itunes: xml parser errored: %w", self.xpp.Err())
+	case self.p.Err() != nil:
+		return fmt.Errorf("gofeed/itunes: xml parser errored: %w", self.p.Err())
 	}
 	return nil
 }
 
-func (self *itemParser) image() string {
-	return self.xpp.Attribute("href")
+func (self *itemParser) image(name string) string {
+	href := self.p.Attribute("href")
+	self.p.Skip(name)
+	return href
 }

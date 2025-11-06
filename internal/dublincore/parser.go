@@ -11,8 +11,8 @@ import (
 )
 
 type parser struct {
-	xpp *xml.Parser
-	dc  *ext.DublinCoreExtension
+	p  *xml.Parser
+	dc *ext.DublinCoreExtension
 
 	err error
 }
@@ -23,67 +23,70 @@ func Parse(p *xml.Parser, dc *ext.DublinCoreExtension,
 		dc = &ext.DublinCoreExtension{}
 	}
 
-	self := parser{xpp: p, dc: dc}
+	self := parser{p: p, dc: dc}
 	return self.Parse()
 }
 
 func (self *parser) Parse() (*ext.DublinCoreExtension, error) {
-	name := strings.ToLower(self.xpp.Name)
-	switch name {
-	case "title":
-		self.dc.Title = self.xpp.Text()
-	case "creator":
-		self.dc.Creator = self.xpp.Text()
-	case "author":
-		self.dc.Author = self.xpp.Text()
-	case "subject":
-		self.dc.Subject = self.xpp.Text()
-	case "description":
-		self.dc.Description = self.xpp.Text()
-	case "publisher":
-		self.dc.Publisher = self.xpp.Text()
-	case "contributor":
-		self.dc.Contributor = self.xpp.Text()
-	case "date":
-		self.dc.Date = self.xpp.Text()
-	case "type":
-		self.dc.Type = self.xpp.Text()
-	case "format":
-		self.dc.Format = self.xpp.Text()
-	case "identifier":
-		self.dc.Identifier = self.xpp.Text()
-	case "source":
-		self.dc.Source = self.xpp.Text()
-	case "language":
-		self.dc.Language = self.xpp.Text()
-	case "relation":
-		self.dc.Relation = self.xpp.Text()
-	case "coverage":
-		self.dc.Coverage = self.xpp.Text()
-	case "rights":
-		self.dc.Rights = self.xpp.Text()
-	default:
-		self.xpp.Skip(name)
-	}
-
+	name := strings.ToLower(self.p.Name)
+	self.body(name)
 	if err := self.Err(); err != nil {
 		return nil, err
 	}
 
-	if err := self.xpp.Expect(xpp.EndTag, name); err != nil {
+	if err := self.p.Expect(xpp.EndTag, name); err != nil {
 		return nil, fmt.Errorf(
 			"gofeed/dublincore: unexpected state at the end: %w", err)
 	}
 	return self.dc, nil
 }
 
+func (self *parser) body(name string) {
+	switch name {
+	case "title":
+		self.dc.Title = self.p.Text()
+	case "creator":
+		self.dc.Creator = self.p.Text()
+	case "author":
+		self.dc.Author = self.p.Text()
+	case "subject":
+		self.dc.Subject = self.p.Text()
+	case "description":
+		self.dc.Description = self.p.Text()
+	case "publisher":
+		self.dc.Publisher = self.p.Text()
+	case "contributor":
+		self.dc.Contributor = self.p.Text()
+	case "date":
+		self.dc.Date = self.p.Text()
+	case "type":
+		self.dc.Type = self.p.Text()
+	case "format":
+		self.dc.Format = self.p.Text()
+	case "identifier":
+		self.dc.Identifier = self.p.Text()
+	case "source":
+		self.dc.Source = self.p.Text()
+	case "language":
+		self.dc.Language = self.p.Text()
+	case "relation":
+		self.dc.Relation = self.p.Text()
+	case "coverage":
+		self.dc.Coverage = self.p.Text()
+	case "rights":
+		self.dc.Rights = self.p.Text()
+	default:
+		self.p.Skip(name)
+	}
+}
+
 func (self *parser) Err() error {
 	switch {
 	case self.err != nil:
 		return self.err
-	case self.xpp.Err() != nil:
+	case self.p.Err() != nil:
 		return fmt.Errorf("gofeed/dublincore: xml parser errored: %w",
-			self.xpp.Err())
+			self.p.Err())
 	}
 	return nil
 }
