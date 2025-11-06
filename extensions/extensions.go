@@ -18,18 +18,6 @@ type Extension struct {
 	Children map[string][]Extension `json:"children"`
 }
 
-func parseTextExtension(name string, extensions map[string][]Extension) string {
-	if extensions == nil {
-		return ""
-	}
-
-	matches, ok := extensions[name]
-	if !ok || len(matches) == 0 {
-		return ""
-	}
-	return matches[0].Value
-}
-
 func ElementsSeq(extensions Extensions, keys ...string,
 ) iter.Seq[map[string][]Extension] {
 	return func(yield func(map[string][]Extension) bool) {

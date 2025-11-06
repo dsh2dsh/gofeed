@@ -12,6 +12,7 @@ import (
 
 	ext "github.com/dsh2dsh/gofeed/v2/extensions"
 	"github.com/dsh2dsh/gofeed/v2/internal/dublincore"
+	"github.com/dsh2dsh/gofeed/v2/internal/itunes"
 	"github.com/dsh2dsh/gofeed/v2/internal/shared"
 	"github.com/dsh2dsh/gofeed/v2/options"
 )
@@ -255,12 +256,6 @@ func (rp *Parser) parseChannel() (rss *Feed, err error) {
 	if err = rp.expect(xpp.EndTag, channelTag); err != nil {
 		return nil, err
 	}
-
-	if len(rss.Extensions) != 0 {
-		if itunes, ok := rss.Extensions[itunesKey]; ok {
-			rss.ITunesExt = ext.NewITunesFeedExtension(itunes)
-		}
-	}
 	return rss, nil
 }
 
@@ -342,12 +337,6 @@ func (rp *Parser) parseItem() (item *Item, err error) {
 
 	if err = rp.expect(xpp.EndTag, itemTag); err != nil {
 		return nil, err
-	}
-
-	if len(item.Extensions) != 0 {
-		if itunes, ok := item.Extensions[itunesKey]; ok {
-			item.ITunesExt = ext.NewITunesItemExtension(itunes)
-		}
 	}
 	return item, nil
 }
@@ -761,7 +750,7 @@ func (rp *Parser) parseChannelExt(rss *Feed) bool {
 	case dcKey:
 		rss.DublinCoreExt = rp.dublinCore(rss.DublinCoreExt)
 	case itunesKey:
-		rss.Extensions = rp.extensions(rss.Extensions)
+		rss.ITunesExt = rp.itunesFeed(rss.ITunesExt)
 	default:
 		rss.Extensions = rp.extensions(rss.Extensions)
 	}
@@ -775,6 +764,15 @@ func (rp *Parser) dublinCore(dc *ext.DublinCoreExtension,
 		rp.err = err
 	}
 	return dc
+}
+
+func (rp *Parser) itunesFeed(feed *ext.ITunesFeedExtension,
+) *ext.ITunesFeedExtension {
+	feed, err := itunes.ParseFeed(rp.p, feed)
+	if err != nil {
+		rp.err = err
+	}
+	return feed
 }
 
 func (rp *Parser) extensions(e ext.Extensions) ext.Extensions {
@@ -792,9 +790,18 @@ func (rp *Parser) parseItemExt(item *Item) bool {
 	case dcKey:
 		item.DublinCoreExt = rp.dublinCore(item.DublinCoreExt)
 	case itunesKey:
-		item.Extensions = rp.extensions(item.Extensions)
+		item.ITunesExt = rp.itunesItem(item.ITunesExt)
 	default:
 		item.Extensions = rp.extensions(item.Extensions)
 	}
 	return true
+}
+
+func (rp *Parser) itunesItem(item *ext.ITunesItemExtension,
+) *ext.ITunesItemExtension {
+	item, err := itunes.ParseItem(rp.p, item)
+	if err != nil {
+		rp.err = err
+	}
+	return item
 }

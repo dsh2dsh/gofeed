@@ -1,0 +1,107 @@
+package xml
+
+import (
+	"errors"
+	"fmt"
+
+	xpp "github.com/dsh2dsh/goxpp/v2"
+
+	"github.com/dsh2dsh/gofeed/v2/internal/shared"
+)
+
+type Parser struct {
+	*xpp.XMLPullParser
+
+	err error
+}
+
+func NewParser(p *xpp.XMLPullParser) *Parser {
+	return &Parser{XMLPullParser: p}
+}
+
+func (self *Parser) Err() error { return self.err }
+
+func (self *Parser) Text() string {
+	s, err := shared.ParseText(self.XMLPullParser)
+	if err != nil {
+		self.err = err
+		return ""
+	}
+	return s
+}
+
+func (self *Parser) Skip(tag string) {
+	if err := self.XMLPullParser.Skip(); err != nil {
+		self.err = fmt.Errorf(
+			"gofeed/internal/xml: skip unknown element %q: %w", tag, err)
+	}
+}
+
+func (self *Parser) Expect(event xpp.XMLEventType, name string) error {
+	if err := self.XMLPullParser.Expect(event, name); err != nil {
+		return fmt.Errorf("gofeed/internal/xml: expect %q tag, got %q: %w",
+			name, self.Name, err)
+	}
+	return nil
+}
+
+// Next iterates through the tokens until it reaches a StartTag or EndTag.
+//
+// Next is similar to goxpp's NextTag method except it wont throw an error if
+// the next immediate token isnt a Start/EndTag. Instead, it will continue to
+// consume tokens until it hits a Start/EndTag or EndDocument.
+func (self *Parser) Next() (xpp.XMLEventType, error) {
+	if self.err != nil {
+		return 0, self.err
+	}
+
+	for {
+		event, err := self.XMLPullParser.Next()
+		if err != nil {
+			return event, fmt.Errorf("gofeed/internal/xml: looking for next tag: %w",
+				err)
+		}
+
+		switch event {
+		case xpp.EndTag:
+			return event, nil
+		case xpp.StartTag:
+			return event, nil
+		case xpp.EndDocument:
+			return event, errors.New(
+				"gofeed/internal/xml: looking for next tag, got unexpected end of the document")
+		}
+	}
+}
+
+func (self *Parser) ParsingElement(name string, init func() error,
+	yield func() error,
+) error {
+	if err := self.Expect(xpp.StartTag, name); err != nil {
+		return err
+	}
+
+	if init != nil {
+		if err := init(); err != nil {
+			return err
+		}
+	}
+
+	for {
+		event, err := self.Next()
+		if err != nil {
+			return fmt.Errorf("gofeed/internal/xml: next %q element: %w", name, err)
+		} else if event == xpp.EndTag {
+			break
+		}
+
+		if err := yield(); err != nil {
+			return err
+		}
+	}
+
+	if err := self.Expect(xpp.EndTag, name); err != nil {
+		return err
+	}
+	return nil
+}

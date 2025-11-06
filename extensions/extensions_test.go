@@ -14,38 +14,6 @@ import (
 	"github.com/dsh2dsh/gofeed/v2"
 )
 
-func TestITunes_Extensions(t *testing.T) {
-	files, _ := filepath.Glob("testdata/itunes/*.xml")
-	for _, f := range files {
-		base := filepath.Base(f)
-		name := strings.TrimSuffix(base, filepath.Ext(base))
-
-		fmt.Printf("Testing %s... ", name)
-
-		// Get actual source feed
-		ff := fmt.Sprintf("testdata/itunes/%s.xml", name)
-		f, _ := os.ReadFile(ff)
-
-		// Parse actual feed
-		fp := gofeed.NewParser()
-		actual, _ := fp.Parse(bytes.NewReader(f))
-
-		// Get json encoded expected feed result
-		ef := fmt.Sprintf("testdata/itunes/%s.json", name)
-		e, _ := os.ReadFile(ef)
-
-		// Unmarshal expected feed
-		expected := &gofeed.Feed{}
-		json.Unmarshal(e, &expected)
-
-		if assert.Equal(t, expected, actual, "Feed file %s.xml did not match expected output %s.json", name, name) {
-			fmt.Printf("OK\n")
-		} else {
-			fmt.Printf("Failed\n")
-		}
-	}
-}
-
 func TestMedia_Extensions(t *testing.T) {
 	files, _ := filepath.Glob("testdata/media/*.xml")
 	for _, f := range files {
