@@ -21,6 +21,26 @@ func NewParser(p *xpp.XMLPullParser) *Parser {
 
 func (self *Parser) Err() error { return self.err }
 
+// FindRoot iterates through the tokens of an xml document until it encounters
+// its first StartTag event. It returns an error if it reaches EndDocument
+// before finding a tag.
+func (self *Parser) FindRoot() (event xpp.XMLEventType, err error) {
+	for {
+		event, err = self.XMLPullParser.Next()
+		if err != nil {
+			return event, fmt.Errorf("gofeed/internal/xml: looking for root: %w", err)
+		}
+
+		if event == xpp.StartTag {
+			break
+		} else if event == xpp.EndDocument {
+			return event, errors.New(
+				"gofeed/internal/xml: failed to find root node before document end")
+		}
+	}
+	return event, nil
+}
+
 func (self *Parser) Text() string {
 	s, err := shared.ParseText(self.XMLPullParser)
 	if err != nil {
@@ -96,6 +116,31 @@ func (self *Parser) ParsingElement(name string, init func() error,
 		}
 
 		if err := yield(); err != nil {
+			return err
+		}
+	}
+
+	if err := self.Expect(xpp.EndTag, name); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (self *Parser) WithText(name string, init func() error,
+	yield func(string) error,
+) error {
+	if err := self.Expect(xpp.StartTag, name); err != nil {
+		return err
+	}
+
+	if init != nil {
+		if err := init(); err != nil {
+			return err
+		}
+	}
+
+	if s := self.Text(); self.err == nil {
+		if err := yield(s); err != nil {
 			return err
 		}
 	}

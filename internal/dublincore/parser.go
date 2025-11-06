@@ -17,13 +17,13 @@ type parser struct {
 	err error
 }
 
-func Parse(p *xpp.XMLPullParser, dc *ext.DublinCoreExtension,
+func Parse(p *xml.Parser, dc *ext.DublinCoreExtension,
 ) (*ext.DublinCoreExtension, error) {
 	if dc == nil {
 		dc = &ext.DublinCoreExtension{}
 	}
 
-	self := parser{xpp: xml.NewParser(p), dc: dc}
+	self := parser{xpp: p, dc: dc}
 	return self.Parse()
 }
 

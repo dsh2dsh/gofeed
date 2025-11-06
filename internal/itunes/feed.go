@@ -17,13 +17,13 @@ type feedParser struct {
 	err error
 }
 
-func ParseFeed(p *xpp.XMLPullParser, itunes *ext.ITunesFeedExtension,
+func ParseFeed(p *xml.Parser, itunes *ext.ITunesFeedExtension,
 ) (*ext.ITunesFeedExtension, error) {
 	if itunes == nil {
 		itunes = &ext.ITunesFeedExtension{}
 	}
 
-	self := feedParser{xpp: xml.NewParser(p), itunes: itunes}
+	self := feedParser{xpp: p, itunes: itunes}
 	return self.Parse()
 }
 

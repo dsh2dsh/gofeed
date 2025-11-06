@@ -17,13 +17,13 @@ type itemParser struct {
 	err error
 }
 
-func ParseItem(p *xpp.XMLPullParser, itunes *ext.ITunesItemExtension,
+func ParseItem(p *xml.Parser, itunes *ext.ITunesItemExtension,
 ) (*ext.ITunesItemExtension, error) {
 	if itunes == nil {
 		itunes = &ext.ITunesItemExtension{}
 	}
 
-	self := itemParser{xpp: xml.NewParser(p), itunes: itunes}
+	self := itemParser{xpp: p, itunes: itunes}
 	return self.Parse()
 }
 
