@@ -7,11 +7,11 @@ import (
 	xpp "github.com/dsh2dsh/goxpp/v2"
 
 	ext "github.com/dsh2dsh/gofeed/v2/extensions"
-	"github.com/dsh2dsh/gofeed/v2/internal/shared"
+	"github.com/dsh2dsh/gofeed/v2/internal/xml"
 )
 
 type parser struct {
-	xpp *xpp.XMLPullParser
+	xpp *xml.Parser
 	dc  *ext.DublinCoreExtension
 
 	err error
@@ -23,71 +23,67 @@ func Parse(p *xpp.XMLPullParser, dc *ext.DublinCoreExtension,
 		dc = &ext.DublinCoreExtension{}
 	}
 
-	self := parser{xpp: p, dc: dc}
+	self := parser{xpp: xml.NewParser(p), dc: dc}
 	return self.Parse()
 }
 
 func (self *parser) Parse() (*ext.DublinCoreExtension, error) {
-	tag := strings.ToLower(self.xpp.Name)
-	switch tag {
+	name := strings.ToLower(self.xpp.Name)
+	switch name {
 	case "title":
-		self.dc.Title = self.text()
+		self.dc.Title = self.xpp.Text()
 	case "creator":
-		self.dc.Creator = self.text()
+		self.dc.Creator = self.xpp.Text()
 	case "author":
-		self.dc.Author = self.text()
+		self.dc.Author = self.xpp.Text()
 	case "subject":
-		self.dc.Subject = self.text()
+		self.dc.Subject = self.xpp.Text()
 	case "description":
-		self.dc.Description = self.text()
+		self.dc.Description = self.xpp.Text()
 	case "publisher":
-		self.dc.Publisher = self.text()
+		self.dc.Publisher = self.xpp.Text()
 	case "contributor":
-		self.dc.Contributor = self.text()
+		self.dc.Contributor = self.xpp.Text()
 	case "date":
-		self.dc.Date = self.text()
+		self.dc.Date = self.xpp.Text()
 	case "type":
-		self.dc.Type = self.text()
+		self.dc.Type = self.xpp.Text()
 	case "format":
-		self.dc.Format = self.text()
+		self.dc.Format = self.xpp.Text()
 	case "identifier":
-		self.dc.Identifier = self.text()
+		self.dc.Identifier = self.xpp.Text()
 	case "source":
-		self.dc.Source = self.text()
+		self.dc.Source = self.xpp.Text()
 	case "language":
-		self.dc.Language = self.text()
+		self.dc.Language = self.xpp.Text()
 	case "relation":
-		self.dc.Relation = self.text()
+		self.dc.Relation = self.xpp.Text()
 	case "coverage":
-		self.dc.Coverage = self.text()
+		self.dc.Coverage = self.xpp.Text()
 	case "rights":
-		self.dc.Rights = self.text()
+		self.dc.Rights = self.xpp.Text()
 	default:
-		self.skip(tag)
+		self.xpp.Skip(name)
 	}
 
-	if self.err != nil {
-		return nil, self.err
+	if err := self.Err(); err != nil {
+		return nil, err
 	}
 
-	if err := self.xpp.Expect(xpp.EndTag, tag); err != nil {
-		return nil, fmt.Errorf("gofeed/dublincore: expect end tag %q: %w", tag, err)
+	if err := self.xpp.Expect(xpp.EndTag, name); err != nil {
+		return nil, fmt.Errorf(
+			"gofeed/dublincore: unexpected state at the end: %w", err)
 	}
 	return self.dc, nil
 }
 
-func (self *parser) text() string {
-	s, err := shared.ParseText(self.xpp)
-	if err != nil {
-		self.err = err
-		return ""
+func (self *parser) Err() error {
+	switch {
+	case self.err != nil:
+		return self.err
+	case self.xpp.Err() != nil:
+		return fmt.Errorf("gofeed/dublincore: xml parser errored: %w",
+			self.xpp.Err())
 	}
-	return s
-}
-
-func (self *parser) skip(tag string) {
-	if err := self.xpp.Skip(); err != nil {
-		self.err = fmt.Errorf(
-			"gofeed/dublincore: skip unknown element %q: %w", tag, err)
-	}
+	return nil
 }
