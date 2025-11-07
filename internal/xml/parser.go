@@ -3,6 +3,8 @@ package xml
 import (
 	"errors"
 	"fmt"
+	"iter"
+	"strings"
 
 	xpp "github.com/dsh2dsh/goxpp/v2"
 
@@ -145,8 +147,60 @@ func (self *Parser) WithText(name string, init func() error,
 		}
 	}
 
-	if err := self.Expect(xpp.EndTag, name); err != nil {
+	if self.err != nil {
+		return self.err
+	}
+	return self.Expect(xpp.EndTag, name)
+}
+
+func (self *Parser) MakeChildrenSeq(name string) (iter.Seq[string], error) {
+	if err := self.Expect(xpp.StartTag, name); err != nil {
+		return nil, err
+	}
+
+	return func(yield func(string) bool) {
+		for {
+			event, err := self.Next()
+			switch {
+			case err != nil:
+				self.err = fmt.Errorf("next child of %q element: %w", name, err)
+				return
+			case event == xpp.EndTag:
+				if self.err == nil {
+					self.err = self.Expect(xpp.EndTag, name)
+				}
+				return
+			case !yield(strings.ToLower(self.Name)):
+				return
+			}
+		}
+	}, nil
+}
+
+func (self *Parser) AttributeSeq() iter.Seq2[string, string] {
+	return func(yield func(string, string) bool) {
+		for i := range self.Attrs {
+			attr := &self.Attrs[i]
+			lowerName := strings.ToLower(attr.Name.Local)
+			if !yield(lowerName, attr.Value) {
+				return
+			}
+		}
+	}
+}
+
+func (self *Parser) WithSkip(name string, yield func() error) error {
+	if err := self.Expect(xpp.StartTag, name); err != nil {
 		return err
 	}
-	return nil
+
+	if err := yield(); err != nil {
+		return err
+	}
+	self.Skip(name)
+
+	if self.err != nil {
+		return self.err
+	}
+	return self.Expect(xpp.EndTag, name)
 }
