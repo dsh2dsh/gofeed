@@ -84,8 +84,14 @@ func (self *itemParser) Err() error {
 	return nil
 }
 
-func (self *itemParser) image(name string) string {
-	href := self.p.Attribute("href")
-	self.p.Skip(name)
+func (self *itemParser) image(name string) (href string) {
+	err := self.p.WithSkip(name, func() error {
+		href = self.p.Attribute("href")
+		return nil
+	})
+	if err != nil {
+		self.err = err
+		return ""
+	}
 	return href
 }

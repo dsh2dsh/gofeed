@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"iter"
+	"maps"
 	"strings"
 	"time"
 
@@ -539,9 +540,7 @@ func (self *Parser) parseCustomExtInto(name string, extensions ext.Extensions,
 	// Copy attributes
 	if n := len(self.p.Attrs); n != 0 {
 		custom.Attrs = make(map[string]string, n)
-		for _, attr := range self.p.Attrs {
-			custom.Attrs[attr.Name.Local] = attr.Value
-		}
+		maps.Insert(custom.Attrs, self.p.AttributeSeq())
 	}
 
 	// Parse the text content

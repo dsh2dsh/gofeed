@@ -2,6 +2,7 @@ package itunes
 
 import (
 	"fmt"
+	"iter"
 	"strings"
 
 	xpp "github.com/dsh2dsh/goxpp/v2"
@@ -82,9 +83,15 @@ func (self *feedParser) body(name string) {
 	}
 }
 
-func (self *feedParser) image(name string) string {
-	href := self.p.Attribute("href")
-	self.p.Skip(name)
+func (self *feedParser) image(name string) (href string) {
+	err := self.p.WithSkip(name, func() error {
+		href = self.p.Attribute("href")
+		return nil
+	})
+	if err != nil {
+		self.err = err
+		return ""
+	}
 	return href
 }
 
@@ -98,52 +105,74 @@ func (self *feedParser) appendCategory(name string,
 	return append(categories, c)
 }
 
-func (self *feedParser) category(name string) (c *ext.ITunesCategory) {
-	err := self.p.ParsingElement(name,
-		func() error {
-			c = &ext.ITunesCategory{Text: self.p.Attribute("text")}
-			return nil
-		},
-		func() error { return self.categoryBody(name, c) })
-	if err != nil {
-		self.err = err
+func (self *feedParser) category(name string) *ext.ITunesCategory {
+	children := self.makeChildrenSeq(name)
+	if children == nil {
+		return nil
+	}
+
+	c := &ext.ITunesCategory{Text: self.p.Attribute("text")}
+	for name := range children {
+		switch name {
+		case "category":
+			c.Subcategory = self.category(name)
+		default:
+			self.p.Skip(name)
+		}
+	}
+
+	if self.err != nil {
 		return nil
 	}
 	return c
 }
 
-func (self *feedParser) categoryBody(name string, c *ext.ITunesCategory) error {
-	switch tag := strings.ToLower(self.p.Name); tag {
-	case name:
-		c.Subcategory = self.category(tag)
-	default:
-		self.p.Skip(tag)
-	}
-	return nil
-}
-
-func (self *feedParser) owner(name string) (owner *ext.ITunesOwner) {
-	err := self.p.ParsingElement(name,
-		func() error {
-			owner = new(ext.ITunesOwner)
-			return nil
-		},
-		func() error { return self.ownerBody(owner) })
+func (self *feedParser) makeChildrenSeq(name string) iter.Seq[string] {
+	children, err := self.p.MakeChildrenSeq(name)
 	if err != nil {
 		self.err = err
 		return nil
 	}
-	return owner
+
+	return func(yield func(string) bool) {
+		for name := range children {
+			if err := self.Err(); err != nil {
+				self.err = err
+				return
+			}
+
+			if !yield(name) {
+				break
+			}
+		}
+
+		if err := self.Err(); err != nil {
+			self.err = err
+			return
+		}
+	}
 }
 
-func (self *feedParser) ownerBody(owner *ext.ITunesOwner) error {
-	switch name := strings.ToLower(self.p.Name); name {
-	case "name":
-		owner.Name = self.p.Text()
-	case "email":
-		owner.Email = self.p.Text()
-	default:
-		self.p.Skip(name)
+func (self *feedParser) owner(name string) (owner *ext.ITunesOwner) {
+	children := self.makeChildrenSeq(name)
+	if children == nil {
+		return nil
 	}
-	return nil
+
+	owner = new(ext.ITunesOwner)
+	for name := range children {
+		switch name {
+		case "name":
+			owner.Name = self.p.Text()
+		case "email":
+			owner.Email = self.p.Text()
+		default:
+			self.p.Skip(name)
+		}
+	}
+
+	if self.err != nil {
+		return nil
+	}
+	return owner
 }

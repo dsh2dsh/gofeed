@@ -3,6 +3,8 @@ package rss
 import (
 	"fmt"
 	"io"
+	"iter"
+	"maps"
 	"strings"
 	"time"
 
@@ -17,9 +19,8 @@ import (
 )
 
 const (
-	customKey = "_custom"
-	dcNS      = "dc"
-	itunesNS  = "itunes"
+	dcNS     = "dc"
+	itunesNS = "itunes"
 )
 
 var emptyAttrs = map[string]string{}
@@ -60,41 +61,38 @@ func (self *Parser) Err() error {
 }
 
 func (self *Parser) root(name string) (channel *Feed) {
+	children := self.makeChildrenSeq(name)
+	if children == nil {
+		return nil
+	}
+
 	// Items found in feed root
 	var ti *TextInput
 	var image *Image
-	var ver string
 	items := []*Item{}
+	ver := self.parseVersion(name)
 
-	err := self.p.ParsingElement(name,
-		func() error {
-			ver = self.parseVersion()
-			return nil
-		},
-		func() error {
-			name := strings.ToLower(self.p.Name)
-			// Skip any extensions found in the feed root.
-			if shared.IsExtension(self.p.XMLPullParser) {
-				self.p.Skip(name)
-				return nil
-			}
+	for name := range children {
+		// Skip any extensions found in the feed root.
+		if shared.IsExtension(self.p.XMLPullParser) {
+			self.p.Skip(name)
+			continue
+		}
 
-			switch name {
-			case "channel":
-				channel = self.channel(name)
-			case "item":
-				items = self.appendItem(name, items)
-			case "textinput":
-				ti = self.textInput(name)
-			case "image":
-				image = self.image(name)
-			default:
-				self.p.Skip(name)
-			}
-			return nil
-		})
-	if err != nil {
-		self.err = err
+		switch name {
+		case "channel":
+			channel = self.channel(name)
+		case "item":
+			items = self.appendItem(name, items)
+		case "textinput":
+			ti = self.textInput(name)
+		case "image":
+			image = self.image(name)
+		default:
+			self.p.Skip(name)
+		}
+	}
+	if self.err != nil {
 		return nil
 	}
 
@@ -116,26 +114,55 @@ func (self *Parser) root(name string) (channel *Feed) {
 	return channel
 }
 
-func (self *Parser) channel(name string) (rss *Feed) {
-	err := self.p.ParsingElement(name,
-		func() error {
-			rss = &Feed{Items: []*Item{}}
-			return nil
-		},
-		func() error { return self.channelBody(rss) })
+func (self *Parser) makeChildrenSeq(name string) iter.Seq[string] {
+	children, err := self.p.MakeChildrenSeq(name)
 	if err != nil {
 		self.err = err
+		return nil
+	}
+
+	return func(yield func(string) bool) {
+		for name := range children {
+			if err := self.Err(); err != nil {
+				self.err = err
+				return
+			}
+
+			if !yield(name) {
+				break
+			}
+		}
+
+		if err := self.Err(); err != nil {
+			self.err = err
+			return
+		}
+	}
+}
+
+func (self *Parser) channel(name string) *Feed {
+	children := self.makeChildrenSeq(name)
+	if children == nil {
+		return nil
+	}
+
+	rss := &Feed{Items: []*Item{}}
+	for name := range children {
+		self.channelBody(name, rss)
+	}
+
+	if self.err != nil {
 		return nil
 	}
 	return rss
 }
 
-func (self *Parser) channelBody(rss *Feed) error {
+func (self *Parser) channelBody(name string, rss *Feed) {
 	if self.parseChannelExt(rss) {
-		return nil
+		return
 	}
 
-	switch name := strings.ToLower(self.p.Name); name {
+	switch name {
 	case "title":
 		rss.Title = self.p.Text()
 	case "description":
@@ -187,30 +214,31 @@ func (self *Parser) channelBody(rss *Feed) error {
 			rss.Extensions = e
 		}
 	}
-	return nil
 }
 
 func (self *Parser) appendItem(name string, items []*Item) []*Item {
-	var item *Item
-	err := self.p.ParsingElement(name,
-		func() error {
-			item = new(Item)
-			return nil
-		},
-		func() error { return self.itemBody(item) })
-	if err != nil {
-		self.err = err
+	children := self.makeChildrenSeq(name)
+	if children == nil {
+		return items
+	}
+
+	item := new(Item)
+	for name := range children {
+		self.itemBody(name, item)
+	}
+
+	if self.err != nil {
 		return items
 	}
 	return append(items, item)
 }
 
-func (self *Parser) itemBody(item *Item) error {
+func (self *Parser) itemBody(name string, item *Item) {
 	if self.parseItemExt(item) {
-		return nil
+		return
 	}
 
-	switch name := strings.ToLower(self.p.Name); name {
+	switch name {
 	case "title":
 		item.Title = self.p.Text()
 	case "description":
@@ -243,7 +271,6 @@ func (self *Parser) itemBody(item *Item) error {
 			item.Extensions = e
 		}
 	}
-	return nil
 }
 
 func (self *Parser) appendLink(name string, links []string) []string {
@@ -281,6 +308,7 @@ func (self *Parser) parseDate(name string) (string, *time.Time) {
 	if err != nil {
 		return result, nil
 	}
+
 	utcDate := date.UTC()
 	return result, &utcDate
 }
@@ -302,19 +330,19 @@ func (self *Parser) source(name string) (source *Source) {
 	return source
 }
 
-func (self *Parser) enclosure(name string) (enclosure *Enclosure) {
-	err := self.p.ParsingElement(name,
-		func() error {
-			enclosure = self.makeEnclosure()
-			return nil
-		},
-		func() error {
-			// Ignore any enclosure tag
-			self.p.Skip(self.p.Name)
-			return nil
-		})
-	if err != nil {
-		self.err = err
+func (self *Parser) enclosure(name string) *Enclosure {
+	children := self.makeChildrenSeq(name)
+	if children == nil {
+		return nil
+	}
+
+	enclosure := self.makeEnclosure()
+	for name := range children {
+		// Ignore any enclosure tag
+		self.p.Skip(name)
+	}
+
+	if self.err != nil {
 		return nil
 	}
 	return enclosure
@@ -322,35 +350,38 @@ func (self *Parser) enclosure(name string) (enclosure *Enclosure) {
 
 func (self *Parser) makeEnclosure() *Enclosure {
 	enclosure := new(Enclosure)
-	for _, attr := range self.p.Attrs {
-		switch v := attr.Name.Local; v {
+	for name, value := range self.p.AttributeSeq() {
+		switch name {
 		case "url":
-			enclosure.URL = attr.Value
+			enclosure.URL = value
 		case "length":
-			enclosure.Length = attr.Value
+			enclosure.Length = value
 		case "type":
-			enclosure.Type = attr.Value
+			enclosure.Type = value
 		}
 	}
 	return enclosure
 }
 
-func (self *Parser) image(name string) (image *Image) {
-	err := self.p.ParsingElement(name,
-		func() error {
-			image = new(Image)
-			return nil
-		},
-		func() error { return self.imageBody(image) })
-	if err != nil {
-		self.err = err
+func (self *Parser) image(name string) *Image {
+	children := self.makeChildrenSeq(name)
+	if children == nil {
+		return nil
+	}
+
+	image := new(Image)
+	for name := range children {
+		self.imageBody(name, image)
+	}
+
+	if self.err != nil {
 		return nil
 	}
 	return image
 }
 
-func (self *Parser) imageBody(image *Image) error {
-	switch name := strings.ToLower(self.p.Name); name {
+func (self *Parser) imageBody(name string, image *Image) {
+	switch name {
 	case "url":
 		image.URL = self.p.Text()
 	case "title":
@@ -366,7 +397,6 @@ func (self *Parser) imageBody(image *Image) error {
 	default:
 		self.p.Skip(name)
 	}
-	return nil
 }
 
 func (self *Parser) guid(name string) (guid *GUID) {
@@ -406,21 +436,24 @@ func (self *Parser) appendCategory(name string, categories []*Category,
 }
 
 func (self *Parser) textInput(name string) (ti *TextInput) {
-	err := self.p.ParsingElement(name,
-		func() error {
-			ti = new(TextInput)
-			return nil
-		},
-		func() error { return self.textInputBody(ti) })
-	if err != nil {
-		self.err = err
+	children := self.makeChildrenSeq(name)
+	if children == nil {
+		return nil
+	}
+
+	ti = new(TextInput)
+	for name := range children {
+		self.textInputBody(name, ti)
+	}
+
+	if self.err != nil {
 		return nil
 	}
 	return ti
 }
 
-func (self *Parser) textInputBody(ti *TextInput) error {
-	switch name := strings.ToLower(self.p.Name); name {
+func (self *Parser) textInputBody(name string, ti *TextInput) {
+	switch name {
 	case "title":
 		ti.Title = self.p.Text()
 	case "description":
@@ -432,57 +465,61 @@ func (self *Parser) textInputBody(ti *TextInput) error {
 	default:
 		self.p.Skip(name)
 	}
-	return nil
 }
 
 func (self *Parser) appendSkip(name, unit string, values []string) []string {
-	err := self.p.ParsingElement(name, nil,
-		func() error {
-			switch name := strings.ToLower(self.p.Name); name {
-			case unit:
-				s := self.p.Text()
-				if self.p.Err() == nil {
-					values = append(values, s)
-				}
-			default:
-				self.p.Skip(name)
-			}
-			return nil
-		})
-	if err != nil {
-		self.err = err
+	children := self.makeChildrenSeq(name)
+	if children == nil {
 		return values
+	}
+
+	for name := range children {
+		switch name {
+		case unit:
+			s := self.p.Text()
+			if self.p.Err() == nil {
+				values = append(values, s)
+			}
+		default:
+			self.p.Skip(name)
+		}
 	}
 	return values
 }
 
-func (self *Parser) cloud(name string) *Cloud {
-	cloud := self.makeCloud()
-	self.p.Skip(name)
+func (self *Parser) cloud(name string) (cloud *Cloud) {
+	err := self.p.WithSkip(name, func() error {
+		cloud = self.makeCloud()
+		return nil
+	})
+	if err != nil {
+		self.err = err
+		return nil
+	}
 	return cloud
 }
 
 func (self *Parser) makeCloud() *Cloud {
 	cloud := new(Cloud)
-	for _, attr := range self.p.Attrs {
-		switch v := attr.Name.Local; v {
+	for name, value := range self.p.AttributeSeq() {
+		switch name {
 		case "domain":
-			cloud.Domain = attr.Value
+			cloud.Domain = value
 		case "port":
-			cloud.Port = attr.Value
+			cloud.Port = value
 		case "path":
-			cloud.Path = attr.Value
-		case "registerProcedure":
-			cloud.RegisterProcedure = attr.Value
+			cloud.Path = value
+		case "registerprocedure":
+			cloud.RegisterProcedure = value
 		case "protocol":
-			cloud.Protocol = attr.Value
+			cloud.Protocol = value
 		}
 	}
 	return cloud
 }
 
-func (self *Parser) parseVersion() string {
-	switch strings.ToLower(self.p.Name) {
+func (self *Parser) parseVersion(name string) string {
+	switch strings.ToLower(name) {
 	case "rss":
 		return self.p.Attribute("version")
 	case "rdf":
@@ -503,9 +540,7 @@ func (self *Parser) parseCustomExtInto(name string, extensions ext.Extensions,
 	// Copy attributes
 	if n := len(self.p.Attrs); n != 0 {
 		custom.Attrs = make(map[string]string, n)
-		for _, attr := range self.p.Attrs {
-			custom.Attrs[attr.Name.Local] = attr.Value
-		}
+		maps.Insert(custom.Attrs, self.p.AttributeSeq())
 	}
 
 	err := self.p.WithText(name, nil, func(s string) error {
@@ -518,6 +553,7 @@ func (self *Parser) parseCustomExtInto(name string, extensions ext.Extensions,
 	}
 
 	// Initialize extensions map if needed
+	const customKey = "_custom"
 	if extensions == nil {
 		extensions = ext.Extensions{customKey: {self.p.Name: {custom}}}
 	} else if m, ok := extensions[customKey]; !ok {

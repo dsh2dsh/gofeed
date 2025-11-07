@@ -96,38 +96,6 @@ func (self *Parser) Next() (xpp.XMLEventType, error) {
 	}
 }
 
-func (self *Parser) ParsingElement(name string, init func() error,
-	yield func() error,
-) error {
-	if err := self.Expect(xpp.StartTag, name); err != nil {
-		return err
-	}
-
-	if init != nil {
-		if err := init(); err != nil {
-			return err
-		}
-	}
-
-	for {
-		event, err := self.Next()
-		if err != nil {
-			return fmt.Errorf("gofeed/internal/xml: next %q element: %w", name, err)
-		} else if event == xpp.EndTag {
-			break
-		}
-
-		if err := yield(); err != nil {
-			return err
-		}
-	}
-
-	if err := self.Expect(xpp.EndTag, name); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (self *Parser) WithText(name string, init func() error,
 	yield func(string) error,
 ) error {
