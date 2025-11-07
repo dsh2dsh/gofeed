@@ -42,16 +42,6 @@ func FindRoot(p *xpp.XMLPullParser) (event xpp.XMLEventType, err error) {
 	return event, nil
 }
 
-// ParseText is a helper function for parsing the text from the current element
-// of the XMLPullParser.
-func ParseText(p *xpp.XMLPullParser) (string, error) {
-	s, err := p.NextText()
-	if err != nil {
-		return "", fmt.Errorf("gofeed/shared: parse text: %w", err)
-	}
-	return strings.TrimSpace(s), nil
-}
-
 // StripCDATA removes CDATA tags from the string
 // content outside of CDATA tags is passed via DecodeEntities
 func StripCDATA(str string) string {

@@ -7,8 +7,6 @@ import (
 	"strings"
 
 	xpp "github.com/dsh2dsh/goxpp/v2"
-
-	"github.com/dsh2dsh/gofeed/v2/internal/shared"
 )
 
 type Parser struct {
@@ -43,13 +41,15 @@ func (self *Parser) FindRoot() (event xpp.XMLEventType, err error) {
 	return event, nil
 }
 
+// Text is a helper function for parsing the text from the current element of
+// the XMLPullParser.
 func (self *Parser) Text() string {
-	s, err := shared.ParseText(self.XMLPullParser)
+	s, err := self.NextText()
 	if err != nil {
-		self.err = err
+		self.err = fmt.Errorf("gofeed/internal/xml: parse text: %w", err)
 		return ""
 	}
-	return s
+	return strings.TrimSpace(s)
 }
 
 func (self *Parser) Skip(tag string) {
