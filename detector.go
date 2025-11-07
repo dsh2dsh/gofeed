@@ -10,6 +10,7 @@ import (
 	xpp "github.com/dsh2dsh/goxpp/v2"
 
 	"github.com/dsh2dsh/gofeed/v2/internal/shared"
+	"github.com/dsh2dsh/gofeed/v2/internal/xml"
 )
 
 // FeedType represents one of the possible feed
@@ -60,9 +61,10 @@ loop:
 	switch firstChar {
 	case '<':
 		// Check if it's an XML based feed
-		p := xpp.NewXMLPullParser(bytes.NewReader(b), false, shared.NewReaderLabel)
+		p := xml.NewParser(
+			xpp.NewXMLPullParser(bytes.NewReader(b), false, shared.NewReaderLabel))
 
-		if _, err := shared.FindRoot(p); err != nil {
+		if _, err := p.FindRoot(); err != nil {
 			return FeedTypeUnknown
 		}
 

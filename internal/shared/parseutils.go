@@ -1,13 +1,9 @@
 package shared
 
 import (
-	"errors"
-	"fmt"
 	"html"
 	"regexp"
 	"strings"
-
-	xpp "github.com/dsh2dsh/goxpp/v2"
 )
 
 var (
@@ -21,26 +17,6 @@ const (
 	CDATA_START = "<![CDATA["
 	CDATA_END   = "]]>"
 )
-
-// FindRoot iterates through the tokens of an xml document until
-// it encounters its first StartTag event.  It returns an error
-// if it reaches EndDocument before finding a tag.
-func FindRoot(p *xpp.XMLPullParser) (event xpp.XMLEventType, err error) {
-	for {
-		event, err = p.Next()
-		if err != nil {
-			return event, fmt.Errorf("gofeed/internal/shared: %w", err)
-		}
-		if event == xpp.StartTag {
-			break
-		}
-
-		if event == xpp.EndDocument {
-			return event, errors.New("failed to find root node before document end")
-		}
-	}
-	return event, nil
-}
 
 // StripCDATA removes CDATA tags from the string
 // content outside of CDATA tags is passed via DecodeEntities
