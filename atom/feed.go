@@ -24,9 +24,9 @@ type Feed struct {
 	Contributors  []*Person      `json:"contributors,omitempty"`
 	Authors       []*Person      `json:"authors,omitempty"`
 	Categories    []*Category    `json:"categories,omitempty"`
-	Entries       []*Entry       `json:"entries"`
+	Entries       []*Entry       `json:"entries,omitempty"`
 	Extensions    ext.Extensions `json:"extensions,omitempty"`
-	Version       string         `json:"version"`
+	Version       string         `json:"version,omitempty"`
 }
 
 // Link is an Atom link that defines a reference

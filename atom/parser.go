@@ -38,8 +38,9 @@ var atomUriAttrs = map[string]struct{}{
 
 // Parser is an Atom Parser
 type Parser struct {
-	p   *xml.Parser
-	err error
+	p    *xml.Parser
+	feed *Feed
+	err  error
 }
 
 var emptyAttrs = map[string]string{}
@@ -56,11 +57,11 @@ func (self *Parser) Parse(r io.Reader, opts ...options.Option) (*Feed, error) {
 		return nil, fmt.Errorf("gofeed/atom: %w", err)
 	}
 
-	feed := self.root()
+	self.root()
 	if err := self.Err(); err != nil {
 		return nil, err
 	}
-	return feed, nil
+	return self.feed, nil
 }
 
 func (self *Parser) Err() error {
@@ -73,26 +74,17 @@ func (self *Parser) Err() error {
 	return nil
 }
 
-func (self *Parser) root() *Feed {
+func (self *Parser) root() {
 	children := self.makeChildrenSeq(self.p.Name)
 	if children == nil {
-		return nil
+		return
 	}
 
-	atom := &Feed{
-		Language: self.language(),
-		Entries:  []*Entry{},
-		Version:  self.version(),
-	}
+	self.feed = &Feed{Language: self.language(), Version: self.version()}
 
 	for name := range children {
-		self.feedBody(name, atom)
+		self.feedBody(name)
 	}
-
-	if self.err != nil {
-		return nil
-	}
-	return atom
 }
 
 func (self *Parser) makeChildrenSeq(name string) iter.Seq[string] {
@@ -142,7 +134,8 @@ func (self *Parser) resolveAttrs() {
 	}
 }
 
-func (self *Parser) feedBody(name string, atom *Feed) {
+func (self *Parser) feedBody(name string) {
+	atom := self.feed
 	if e, ok := self.extensions(atom.Extensions); ok {
 		atom.Extensions = e
 		return
