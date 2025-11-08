@@ -56,7 +56,9 @@ func parseExtensionElement(p *xpp.XMLPullParser) (e ext.Extension, err error) {
 		}
 	}
 
-	var textValue strings.Builder
+	var text1 string
+	var text2 strings.Builder
+
 	for {
 		tok, err := p.Next()
 		if err != nil {
@@ -67,8 +69,7 @@ func parseExtensionElement(p *xpp.XMLPullParser) (e ext.Extension, err error) {
 			break
 		}
 
-		switch tok {
-		case xpp.StartTag:
+		if tok == xpp.StartTag {
 			child, err := parseExtensionElement(p)
 			if err != nil {
 				return e, err
@@ -78,11 +79,27 @@ func parseExtensionElement(p *xpp.XMLPullParser) (e ext.Extension, err error) {
 			} else {
 				e.Children[child.Name] = append(e.Children[child.Name], child)
 			}
-		case xpp.Text:
-			textValue.WriteString(p.Text())
+			continue
+		} else if tok != xpp.Text {
+			continue
+		}
+
+		switch {
+		case text1 == "":
+			text1 = p.Text()
+		case text2.Len() == 0:
+			text2.WriteString(text1)
+			fallthrough
+		default:
+			text2.WriteString(p.Text())
 		}
 	}
-	e.Value = strings.TrimSpace(textValue.String())
+
+	if text2.Len() == 0 {
+		e.Value = strings.TrimSpace(text1)
+	} else {
+		e.Value = strings.TrimSpace(text2.String())
+	}
 
 	if err = p.Expect(xpp.EndTag, e.Name); err != nil {
 		return e, fmt.Errorf("gofeed/internal/shared: %w", err)
