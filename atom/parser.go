@@ -185,8 +185,7 @@ func (self *Parser) feedBody(name string, atom *Feed) {
 }
 
 func (self *Parser) extensions(e ext.Extensions) (ext.Extensions, bool) {
-	switch shared.PrefixForNamespace(self.p.Space, self.p.XMLPullParser) {
-	case "", "rss", "rdf", "content":
+	if self.p.ExtensionPrefix() == "" {
 		return e, false
 	}
 

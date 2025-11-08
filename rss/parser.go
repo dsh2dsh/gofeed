@@ -74,7 +74,7 @@ func (self *Parser) root(name string) (channel *Feed) {
 
 	for name := range children {
 		// Skip any extensions found in the feed root.
-		if shared.IsExtension(self.p.XMLPullParser) {
+		if self.p.ExtensionPrefix() != "" {
 			self.p.Skip(name)
 			continue
 		}
@@ -244,8 +244,7 @@ func (self *Parser) itemBody(name string, item *Item) {
 	case "description":
 		item.Description = self.p.Text()
 	case "encoded":
-		prefix := shared.PrefixForNamespace(self.p.Space, self.p.XMLPullParser)
-		if prefix == "content" {
+		if self.p.NamespacePrefix() == "content" {
 			item.Content = self.p.Text()
 		}
 	case "link":
@@ -565,8 +564,8 @@ func (self *Parser) parseCustomExtInto(name string, extensions ext.Extensions,
 }
 
 func (self *Parser) parseChannelExt(rss *Feed) bool {
-	switch shared.PrefixForNamespace(self.p.Space, self.p.XMLPullParser) {
-	case "", "rss", "rdf", "content":
+	switch ns := self.p.ExtensionPrefix(); ns {
+	case "":
 		return false
 	case dcNS:
 		rss.DublinCoreExt = self.dublinCore(rss.DublinCoreExt)
@@ -605,8 +604,8 @@ func (self *Parser) extensions(e ext.Extensions) ext.Extensions {
 }
 
 func (self *Parser) parseItemExt(item *Item) bool {
-	switch shared.PrefixForNamespace(self.p.Space, self.p.XMLPullParser) {
-	case "", "rss", "rdf", "content":
+	switch self.p.ExtensionPrefix() {
+	case "":
 		return false
 	case dcNS:
 		item.DublinCoreExt = self.dublinCore(item.DublinCoreExt)

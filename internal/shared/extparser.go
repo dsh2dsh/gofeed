@@ -14,14 +14,6 @@ var (
 	emptyChildren = map[string][]ext.Extension{}
 )
 
-// IsExtension returns whether or not the current
-// XML element is an extension element (if it has a
-// non empty prefix)
-func IsExtension(p *xpp.XMLPullParser) bool {
-	prefix := PrefixForNamespace(p.Space, p)
-	return prefix != "" && prefix != "rss" && prefix != "rdf" && prefix != "content"
-}
-
 // ParseExtension parses the current element of the
 // XMLPullParser as an extension element and updates
 // the extension map
