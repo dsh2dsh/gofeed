@@ -27,8 +27,9 @@ var emptyAttrs = map[string]string{}
 
 // Parser is a RSS Parser
 type Parser struct {
-	p   *xml.Parser
-	err error
+	p    *xml.Parser
+	feed *Feed
+	err  error
 }
 
 // NewParser creates a new RSS parser
@@ -43,11 +44,11 @@ func (self *Parser) Parse(r io.Reader, opts ...options.Option) (*Feed, error) {
 		return nil, fmt.Errorf("gofeed/rss: %w", err)
 	}
 
-	feed := self.root(self.p.Name)
+	self.root(self.p.Name)
 	if err := self.Err(); err != nil {
 		return nil, err
 	}
-	return feed, nil
+	return self.feed, nil
 }
 
 func (self *Parser) Err() error {
@@ -60,17 +61,13 @@ func (self *Parser) Err() error {
 	return nil
 }
 
-func (self *Parser) root(name string) (channel *Feed) {
+func (self *Parser) root(name string) {
 	children := self.makeChildrenSeq(name)
 	if children == nil {
-		return nil
+		return
 	}
 
-	// Items found in feed root
-	var ti *TextInput
-	var image *Image
-	items := []*Item{}
-	ver := self.parseVersion(name)
+	self.feed = &Feed{Version: self.version(name)}
 
 	for name := range children {
 		// Skip any extensions found in the feed root.
@@ -81,37 +78,17 @@ func (self *Parser) root(name string) (channel *Feed) {
 
 		switch name {
 		case "channel":
-			channel = self.channel(name)
+			self.channel(name)
 		case "item":
-			items = self.appendItem(name, items)
+			self.feed.Items = self.appendItem(name, self.feed.Items)
 		case "textinput":
-			ti = self.textInput(name)
+			self.feed.TextInput = self.textInput(name)
 		case "image":
-			image = self.image(name)
+			self.feed.Image = self.image(name)
 		default:
 			self.p.Skip(name)
 		}
 	}
-	if self.err != nil {
-		return nil
-	}
-
-	if channel == nil {
-		channel = &Feed{Items: items}
-	} else if n := len(items); n != 0 {
-		channel.Items = append(channel.Items, items...)
-	}
-
-	if ti != nil {
-		channel.TextInput = ti
-	}
-
-	if image != nil {
-		channel.Image = image
-	}
-
-	channel.Version = ver
-	return channel
 }
 
 func (self *Parser) makeChildrenSeq(name string) iter.Seq[string] {
@@ -140,24 +117,19 @@ func (self *Parser) makeChildrenSeq(name string) iter.Seq[string] {
 	}
 }
 
-func (self *Parser) channel(name string) *Feed {
+func (self *Parser) channel(name string) {
 	children := self.makeChildrenSeq(name)
 	if children == nil {
-		return nil
+		return
 	}
 
-	rss := &Feed{Items: []*Item{}}
 	for name := range children {
-		self.channelBody(name, rss)
+		self.channelBody(name)
 	}
-
-	if self.err != nil {
-		return nil
-	}
-	return rss
 }
 
-func (self *Parser) channelBody(name string, rss *Feed) {
+func (self *Parser) channelBody(name string) {
+	rss := self.feed
 	if self.parseChannelExt(rss) {
 		return
 	}
@@ -517,7 +489,7 @@ func (self *Parser) makeCloud() *Cloud {
 	return cloud
 }
 
-func (self *Parser) parseVersion(name string) string {
+func (self *Parser) version(name string) string {
 	switch strings.ToLower(name) {
 	case "rss":
 		return self.p.Attribute("version")

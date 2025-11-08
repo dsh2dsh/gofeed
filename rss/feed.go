@@ -36,8 +36,8 @@ type Feed struct {
 	DublinCoreExt       *ext.DublinCoreExtension `json:"dcExt,omitempty"`
 	ITunesExt           *ext.ITunesFeedExtension `json:"itunesExt,omitempty"`
 	Extensions          ext.Extensions           `json:"extensions,omitempty"`
-	Items               []*Item                  `json:"items"`
-	Version             string                   `json:"version"`
+	Items               []*Item                  `json:"items,omitempty"`
+	Version             string                   `json:"version,omitempty"`
 }
 
 // Image is an image that represents the feed

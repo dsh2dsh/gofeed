@@ -6,6 +6,5 @@
         "registerProcedure": "myCloud.rssPleaseNotify",
         "protocol": "xml-rpc"
     },
-    "items": [],
     "version": "2.0"
 }
