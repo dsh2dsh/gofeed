@@ -2,13 +2,8 @@ package ext
 
 // https://www.rssboard.org/media-rss
 type Media struct {
-	Categories   []string           `json:"category,omitempty"`
-	Groups       []MediaGroup       `json:"group,omitempty"`
-	Contents     []MediaContent     `json:"content,omitempty"`
-	Thumbnails   []string           `json:"thumbnail,omitempty"`
-	Titles       []MediaDescription `json:"title,omitempty"`
-	Descriptions []MediaDescription `json:"description,omitempty"`
-	PeerLinks    []MediaPeerLink    `json:"peerLink,omitempty"`
+	Groups   []MediaGroup   `json:"group,omitempty"`
+	Contents []MediaContent `json:"content,omitempty"`
 }
 
 type MediaGroup struct {
