@@ -14,14 +14,10 @@ import (
 	ext "github.com/dsh2dsh/gofeed/v2/extensions"
 	"github.com/dsh2dsh/gofeed/v2/internal/dublincore"
 	"github.com/dsh2dsh/gofeed/v2/internal/itunes"
+	"github.com/dsh2dsh/gofeed/v2/internal/media"
 	"github.com/dsh2dsh/gofeed/v2/internal/shared"
 	"github.com/dsh2dsh/gofeed/v2/internal/xml"
 	"github.com/dsh2dsh/gofeed/v2/options"
-)
-
-const (
-	dcNS     = "dc"
-	itunesNS = "itunes"
 )
 
 var emptyAttrs = map[string]string{}
@@ -540,10 +536,12 @@ func (self *Parser) parseChannelExt(name string, rss *Feed) bool {
 	switch ns := self.p.ExtensionPrefix(); ns {
 	case "":
 		return false
-	case dcNS:
+	case "dc":
 		rss.DublinCoreExt = self.dublinCore(rss.DublinCoreExt)
-	case itunesNS:
+	case "itunes":
 		rss.ITunesExt = self.itunesFeed(rss.ITunesExt)
+	case "media":
+		rss.Media = self.media(rss.Media)
 	case "atom", "atom10", "atom03":
 		if name == "link" {
 			rss.AtomLinks = self.appendAtomLink(name, rss.AtomLinks)
@@ -596,10 +594,12 @@ func (self *Parser) parseItemExt(name string, item *Item) bool {
 	switch self.p.ExtensionPrefix() {
 	case "":
 		return false
-	case dcNS:
+	case "dc":
 		item.DublinCoreExt = self.dublinCore(item.DublinCoreExt)
-	case itunesNS:
+	case "itunes":
 		item.ITunesExt = self.itunesItem(item.ITunesExt)
+	case "media":
+		item.Media = self.media(item.Media)
 	case "atom", "atom10", "atom03":
 		if name == "link" {
 			item.AtomLinks = self.appendAtomLink(name, item.AtomLinks)
@@ -615,6 +615,14 @@ func (self *Parser) parseItemExt(name string, item *Item) bool {
 func (self *Parser) itunesItem(item *ext.ITunesItemExtension,
 ) *ext.ITunesItemExtension {
 	item, err := itunes.ParseItem(self.p, item)
+	if err != nil {
+		self.err = err
+	}
+	return item
+}
+
+func (self *Parser) media(item *ext.Media) *ext.Media {
+	item, err := media.Parse(self.p, item)
 	if err != nil {
 		self.err = err
 	}

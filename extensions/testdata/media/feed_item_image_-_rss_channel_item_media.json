@@ -6,31 +6,19 @@
                 "url": "https://example.com/blog-open.png",
                 "title": ""
             },
-            "extensions": {
-                "media": {
-                    "content": [
-                        {
-                            "name": "content",
-                            "value": "",
-                            "attrs": {
-                                "medium": "image",
-                                "url": "https://example.com/blog-open.png"
-                            },
-                            "children": {
-                                "title": [
-                                    {
-                                        "name": "title",
-                                        "value": "blog-open",
-                                        "attrs": {
-                                            "type": "html"
-                                        },
-                                        "children": {}
-                                    }
-                                ]
-                            }
-                        }
-                    ]
+            "media": {
+              "content": [
+                {
+                  "medium": "image",
+                  "url": "https://example.com/blog-open.png",
+                  "title": [
+                    {
+                      "type": "html",
+                      "text": "title"
+                    }
+                  ]
                 }
+              ]
             }
         }
     ],

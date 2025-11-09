@@ -16,6 +16,22 @@ from upstream:
 
 * Atom parser doesn't resolve relative links inside (x)html content
 
+* Faster and less memory allocs
+
+  Before/after:
+
+  ```
+  pkg: github.com/dsh2dsh/gofeed/v2/atom
+  BenchmarkParse-6  262  4575805 ns/op  1399318 B/op  5145 allocs/op
+  BenchmarkParse-6  338  3525674 ns/op   434490 B/op  3899 allocs/op
+  ```
+
+  ```
+  pkg: github.com/dsh2dsh/gofeed/v2/rss
+  BenchmarkParse-6  308  3884274 ns/op  1194017 B/op  3965 allocs/op
+  BenchmarkParse-6  404  2953899 ns/op   324516 B/op  2847 allocs/op
+  ```
+
 ---
 
 # Gofeed: A Robust Feed Parser for Golang
@@ -231,14 +247,14 @@ fmt.Println(feed.Author) // Valentine Wiggin
 
 ## Dependencies
 
-* [goxpp](https://github.com/mmcdole/goxpp) - XML Pull Parser
+* [goxpp](https://github.com/dsh2dsh/goxpp) - XML Pull Parser
 * [testify](https://github.com/stretchr/testify) - Unit test enhancements
 * [golang.org/x/net](https://pkg.go.dev/golang.org/x/net) - Go supplementary network libraries
 * [golang.org/x/text](https://pkg.go.dev/golang.org/x/text) - Go supplementary text processing libraries
 
 ## License
 
-This project is licensed under the [MIT License](https://raw.githubusercontent.com/mmcdole/gofeed/master/LICENSE)
+This project is licensed under the [MIT License](https://raw.githubusercontent.com/dsh2dsh/gofeed/master/LICENSE)
 
 ## Credits
 

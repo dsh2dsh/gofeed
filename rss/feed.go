@@ -38,6 +38,7 @@ type Feed struct {
 	TextInput           *TextInput               `json:"textInput,omitempty"`
 	DublinCoreExt       *ext.DublinCoreExtension `json:"dcExt,omitempty"`
 	ITunesExt           *ext.ITunesFeedExtension `json:"itunesExt,omitempty"`
+	Media               *ext.Media               `json:"media,omitempty"`
 	Extensions          ext.Extensions           `json:"extensions,omitempty"`
 	Items               []*Item                  `json:"items,omitempty"`
 	Version             string                   `json:"version,omitempty"`
@@ -208,22 +209,14 @@ func (self *Feed) GetImage() *Image {
 		return &Image{URL: self.ITunesExt.Image}
 	}
 
-	media, ok := self.Extensions["media"]
-	if !ok {
+	if self.Media == nil {
 		return nil
 	}
 
-	content, ok := media["content"]
-	if !ok {
-		return nil
-	}
-
-	for i := range content {
-		c := &content[i]
-		hasImage := strings.HasPrefix(c.Attrs["type"], "image/") ||
-			c.Attrs["medium"] == "image"
+	for _, c := range self.Media.Contents {
+		hasImage := strings.HasPrefix(c.Type, "image/") || c.Medium == "image"
 		if hasImage {
-			return &Image{URL: c.Attrs["url"]}
+			return &Image{URL: c.URL}
 		}
 	}
 	return nil
@@ -287,6 +280,7 @@ type Item struct {
 	Source        *Source                  `json:"source,omitempty"`
 	DublinCoreExt *ext.DublinCoreExtension `json:"dcExt,omitempty"`
 	ITunesExt     *ext.ITunesItemExtension `json:"itunesExt,omitempty"`
+	Media         *ext.Media               `json:"media,omitempty"`
 	Extensions    ext.Extensions           `json:"extensions,omitempty"`
 }
 
@@ -389,14 +383,12 @@ func (self *Item) ImageURL() string {
 		return self.ITunesExt.Image
 	}
 
-	if media, ok := self.Extensions["media"]; ok {
-		if content, ok := media["content"]; ok {
-			for _, c := range content {
-				hasImage := strings.Contains(c.Attrs["type"], "image") ||
-					strings.Contains(c.Attrs["medium"], "image")
-				if hasImage {
-					return c.Attrs["url"]
-				}
+	if self.Media != nil {
+		for _, c := range self.Media.Contents {
+			hasImage := strings.Contains(c.Type, "image") ||
+				strings.Contains(c.Medium, "image")
+			if hasImage {
+				return c.URL
 			}
 		}
 	}

@@ -2,20 +2,15 @@
   "items": [
     {
       "title": "Test Item",
+      "media": {
+        "content": [
+          {
+            "url": "http://example.com/media.jpg",
+            "type": "image/jpeg"
+          }
+        ]
+      },
       "extensions": {
-        "media": {
-          "content": [
-            {
-              "name": "content",
-              "value": "",
-              "attrs": {
-                "url": "http://example.com/media.jpg",
-                "type": "image/jpeg"
-              },
-              "children": {}
-            }
-          ]
-        },
         "_custom": {
           "customTag": [
             {

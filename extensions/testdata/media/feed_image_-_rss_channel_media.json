@@ -4,18 +4,12 @@
   "image": {
     "url": "http://example.com/channel.png"
   },
-  "extensions": {
-    "media": {
-      "content": [
-        {
-          "name": "content",
-          "attrs": {
-            "url": "http://example.com/channel.png",
-            "medium": "image"
-          },
-          "children": {}
-        }
-      ]
-    }
+  "media": {
+    "content": [
+      {
+        "url": "http://example.com/channel.png",
+        "medium": "image"
+      }
+    ]
   }
 }
