@@ -3,7 +3,7 @@ package json
 import (
 	"time"
 
-	intJson "github.com/dsh2dsh/gofeed/v2/internal/json"
+	"github.com/dsh2dsh/gofeed/v2/internal/json"
 	"github.com/dsh2dsh/gofeed/v2/internal/shared"
 )
 
@@ -31,7 +31,7 @@ type Feed struct {
 }
 
 func (self *Feed) String() string {
-	s, _ := intJson.MarshalString(self)
+	s, _ := json.MarshalString(self)
 	return s
 }
 

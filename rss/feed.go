@@ -8,7 +8,7 @@ import (
 
 	"github.com/dsh2dsh/gofeed/v2/atom"
 	"github.com/dsh2dsh/gofeed/v2/ext"
-	intJson "github.com/dsh2dsh/gofeed/v2/internal/json"
+	"github.com/dsh2dsh/gofeed/v2/internal/json"
 	"github.com/dsh2dsh/gofeed/v2/internal/shared"
 )
 
@@ -82,7 +82,7 @@ type Cloud struct {
 }
 
 func (self *Feed) String() string {
-	s, _ := intJson.MarshalString(self)
+	s, _ := json.MarshalString(self)
 	return s
 }
 

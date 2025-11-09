@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/dsh2dsh/gofeed/v2/ext"
-	intJson "github.com/dsh2dsh/gofeed/v2/internal/json"
+	"github.com/dsh2dsh/gofeed/v2/internal/json"
 )
 
 // Feed is an Atom Feed
@@ -64,7 +64,7 @@ type Category struct {
 }
 
 func (self *Feed) String() string {
-	s, _ := intJson.MarshalString(self)
+	s, _ := json.MarshalString(self)
 	return s
 }
 
