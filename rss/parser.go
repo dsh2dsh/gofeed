@@ -10,6 +10,7 @@ import (
 
 	xpp "github.com/dsh2dsh/goxpp/v2"
 
+	"github.com/dsh2dsh/gofeed/v2/atom"
 	ext "github.com/dsh2dsh/gofeed/v2/extensions"
 	"github.com/dsh2dsh/gofeed/v2/internal/dublincore"
 	"github.com/dsh2dsh/gofeed/v2/internal/itunes"
@@ -130,7 +131,7 @@ func (self *Parser) channel(name string) {
 
 func (self *Parser) channelBody(name string) {
 	rss := self.feed
-	if self.parseChannelExt(rss) {
+	if self.parseChannelExt(name, rss) {
 		return
 	}
 
@@ -206,7 +207,7 @@ func (self *Parser) appendItem(name string, items []*Item) []*Item {
 }
 
 func (self *Parser) itemBody(name string, item *Item) {
-	if self.parseItemExt(item) {
+	if self.parseItemExt(name, item) {
 		return
 	}
 
@@ -535,7 +536,7 @@ func (self *Parser) parseCustomExtInto(name string, extensions ext.Extensions,
 	return extensions, true
 }
 
-func (self *Parser) parseChannelExt(rss *Feed) bool {
+func (self *Parser) parseChannelExt(name string, rss *Feed) bool {
 	switch ns := self.p.ExtensionPrefix(); ns {
 	case "":
 		return false
@@ -543,6 +544,12 @@ func (self *Parser) parseChannelExt(rss *Feed) bool {
 		rss.DublinCoreExt = self.dublinCore(rss.DublinCoreExt)
 	case itunesNS:
 		rss.ITunesExt = self.itunesFeed(rss.ITunesExt)
+	case "atom", "atom10", "atom03":
+		if name == "link" {
+			rss.AtomLinks = self.appendAtomLink(name, rss.AtomLinks)
+			break
+		}
+		fallthrough
 	default:
 		rss.Extensions = self.extensions(rss.Extensions)
 	}
@@ -575,7 +582,17 @@ func (self *Parser) extensions(e ext.Extensions) ext.Extensions {
 	return e
 }
 
-func (self *Parser) parseItemExt(item *Item) bool {
+func (self *Parser) appendAtomLink(name string, links []*atom.Link,
+) []*atom.Link {
+	l, err := atom.ParseLink(name, self.p)
+	if err != nil {
+		self.err = err
+		return links
+	}
+	return append(links, l)
+}
+
+func (self *Parser) parseItemExt(name string, item *Item) bool {
 	switch self.p.ExtensionPrefix() {
 	case "":
 		return false
@@ -583,6 +600,12 @@ func (self *Parser) parseItemExt(item *Item) bool {
 		item.DublinCoreExt = self.dublinCore(item.DublinCoreExt)
 	case itunesNS:
 		item.ITunesExt = self.itunesItem(item.ITunesExt)
+	case "atom", "atom10", "atom03":
+		if name == "link" {
+			item.AtomLinks = self.appendAtomLink(name, item.AtomLinks)
+			break
+		}
+		fallthrough
 	default:
 		item.Extensions = self.extensions(item.Extensions)
 	}

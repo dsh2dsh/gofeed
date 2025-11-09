@@ -1,10 +1,12 @@
 package rss
 
 import (
+	"iter"
 	"slices"
 	"strings"
 	"time"
 
+	"github.com/dsh2dsh/gofeed/v2/atom"
 	ext "github.com/dsh2dsh/gofeed/v2/extensions"
 	intJson "github.com/dsh2dsh/gofeed/v2/internal/json"
 	"github.com/dsh2dsh/gofeed/v2/internal/shared"
@@ -14,6 +16,7 @@ import (
 type Feed struct {
 	Title               string                   `json:"title,omitempty"`
 	Links               []string                 `json:"links,omitempty"`
+	AtomLinks           []*atom.Link             `json:"atomLinks,omitempty"`
 	Description         string                   `json:"description,omitempty"`
 	Language            string                   `json:"language,omitempty"`
 	Copyright           string                   `json:"copyright,omitempty"`
@@ -102,7 +105,7 @@ func (self *Feed) GetDescription() string {
 	return ""
 }
 
-func (self *Feed) GetLink() string {
+func (self *Feed) Link() string {
 	switch {
 	case len(self.Links) != 0:
 		return self.Links[0]
@@ -112,41 +115,32 @@ func (self *Feed) GetLink() string {
 	return ""
 }
 
-func (self *Feed) GetFeedLink() (link string) {
-	atomExtensions := ext.ElementsSeq(self.Extensions, "atom", "atom10", "atom03")
-	for ex := range atomExtensions {
-		if links, ok := ex["link"]; ok {
-			for i := range links {
-				l := &links[i]
-				if l.Attrs["rel"] == "self" {
-					return l.Attrs["href"]
-				}
-			}
+func (self *Feed) FeedLink() (link string) {
+	for _, l := range self.AtomLinks {
+		if l.Rel == "self" {
+			return l.Href
 		}
 	}
 	return ""
 }
 
-func (self *Feed) GetLinks() (links []string) {
-	if n := len(self.Links); n > 0 {
-		links = make([]string, 0, n)
-		links = append(links, self.Links...)
-	}
+func (self *Feed) LinkSeq() iter.Seq[string] {
+	return func(yield func(string) bool) {
+		for _, link := range self.Links {
+			if !yield(link) {
+				return
+			}
+		}
 
-	atomExtensions := ext.ElementsSeq(self.Extensions, "atom", "atom10", "atom03")
-	for ex := range atomExtensions {
-		if lks, ok := ex["link"]; ok {
-			for i := range lks {
-				l := &lks[i]
-				ok := l.Attrs["rel"] == "" || l.Attrs["rel"] == "alternate" ||
-					l.Attrs["rel"] == "self"
-				if ok {
-					links = append(links, l.Attrs["href"])
+		for _, link := range self.AtomLinks {
+			switch link.Rel {
+			case "", "alternate", "self":
+				if !yield(link.Href) {
+					return
 				}
 			}
 		}
 	}
-	return links
 }
 
 func (self *Feed) GetUpdated() string {
@@ -280,6 +274,7 @@ func (self *Feed) GetCategories() []string {
 type Item struct {
 	Title         string                   `json:"title,omitempty"`
 	Links         []string                 `json:"links,omitempty"`
+	AtomLinks     []*atom.Link             `json:"atomLinks,omitempty"`
 	Description   string                   `json:"description,omitempty"`
 	Content       string                   `json:"content,omitempty"`
 	Author        string                   `json:"author,omitempty"`

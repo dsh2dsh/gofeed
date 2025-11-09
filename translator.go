@@ -2,6 +2,7 @@ package gofeed
 
 import (
 	"errors"
+	"slices"
 	"strconv"
 
 	"github.com/dsh2dsh/gofeed/v2/atom"
@@ -36,9 +37,9 @@ func (t *DefaultRSSTranslator) Translate(feed any, opts *options.Parse) (*Feed, 
 	return &Feed{
 		Title:           rss.GetTitle(),
 		Description:     rss.GetDescription(),
-		Link:            rss.GetLink(),
-		Links:           rss.GetLinks(),
-		FeedLink:        rss.GetFeedLink(),
+		Link:            rss.Link(),
+		Links:           slices.Collect(rss.LinkSeq()),
+		FeedLink:        rss.FeedLink(),
 		Updated:         rss.GetUpdated(),
 		UpdatedParsed:   rss.GetUpdatedParsed(),
 		Published:       rss.PubDate,

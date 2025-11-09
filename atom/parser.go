@@ -344,9 +344,18 @@ func (self *Parser) personBody(name string, person *Person) {
 }
 
 func (self *Parser) appendLink(name string, links []*Link) []*Link {
+	l, err := ParseLink(name, self.p)
+	if err != nil {
+		self.err = err
+		return links
+	}
+	return append(links, l)
+}
+
+func ParseLink(name string, p *xml.Parser) (*Link, error) {
 	l := &Link{Rel: "alternate"}
-	err := self.p.WithSkip(name, func() error {
-		for name, value := range self.p.AttributeSeq() {
+	err := p.WithSkip(name, func() error {
+		for name, value := range p.AttributeSeq() {
 			switch name {
 			case "href":
 				l.Href = value
@@ -365,10 +374,9 @@ func (self *Parser) appendLink(name string, links []*Link) []*Link {
 		return nil
 	})
 	if err != nil {
-		self.err = err
-		return links
+		return nil, err
 	}
-	return append(links, l)
+	return l, nil
 }
 
 func (self *Parser) appendCategory(name string, categories []*Category,
