@@ -3,8 +3,8 @@ package gofeed
 import (
 	"time"
 
-	ext "github.com/dsh2dsh/gofeed/v2/extensions"
-	intJson "github.com/dsh2dsh/gofeed/v2/internal/json"
+	"github.com/dsh2dsh/gofeed/v2/ext"
+	"github.com/dsh2dsh/gofeed/v2/internal/json"
 )
 
 // Feed is the universal Feed type that atom.Feed
@@ -42,7 +42,7 @@ type Feed struct {
 
 // String returns a JSON representation of the Feed for debugging purposes.
 func (f *Feed) String() string {
-	s, _ := intJson.MarshalString(f)
+	s, _ := json.MarshalString(f)
 	return s
 }
 

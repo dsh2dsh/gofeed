@@ -11,7 +11,7 @@ import (
 	xpp "github.com/dsh2dsh/goxpp/v2"
 
 	"github.com/dsh2dsh/gofeed/v2/atom"
-	ext "github.com/dsh2dsh/gofeed/v2/extensions"
+	"github.com/dsh2dsh/gofeed/v2/ext"
 	"github.com/dsh2dsh/gofeed/v2/internal/dublincore"
 	"github.com/dsh2dsh/gofeed/v2/internal/itunes"
 	"github.com/dsh2dsh/gofeed/v2/internal/media"

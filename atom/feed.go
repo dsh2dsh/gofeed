@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	ext "github.com/dsh2dsh/gofeed/v2/extensions"
+	"github.com/dsh2dsh/gofeed/v2/ext"
 	intJson "github.com/dsh2dsh/gofeed/v2/internal/json"
 )
 

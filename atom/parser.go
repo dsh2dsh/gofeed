@@ -11,7 +11,7 @@ import (
 
 	xpp "github.com/dsh2dsh/goxpp/v2"
 
-	ext "github.com/dsh2dsh/gofeed/v2/extensions"
+	"github.com/dsh2dsh/gofeed/v2/ext"
 	"github.com/dsh2dsh/gofeed/v2/internal/shared"
 	"github.com/dsh2dsh/gofeed/v2/internal/xml"
 	"github.com/dsh2dsh/gofeed/v2/options"
