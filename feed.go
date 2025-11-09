@@ -32,9 +32,9 @@ type Feed struct {
 	DublinCoreExt   *ext.DublinCoreExtension `json:"dcExt,omitempty"`
 	ITunesExt       *ext.ITunesFeedExtension `json:"itunesExt,omitempty"`
 	Extensions      ext.Extensions           `json:"extensions,omitempty"`
-	Items           []*Item                  `json:"items"`
-	FeedType        string                   `json:"feedType"`
-	FeedVersion     string                   `json:"feedVersion"`
+	Items           []*Item                  `json:"items,omitempty"`
+	FeedType        string                   `json:"feedType,omitempty"`
+	FeedVersion     string                   `json:"feedVersion,omitempty"`
 
 	// Original format-specific feed data (only populated if KeepOriginalFeed is true)
 	OriginalFeed any `json:"-"`

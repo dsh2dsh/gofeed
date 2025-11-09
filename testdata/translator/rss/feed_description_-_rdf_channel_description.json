@@ -1,6 +1,5 @@
 {
   "description": "Feed Description",
   "feedType": "rss",
-  "feedVersion": "1.0",
-  "items": []
+  "feedVersion": "1.0"
 }

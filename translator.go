@@ -110,6 +110,10 @@ func (t *DefaultRSSTranslator) feedImage(rss *rss.Feed) *Image {
 }
 
 func (t *DefaultRSSTranslator) feedItems(rss *rss.Feed) []*Item {
+	if len(rss.Items) == 0 {
+		return nil
+	}
+
 	items := make([]*Item, len(rss.Items))
 	for i, item := range rss.Items {
 		items[i] = t.translateFeedItem(item)
