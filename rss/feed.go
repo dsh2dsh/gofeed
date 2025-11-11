@@ -174,15 +174,28 @@ func (self *Feed) GetAuthor() (name, address string, ok bool) {
 	case self.WebMaster != "":
 		name, address = shared.ParseNameAddress(self.WebMaster)
 		return name, address, true
-	case self.DublinCoreExt != nil && self.DublinCoreExt.Author != "":
-		name, address = shared.ParseNameAddress(self.DublinCoreExt.Author)
-		return name, address, true
-	case self.DublinCoreExt != nil && self.DublinCoreExt.Creator != "":
-		name, address = shared.ParseNameAddress(self.DublinCoreExt.Creator)
-		return name, address, true
-	case self.ITunesExt != nil && self.ITunesExt.Author != "":
-		name, address = shared.ParseNameAddress(self.ITunesExt.Author)
-		return name, address, true
+	}
+
+	if self.DublinCoreExt != nil {
+		switch {
+		case self.DublinCoreExt.Author != "":
+			name, address = shared.ParseNameAddress(self.DublinCoreExt.Author)
+			return name, address, true
+		case self.DublinCoreExt.Creator != "":
+			name, address = shared.ParseNameAddress(self.DublinCoreExt.Creator)
+			return name, address, true
+		}
+	}
+
+	if self.ITunesExt != nil {
+		switch {
+		case self.ITunesExt.Author != "":
+			name, address = shared.ParseNameAddress(self.ITunesExt.Author)
+			return name, address, true
+		case self.ITunesExt.Owner != nil:
+			owner := self.ITunesExt.Owner
+			return owner.Name, owner.Email, true
+		}
 	}
 	return name, address, false
 }
