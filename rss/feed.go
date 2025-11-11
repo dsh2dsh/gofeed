@@ -107,11 +107,8 @@ func (self *Feed) GetDescription() string {
 }
 
 func (self *Feed) Link() string {
-	switch {
-	case len(self.Links) != 0:
+	if len(self.Links) != 0 {
 		return self.Links[0]
-	case self.ITunesExt != nil && self.ITunesExt.Subtitle != "":
-		return self.ITunesExt.Subtitle
 	}
 	return ""
 }
