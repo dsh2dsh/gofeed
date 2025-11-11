@@ -364,17 +364,23 @@ func (self *Item) GetPublishedParsed() *time.Time {
 }
 
 func (self *Item) GetAuthor() (name, address string, ok bool) {
-	switch {
-	case self.Author != "":
+	if self.Author != "" {
 		name, address = shared.ParseNameAddress(self.Author)
 		return name, address, true
-	case self.DublinCoreExt != nil && self.DublinCoreExt.Author != "":
-		name, address = shared.ParseNameAddress(self.DublinCoreExt.Author)
-		return name, address, true
-	case self.DublinCoreExt != nil && self.DublinCoreExt.Creator != "":
-		name, address = shared.ParseNameAddress(self.DublinCoreExt.Creator)
-		return name, address, true
-	case self.ITunesExt != nil && self.ITunesExt.Author != "":
+	}
+
+	if self.DublinCoreExt != nil {
+		switch {
+		case self.DublinCoreExt.Author != "":
+			name, address = shared.ParseNameAddress(self.DublinCoreExt.Author)
+			return name, address, true
+		case self.DublinCoreExt.Creator != "":
+			name, address = shared.ParseNameAddress(self.DublinCoreExt.Creator)
+			return name, address, true
+		}
+	}
+
+	if self.ITunesExt != nil && self.ITunesExt.Author != "" {
 		name, address = shared.ParseNameAddress(self.ITunesExt.Author)
 		return name, address, true
 	}
