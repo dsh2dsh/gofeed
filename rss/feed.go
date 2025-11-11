@@ -2,7 +2,6 @@ package rss
 
 import (
 	"iter"
-	"slices"
 	"strings"
 	"time"
 
@@ -242,35 +241,51 @@ func (self *Feed) GetCopyright() string {
 	return ""
 }
 
-func (self *Feed) GetCategories() []string {
-	var cats []string
-	if len(self.Categories) != 0 {
-		cats = make([]string, 0, len(self.Categories))
-		for _, c := range self.Categories {
-			cats = append(cats, c.Value)
+func (self *Feed) AllCategories() iter.Seq[string] {
+	return self.categoriesIter
+}
+
+func (self *Feed) categoriesIter(yield func(string) bool) {
+	for _, c := range self.Categories {
+		if !yield(c.Value) {
+			return
 		}
 	}
 
-	if self.ITunesExt != nil && self.ITunesExt.Keywords != "" {
-		cats = slices.Grow(cats, strings.Count(self.ITunesExt.Keywords, ",")+1)
-		cats = slices.AppendSeq(cats, strings.SplitSeq(
-			self.ITunesExt.Keywords, ","))
-	}
+	if itunes := self.ITunesExt; itunes != nil {
+		if itunes.Keywords != "" {
+			for s := range strings.SplitSeq(itunes.Keywords, ",") {
+				if !yield(s) {
+					return
+				}
+			}
+		}
 
-	if self.ITunesExt != nil && len(self.ITunesExt.Categories) != 0 {
-		cats = slices.Grow(cats, len(self.ITunesExt.Categories))
-		for _, c := range self.ITunesExt.Categories {
-			cats = append(cats, c.Text)
+		for _, c := range itunes.Categories {
+			if !yield(c.Text) {
+				return
+			}
 			if s := c.Subcategory; s != nil {
-				cats = append(cats, s.Text)
+				if !yield(s.Text) {
+					return
+				}
 			}
 		}
 	}
 
-	if self.DublinCoreExt != nil && self.DublinCoreExt.Subject != "" {
-		cats = append(cats, self.DublinCoreExt.Subject)
+	if dc := self.DublinCoreExt; dc != nil && dc.Subject != "" {
+		if !yield(dc.Subject) {
+			return
+		}
 	}
-	return cats
+
+	if media := self.Media; media != nil {
+		for s := range media.AllCategories() {
+			if !yield(s) {
+				return
+			}
+		}
+	}
 }
 
 // Item is an RSS Item
@@ -423,23 +438,40 @@ func (self *Item) ImageURL() string {
 	return ""
 }
 
-func (self *Item) GetCategories() []string {
-	var cats []string
-	if self.Categories != nil {
-		cats = make([]string, 0, len(self.Categories))
-		for _, c := range self.Categories {
-			cats = append(cats, c.Value)
+func (self *Item) AllCategories() iter.Seq[string] {
+	return self.categoriesIter
+}
+
+func (self *Item) categoriesIter(yield func(string) bool) {
+	for _, c := range self.Categories {
+		if !yield(c.Value) {
+			return
 		}
 	}
 
-	if self.ITunesExt != nil && self.ITunesExt.Keywords != "" {
-		cats = slices.Grow(cats, strings.Count(self.ITunesExt.Keywords, ",")+1)
-		cats = slices.AppendSeq(cats, strings.SplitSeq(
-			self.ITunesExt.Keywords, ","))
+	if itunes := self.ITunesExt; itunes != nil {
+		if itunes.Keywords != "" {
+			for s := range strings.SplitSeq(itunes.Keywords, ",") {
+				if !yield(s) {
+					return
+				}
+			}
+		}
 	}
 
-	if self.DublinCoreExt != nil && self.DublinCoreExt.Subject != "" {
-		cats = append(cats, self.DublinCoreExt.Subject)
+	if dc := self.DublinCoreExt; dc != nil {
+		if dc.Subject != "" {
+			if !yield(dc.Subject) {
+				return
+			}
+		}
 	}
-	return cats
+
+	if media := self.Media; media != nil {
+		for s := range media.AllCategories() {
+			if !yield(s) {
+				return
+			}
+		}
+	}
 }
