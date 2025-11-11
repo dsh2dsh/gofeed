@@ -331,8 +331,15 @@ func (self *Item) GetDescription() string {
 		return self.Description
 	case self.DublinCoreExt != nil && self.DublinCoreExt.Description != "":
 		return self.DublinCoreExt.Description
-	case self.ITunesExt != nil && self.ITunesExt.Summary != "":
-		return self.ITunesExt.Summary
+	}
+
+	if self.ITunesExt != nil {
+		switch {
+		case self.ITunesExt.Summary != "":
+			return self.ITunesExt.Summary
+		case self.ITunesExt.Subtitle != "":
+			return self.ITunesExt.Subtitle
+		}
 	}
 	return ""
 }
