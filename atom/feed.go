@@ -198,6 +198,14 @@ func (self *Entry) GetContent() string {
 	if self.Content != nil {
 		return self.Content.Value
 	}
+
+	if self.Summary != "" {
+		return self.Summary
+	}
+
+	if self.Media != nil {
+		return self.Media.Description()
+	}
 	return ""
 }
 

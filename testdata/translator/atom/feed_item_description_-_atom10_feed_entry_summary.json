@@ -1,7 +1,8 @@
 {
     "items": [
         {
-            "description": "Entry Summary"
+          "description": "Entry Summary",
+          "content": "Entry Summary"
         }
     ],
     "feedType": "atom",

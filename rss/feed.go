@@ -356,6 +356,10 @@ func (self *Item) GetDescription() string {
 			return self.ITunesExt.Subtitle
 		}
 	}
+
+	if self.Media != nil {
+		return self.Media.Description()
+	}
 	return ""
 }
 

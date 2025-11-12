@@ -126,6 +126,32 @@ func (self *Media) thumbnailsIter(yield func(string) bool) {
 	}
 }
 
+func (self *Media) Description() string {
+	for _, c := range self.Contents {
+		for _, d := range c.Descriptions {
+			if d.Type == "html" {
+				return d.Text
+			}
+		}
+	}
+
+	for _, g := range self.Groups {
+		for _, d := range g.Descriptions {
+			if d.Type == "html" {
+				return d.Text
+			}
+		}
+		for _, c := range g.Contents {
+			for _, d := range c.Descriptions {
+				if d.Type == "html" {
+					return d.Text
+				}
+			}
+		}
+	}
+	return ""
+}
+
 func (self *MediaGroup) AllCategories() iter.Seq[string] {
 	return self.categoriesIter
 }
