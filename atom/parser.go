@@ -12,6 +12,7 @@ import (
 	xpp "github.com/dsh2dsh/goxpp/v2"
 
 	"github.com/dsh2dsh/gofeed/v2/ext"
+	"github.com/dsh2dsh/gofeed/v2/internal/media"
 	"github.com/dsh2dsh/gofeed/v2/internal/shared"
 	"github.com/dsh2dsh/gofeed/v2/internal/xml"
 	"github.com/dsh2dsh/gofeed/v2/options"
@@ -136,7 +137,7 @@ func (self *Parser) resolveAttrs() {
 
 func (self *Parser) feedBody(name string) {
 	atom := self.feed
-	if e, ok := self.extensions(atom.Extensions); ok {
+	if e, ok := self.unknownExtension(atom.Extensions); ok {
 		atom.Extensions = e
 		return
 	}
@@ -177,16 +178,19 @@ func (self *Parser) feedBody(name string) {
 	}
 }
 
-func (self *Parser) extensions(e ext.Extensions) (ext.Extensions, bool) {
+func (self *Parser) unknownExtension(e ext.Extensions) (ext.Extensions, bool) {
 	if self.p.ExtensionPrefix() == "" {
 		return e, false
 	}
+	return self.extensions(e), true
+}
 
+func (self *Parser) extensions(e ext.Extensions) ext.Extensions {
 	e, err := shared.ParseExtension(e, self.p.XMLPullParser)
 	if err != nil {
 		self.err = err
 	}
-	return e, true
+	return e
 }
 
 func (self *Parser) appendEntry(name string, entries []*Entry) []*Entry {
@@ -207,8 +211,7 @@ func (self *Parser) appendEntry(name string, entries []*Entry) []*Entry {
 }
 
 func (self *Parser) entryBody(name string, entry *Entry) {
-	if e, ok := self.extensions(entry.Extensions); ok {
-		entry.Extensions = e
+	if self.parseEntryExt(entry) {
 		return
 	}
 
@@ -246,6 +249,26 @@ func (self *Parser) entryBody(name string, entry *Entry) {
 	}
 }
 
+func (self *Parser) parseEntryExt(entry *Entry) bool {
+	switch ns := self.p.ExtensionPrefix(); ns {
+	case "":
+		return false
+	case "media":
+		entry.Media = self.media(entry.Media)
+	default:
+		entry.Extensions = self.extensions(entry.Extensions)
+	}
+	return true
+}
+
+func (self *Parser) media(item *ext.Media) *ext.Media {
+	item, err := media.Parse(self.p, item)
+	if err != nil {
+		self.err = err
+	}
+	return item
+}
+
 func (self *Parser) source(name string) *Source {
 	children := self.makeChildrenSeq(name)
 	if children == nil {
@@ -264,7 +287,7 @@ func (self *Parser) source(name string) *Source {
 }
 
 func (self *Parser) sourceBody(name string, source *Source) {
-	if e, ok := self.extensions(source.Extensions); ok {
+	if e, ok := self.unknownExtension(source.Extensions); ok {
 		source.Extensions = e
 		return
 	}

@@ -163,6 +163,7 @@ type Entry struct {
 	PublishedParsed *time.Time     `json:"publishedParsed,omitempty"`
 	Source          *Source        `json:"source,omitempty"`
 	Content         *Content       `json:"content,omitempty"`
+	Media           *ext.Media     `json:"media,omitempty"`
 	Extensions      ext.Extensions `json:"extensions,omitempty"`
 }
 
