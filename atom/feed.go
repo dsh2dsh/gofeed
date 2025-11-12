@@ -72,6 +72,12 @@ func (self *Feed) GetLink() string {
 	if l := firstLinkWithType("alternate", self.Links); l != nil {
 		return l.Href
 	}
+
+	for _, l := range self.Links {
+		if l.Rel == "" && (l.Type == "" || l.Type == "text/html") {
+			return l.Href
+		}
+	}
 	return ""
 }
 
@@ -212,6 +218,12 @@ func (self *Entry) GetContent() string {
 func (self *Entry) GetLink() string {
 	if l := firstLinkWithType("alternate", self.Links); l != nil {
 		return l.Href
+	}
+
+	for _, l := range self.Links {
+		if l.Rel == "" && (l.Type == "" || l.Type == "text/html") {
+			return l.Href
+		}
 	}
 	return ""
 }
