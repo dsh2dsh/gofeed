@@ -126,12 +126,12 @@ func (self *Feed) GetCategories() []string {
 		return nil
 	}
 
-	categories := make([]string, len(self.Categories))
-	for i, c := range self.Categories {
+	categories := make([]string, 0, len(self.Categories))
+	for _, c := range self.Categories {
 		if c.Label != "" {
-			categories[i] = c.Label
-		} else {
-			categories[i] = c.Term
+			categories = append(categories, c.Label)
+		} else if c.Term != "" {
+			categories = append(categories, c.Term)
 		}
 	}
 	return categories
@@ -263,12 +263,12 @@ func (self *Entry) GetCategories() []string {
 		return nil
 	}
 
-	categories := make([]string, len(self.Categories))
-	for i, c := range self.Categories {
+	categories := make([]string, 0, len(self.Categories))
+	for _, c := range self.Categories {
 		if c.Label != "" {
-			categories[i] = c.Label
-		} else {
-			categories[i] = c.Term
+			categories = append(categories, c.Label)
+		} else if c.Term != "" {
+			categories = append(categories, c.Term)
 		}
 	}
 	return categories
