@@ -2,6 +2,7 @@ package atom
 
 import (
 	"encoding/base64"
+	stdxml "encoding/xml"
 	"fmt"
 	"io"
 	"iter"
@@ -465,6 +466,8 @@ func (self *Parser) parseAtomText(name string) (string, error) {
 	attrs := self.textAttributes()
 	if attrs.XHTML() {
 		return self.xhtmlContent()
+	} else if attrs.XML() {
+		return self.xmlContent()
 	}
 
 	xmlBaseResolver := self.p.XmlBaseResolver()
@@ -509,17 +512,35 @@ func (self *Parser) textAttributes() textAttributes {
 }
 
 func (self *Parser) xhtmlContent() (string, error) {
-	var xhtmlContent struct {
+	var content struct {
+		Inner string `xml:",innerxml"`
 		XHTML struct {
-			InnerXML string `xml:",innerxml"`
+			XMLName stdxml.Name `xml:"div"`
+			Inner   string      `xml:",innerxml"`
 		} `xml:"http://www.w3.org/1999/xhtml div"`
 	}
 
-	if err := self.p.DecodeElement(&xhtmlContent); err != nil {
+	if err := self.p.DecodeElement(&content); err != nil {
 		return "", fmt.Errorf("gofeed/atom: extract xhtml text from %q: %w",
 			self.p.Name, err)
 	}
-	return strings.TrimSpace(xhtmlContent.XHTML.InnerXML), nil
+
+	if content.XHTML.XMLName.Local != "" {
+		return strings.TrimSpace(content.XHTML.Inner), nil
+	}
+	return strings.TrimSpace(content.Inner), nil
+}
+
+func (self *Parser) xmlContent() (string, error) {
+	var xmlContent struct {
+		InnerXML string `xml:",innerxml"`
+	}
+
+	if err := self.p.DecodeElement(&xmlContent); err != nil {
+		return "", fmt.Errorf("gofeed/atom: extract xhtml text from %q: %w",
+			self.p.Name, err)
+	}
+	return strings.TrimSpace(xmlContent.InnerXML), nil
 }
 
 func (self *Parser) language() string { return self.p.Attribute("lang") }
