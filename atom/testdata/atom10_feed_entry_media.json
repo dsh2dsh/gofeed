@@ -5,14 +5,36 @@
             "media": {
               "content": [
                 {
-                  "medium": "image",
-                  "url": "https://example.com/blog-open.png",
-                  "title": [
-                    {
-                      "type": "html",
-                      "text": "blog-open"
-                    }
-                  ]
+                  "url": "https://www.youtube.com/v/abcd",
+                  "type": "application/x-shockwave-flash"
+                },
+                {
+                  "url": "/relative/media.mp4",
+                  "type": "application/x-shockwave-flash"
+                }
+              ],
+              "thumbnail": [
+                "https://example.org/duplicated-thumbnail.jpg",
+                "https://example.org/duplicated-thumbnail.jpg"
+              ],
+              "title": [
+                {
+                  "text": "Another title"
+                }
+              ],
+              "description": [
+                {
+                  "text": "Some description\nA website: http://example.org/"
+                }
+              ],
+              "peerLink": [
+                {
+                  "href": "http://www.example.org/sampleFile.torrent",
+                  "type": "application/x-bittorrent"
+                },
+                {
+                  "href": "/sampleFile2.torrent",
+                  "type": "application/x-bittorrent"
                 }
               ]
             }

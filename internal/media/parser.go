@@ -53,11 +53,22 @@ func (self *parser) Err() error {
 }
 
 func (self *parser) body(name string) {
+	m := self.media
 	switch name {
 	case "group":
-		self.media.Groups = self.appendGroup(name, self.media.Groups)
+		m.Groups = self.appendGroup(name, m.Groups)
 	case "content":
-		self.media.Contents = self.appendContent(name, self.media.Contents)
+		m.Contents = self.appendContent(name, m.Contents)
+	case "category":
+		m.Categories = self.appendCategory(name, m.Categories)
+	case "thumbnail":
+		m.Thumbnails = self.appendThumbnail(name, m.Thumbnails)
+	case "title":
+		m.Titles = self.appendDescription(name, m.Titles)
+	case "description":
+		m.Descriptions = self.appendDescription(name, m.Descriptions)
+	case "peerlink":
+		m.PeerLinks = self.appendPeerLink(name, m.PeerLinks)
 	default:
 		self.p.Skip(name)
 	}

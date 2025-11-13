@@ -1,0 +1,22 @@
+{
+    "entries": [
+        {
+          "title": "Entry Title",
+            "media": {
+              "content": [
+                {
+                  "medium": "image",
+                  "url": "https://example.com/blog-open.png",
+                  "title": [
+                    {
+                      "type": "html",
+                      "text": "blog-open"
+                    }
+                  ]
+                }
+              ]
+            }
+        }
+    ],
+    "version": "1.0"
+}

@@ -1,0 +1,39 @@
+{
+    "entries": [
+        {
+          "title": "Entry Title",
+          "media": {
+            "group": [
+              {
+                "content": [
+                  {
+                    "url": "https://www.youtube.com/v/abcd",
+                    "type": "application/x-shockwave-flash"
+                  },
+                  {
+                    "url": "/v/efg",
+                    "type": "application/x-shockwave-flash"
+                  }
+                ],
+                "thumbnail": [
+                  "https://www.example.org/duplicate-thumbnail.jpg",
+                  "https://www.example.org/duplicate-thumbnail.jpg",
+                  "/thumbnail2.jpg"
+                ],
+                "title": [
+                  {
+                    "text": "Another title"
+                  }
+                ],
+                "description": [
+                  {
+                    "text": "Some description A website: http://example.org/"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+    ],
+    "version": "1.0"
+}

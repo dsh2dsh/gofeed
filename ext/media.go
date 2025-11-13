@@ -6,6 +6,12 @@ import "iter"
 type Media struct {
 	Groups   []MediaGroup   `json:"group,omitempty"`
 	Contents []MediaContent `json:"content,omitempty"`
+
+	Categories   []string           `json:"category,omitempty"`
+	Thumbnails   []string           `json:"thumbnail,omitempty"`
+	Titles       []MediaDescription `json:"title,omitempty"`
+	Descriptions []MediaDescription `json:"description,omitempty"`
+	PeerLinks    []MediaPeerLink    `json:"peerLink,omitempty"`
 }
 
 type MediaGroup struct {
@@ -45,6 +51,12 @@ func (self *Media) AllCategories() iter.Seq[string] {
 }
 
 func (self *Media) categoriesIter(yield func(string) bool) {
+	for _, s := range self.Categories {
+		if !yield(s) {
+			return
+		}
+	}
+
 	for _, c := range self.Contents {
 		for _, s := range c.Categories {
 			if !yield(s) {
@@ -87,6 +99,12 @@ func (self *Media) AllPeerLinks() iter.Seq[MediaPeerLink] {
 }
 
 func (self *Media) peerLinksIter(yield func(MediaPeerLink) bool) {
+	for _, pl := range self.PeerLinks {
+		if pl.URL != "" && !yield(pl) {
+			return
+		}
+	}
+
 	for _, c := range self.Contents {
 		for _, pl := range c.PeerLinks {
 			if pl.URL != "" && !yield(pl) {
@@ -109,6 +127,12 @@ func (self *Media) AllThumbnails() iter.Seq[string] {
 }
 
 func (self *Media) thumbnailsIter(yield func(string) bool) {
+	for _, s := range self.Thumbnails {
+		if s != "" && !yield(s) {
+			return
+		}
+	}
+
 	for _, c := range self.Contents {
 		for _, s := range c.Thumbnails {
 			if s != "" && !yield(s) {
@@ -127,6 +151,12 @@ func (self *Media) thumbnailsIter(yield func(string) bool) {
 }
 
 func (self *Media) Description() string {
+	for _, d := range self.Descriptions {
+		if d.Type == "html" {
+			return d.Text
+		}
+	}
+
 	for _, c := range self.Contents {
 		for _, d := range c.Descriptions {
 			if d.Type == "html" {

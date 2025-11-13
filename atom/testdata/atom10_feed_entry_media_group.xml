@@ -1,0 +1,16 @@
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <entry>
+    <title>Entry Title</title>
+    <media:group>
+      <media:title>Another title</media:title>
+      <media:content url="https://www.youtube.com/v/abcd" type="application/x-shockwave-flash" width="640" height="390"/>
+      <media:content url="   /v/efg  " type="application/x-shockwave-flash" width="640" height="390"/>
+      <media:content url="     " type="application/x-shockwave-flash" width="640" height="390"/>
+      <media:thumbnail url="https://www.example.org/duplicate-thumbnail.jpg" width="480" height="360"/>
+      <media:thumbnail url="https://www.example.org/duplicate-thumbnail.jpg" width="480" height="360"/>
+      <media:thumbnail url=" /thumbnail2.jpg   " width="480" height="360"/>
+      <media:thumbnail url="    " width="480" height="360"/>
+      <media:description>Some description A website: http://example.org/</media:description>
+    </media:group>
+  </entry>
+</feed>

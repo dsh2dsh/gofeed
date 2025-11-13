@@ -1,0 +1,8 @@
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <entry>
+    <title>Entry Title</title>
+      <media:content url="https://example.com/blog-open.png" medium="image">
+        <media:title type="html">blog-open</media:title>
+      </media:content>
+  </entry>
+</feed>
