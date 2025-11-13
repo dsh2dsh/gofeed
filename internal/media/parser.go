@@ -114,7 +114,7 @@ func (self *parser) appendContent(name string, contents []ext.MediaContent,
 		}
 	}
 
-	if self.err != nil {
+	if self.err != nil || c.URL == "" {
 		return contents
 	}
 	return append(contents, c)
@@ -149,11 +149,15 @@ func (self *parser) makeChildrenSeq(name string) iter.Seq[string] {
 func (self *parser) appendThumbnail(name string, thumbnails []string) []string {
 	var url string
 	err := self.p.WithSkip(name, func() error {
-		url = self.p.Attribute("url")
+		url = strings.TrimSpace(self.p.Attribute("url"))
 		return nil
 	})
 	if err != nil {
 		self.err = err
+		return thumbnails
+	}
+
+	if url == "" {
 		return thumbnails
 	}
 	return append(thumbnails, url)
@@ -197,31 +201,41 @@ func (self *parser) appendPeerLink(name string, links []ext.MediaPeerLink,
 		self.err = err
 		return links
 	}
+
+	if link.URL == "" {
+		return links
+	}
 	return append(links, link)
 }
 
 func (self *parser) appendGroup(name string, groups []ext.MediaGroup,
 ) []ext.MediaGroup {
-	var g ext.MediaGroup
-	switch name {
-	case "category":
-		g.Categories = self.appendCategory(name, g.Categories)
-	case "content":
-		g.Contents = self.appendContent(name, g.Contents)
-	case "thumbnail":
-		g.Thumbnails = self.appendThumbnail(name, g.Thumbnails)
-	case "title":
-		g.Titles = self.appendDescription(name, g.Titles)
-	case "description":
-		g.Descriptions = self.appendDescription(name, g.Descriptions)
-	case "peerlink":
-		g.PeerLinks = self.appendPeerLink(name, g.PeerLinks)
-	default:
-		self.p.Skip(name)
+	children := self.makeChildrenSeq(name)
+	if children == nil {
+		return groups
 	}
 
-	if err := self.Err(); err != nil {
-		self.err = err
+	var g ext.MediaGroup
+	for name := range children {
+		switch name {
+		case "category":
+			g.Categories = self.appendCategory(name, g.Categories)
+		case "content":
+			g.Contents = self.appendContent(name, g.Contents)
+		case "thumbnail":
+			g.Thumbnails = self.appendThumbnail(name, g.Thumbnails)
+		case "title":
+			g.Titles = self.appendDescription(name, g.Titles)
+		case "description":
+			g.Descriptions = self.appendDescription(name, g.Descriptions)
+		case "peerlink":
+			g.PeerLinks = self.appendPeerLink(name, g.PeerLinks)
+		default:
+			self.p.Skip(name)
+		}
+	}
+
+	if self.err != nil {
 		return groups
 	}
 	return append(groups, g)
