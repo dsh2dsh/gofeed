@@ -1,6 +1,9 @@
 package json
 
 import (
+	"iter"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/dsh2dsh/gofeed/v2/internal/json"
@@ -73,6 +76,19 @@ func (self *Feed) GetPublishedParsed() *time.Time {
 	return nil
 }
 
+func (self *Feed) AllAuthors() iter.Seq[*Author] {
+	return func(yield func(*Author) bool) {
+		if self.Author != nil && !yield(self.Author) {
+			return
+		}
+		for _, author := range self.Authors {
+			if author != nil && !yield(author) {
+				return
+			}
+		}
+	}
+}
+
 // Item defines an item in the feed
 type Item struct {
 	ID            string  `json:"id,omitempty"`             // id (required, string) is unique for that item for that feed over time. If an id is presented as a number or other type, a JSON Feed reader must coerce it to a string. Ideally, the id is the full URL of the resource described by the item, since URLs make great unique identifiers.
@@ -114,22 +130,30 @@ type Attachments struct {
 }
 
 func (self *Item) Content() string {
-	if self.ContentHTML != "" {
-		return self.ContentHTML
-	} else if self.ContentText != "" {
-		return self.ContentText
+	contents := [...]string{self.ContentHTML, self.ContentText, self.Summary}
+	for _, s := range contents {
+		if s = strings.TrimSpace(s); s != "" {
+			return s
+		}
 	}
 	return ""
 }
 
-func (self *Item) Links() (links []string) {
-	if self.URL != "" {
-		links = append(links, self.URL)
+func (self *Item) Links() []string { return slices.Collect(self.AllLinks()) }
+
+func (self *Item) AllLinks() iter.Seq[string] {
+	return func(yield func(string) bool) {
+		if s := self.URL; s != "" {
+			if !yield(s) {
+				return
+			}
+		}
+		if s := self.ExternalURL; s != "" {
+			if !yield(s) {
+				return
+			}
+		}
 	}
-	if self.ExternalURL != "" {
-		links = append(links, self.ExternalURL)
-	}
-	return links
 }
 
 func (self *Item) UpdatedParsed() *time.Time {
@@ -163,4 +187,19 @@ func (self *Item) ImageURL() string {
 		return self.BannerImage
 	}
 	return ""
+}
+
+func (self *Item) AllAuthors() iter.Seq[*Author] {
+	return func(yield func(*Author) bool) {
+		if self.Author != nil {
+			if !yield(self.Author) {
+				return
+			}
+		}
+		for _, author := range self.Authors {
+			if !yield(author) {
+				return
+			}
+		}
+	}
 }
