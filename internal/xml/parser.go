@@ -152,7 +152,7 @@ func (self *Parser) AttributeSeq() iter.Seq2[string, string] {
 		for i := range self.Attrs {
 			attr := &self.Attrs[i]
 			lowerName := strings.ToLower(attr.Name.Local)
-			if !yield(lowerName, attr.Value) {
+			if !yield(lowerName, strings.TrimSpace(attr.Value)) {
 				return
 			}
 		}
