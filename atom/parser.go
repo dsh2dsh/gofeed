@@ -43,6 +43,8 @@ type Parser struct {
 	p    *xml.Parser
 	feed *Feed
 	err  error
+
+	opts options.Parse
 }
 
 var emptyAttrs = map[string]string{}
@@ -52,6 +54,8 @@ func NewParser() *Parser { return &Parser{} }
 
 // Parse parses an xml feed into an atom.Feed
 func (self *Parser) Parse(r io.Reader, opts ...options.Option) (*Feed, error) {
+	self.opts.Apply(opts...)
+
 	self.p = xml.NewParser(
 		xpp.NewXMLPullParser(r, false, shared.NewReaderLabel))
 
@@ -138,7 +142,7 @@ func (self *Parser) resolveAttrs() {
 
 func (self *Parser) feedBody(name string) {
 	atom := self.feed
-	if e, ok := self.unknownExtension(atom.Extensions); ok {
+	if e, ok := self.unknownExtension(name, atom.Extensions); ok {
 		atom.Extensions = e
 		return
 	}
@@ -179,14 +183,19 @@ func (self *Parser) feedBody(name string) {
 	}
 }
 
-func (self *Parser) unknownExtension(e ext.Extensions) (ext.Extensions, bool) {
+func (self *Parser) unknownExtension(name string, e ext.Extensions,
+) (ext.Extensions, bool) {
 	if self.p.ExtensionPrefix() == "" {
 		return e, false
 	}
-	return self.extensions(e), true
+	return self.extensions(name, e), true
 }
 
-func (self *Parser) extensions(e ext.Extensions) ext.Extensions {
+func (self *Parser) extensions(name string, e ext.Extensions) ext.Extensions {
+	if self.opts.SkipUnknownElements {
+		self.p.Skip(name)
+		return e
+	}
 	e, err := shared.ParseExtension(e, self.p.XMLPullParser)
 	if err != nil {
 		self.err = err
@@ -212,7 +221,7 @@ func (self *Parser) appendEntry(name string, entries []*Entry) []*Entry {
 }
 
 func (self *Parser) entryBody(name string, entry *Entry) {
-	if self.parseEntryExt(entry) {
+	if self.parseEntryExt(name, entry) {
 		return
 	}
 
@@ -250,14 +259,14 @@ func (self *Parser) entryBody(name string, entry *Entry) {
 	}
 }
 
-func (self *Parser) parseEntryExt(entry *Entry) bool {
+func (self *Parser) parseEntryExt(name string, entry *Entry) bool {
 	switch ns := self.p.ExtensionPrefix(); ns {
 	case "":
 		return false
 	case "media":
 		entry.Media = self.media(entry.Media)
 	default:
-		entry.Extensions = self.extensions(entry.Extensions)
+		entry.Extensions = self.extensions(name, entry.Extensions)
 	}
 	return true
 }
@@ -288,7 +297,7 @@ func (self *Parser) source(name string) *Source {
 }
 
 func (self *Parser) sourceBody(name string, source *Source) {
-	if e, ok := self.unknownExtension(source.Extensions); ok {
+	if e, ok := self.unknownExtension(name, source.Extensions); ok {
 		source.Extensions = e
 		return
 	}
@@ -580,6 +589,11 @@ func (self *Parser) parseDate(name string) (string, *time.Time) {
 
 func (self *Parser) parseCustomExtInto(name string, extensions ext.Extensions,
 ) (ext.Extensions, bool) {
+	if self.opts.SkipUnknownElements {
+		self.p.Skip(name)
+		return extensions, false
+	}
+
 	custom := ext.Extension{Name: self.p.Name, Attrs: emptyAttrs}
 	// Copy attributes
 	if n := len(self.p.Attrs); n != 0 {

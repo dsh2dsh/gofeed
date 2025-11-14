@@ -44,7 +44,7 @@ func TestDefaultRSSTranslator_Translate(t *testing.T) {
 			require.NoError(t, err)
 
 			// Parse actual feed
-			rssFeed, err := rss.NewParser().Parse(bytes.NewReader(f), nil)
+			rssFeed, err := rss.NewParser().Parse(bytes.NewReader(f))
 			require.NoError(t, err)
 
 			var translator gofeed.DefaultRSSTranslator
@@ -96,7 +96,7 @@ func TestDefaultAtomTranslator_Translate(t *testing.T) {
 			require.NoError(t, err)
 
 			// Parse actual feed
-			atomFeed, err := atom.NewParser().Parse(bytes.NewReader(f), nil)
+			atomFeed, err := atom.NewParser().Parse(bytes.NewReader(f))
 			require.NoError(t, err)
 
 			var translator gofeed.DefaultAtomTranslator

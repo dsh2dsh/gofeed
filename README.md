@@ -32,6 +32,10 @@ from upstream:
   BenchmarkParse-6  404  2953899 ns/op   324516 B/op  2847 allocs/op
   ```
 
+* Added option to skip parsing of unknown elements and extensions.
+
+  See `options.WithSkipUnknownElements`.
+
 ---
 
 # Gofeed: A Robust Feed Parser for Golang

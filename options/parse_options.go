@@ -4,10 +4,11 @@ package options
 type Parse struct {
 	// Keep reference to the original format-specific feed
 	KeepOriginalFeed bool
-}
 
-// Default returns sensible defaults
-func Default() *Parse { return &Parse{} }
+	// Skip any element or extension, which the parser doesn't know. So instead of
+	// parse it into [ext.Extensions] map, the parser skips it.
+	SkipUnknownElements bool
+}
 
 type Option func(opts *Parse)
 
@@ -27,6 +28,13 @@ func WithKeepOriginalFeed(v bool) Option {
 }
 
 // From copies all given options.
-func From(v *Parse) Option {
-	return func(opts *Parse) { *opts = *v }
+func From(v Parse) Option {
+	return func(opts *Parse) { *opts = v }
+}
+
+// WithSkipUnknownElements configures the parser to skip any element or
+// extension, which the parser doesn't know. So instead of parse it into
+// [ext.Extensions] map, the parser skips it.
+func WithSkipUnknownElements(v bool) Option {
+	return func(opts *Parse) { opts.SkipUnknownElements = v }
 }

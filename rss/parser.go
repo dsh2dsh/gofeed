@@ -27,6 +27,8 @@ type Parser struct {
 	p    *xml.Parser
 	feed *Feed
 	err  error
+
+	opts options.Parse
 }
 
 // NewParser creates a new RSS parser
@@ -34,6 +36,8 @@ func NewParser() *Parser { return &Parser{} }
 
 // Parse parses an xml feed into an rss.Feed
 func (self *Parser) Parse(r io.Reader, opts ...options.Option) (*Feed, error) {
+	self.opts.Apply(opts...)
+
 	self.p = xml.NewParser(
 		xpp.NewXMLPullParser(r, false, shared.NewReaderLabel))
 
@@ -504,6 +508,11 @@ func (self *Parser) version(name string) string {
 
 func (self *Parser) parseCustomExtInto(name string, extensions ext.Extensions,
 ) (ext.Extensions, bool) {
+	if self.opts.SkipUnknownElements {
+		self.p.Skip(name)
+		return extensions, false
+	}
+
 	custom := ext.Extension{Name: self.p.Name, Attrs: emptyAttrs}
 	// Copy attributes
 	if n := len(self.p.Attrs); n != 0 {
@@ -549,7 +558,7 @@ func (self *Parser) parseChannelExt(name string, rss *Feed) bool {
 		}
 		fallthrough
 	default:
-		rss.Extensions = self.extensions(rss.Extensions)
+		rss.Extensions = self.extensions(name, rss.Extensions)
 	}
 	return true
 }
@@ -572,7 +581,12 @@ func (self *Parser) itunesFeed(feed *ext.ITunesFeedExtension,
 	return feed
 }
 
-func (self *Parser) extensions(e ext.Extensions) ext.Extensions {
+func (self *Parser) extensions(name string, e ext.Extensions) ext.Extensions {
+	if self.opts.SkipUnknownElements {
+		self.p.Skip(name)
+		return e
+	}
+
 	e, err := shared.ParseExtension(e, self.p.XMLPullParser)
 	if err != nil {
 		self.err = err
@@ -607,7 +621,7 @@ func (self *Parser) parseItemExt(name string, item *Item) bool {
 		}
 		fallthrough
 	default:
-		item.Extensions = self.extensions(item.Extensions)
+		item.Extensions = self.extensions(name, item.Extensions)
 	}
 	return true
 }

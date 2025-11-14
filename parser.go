@@ -24,7 +24,7 @@ type Parser struct {
 	RSSTranslator  Translator
 	JSONTranslator Translator
 
-	opts *options.Parse
+	opts options.Parse
 }
 
 // NewParser creates a universal feed parser.
@@ -33,7 +33,7 @@ func NewParser() *Parser { return &Parser{} }
 // Parse parses a RSS or Atom or JSON feed into the universal gofeed.Feed. It
 // takes an io.Reader which should return the xml/json content.
 func (f *Parser) Parse(feed io.Reader, opts ...options.Option) (*Feed, error) {
-	f.opts = options.Default().Apply(opts...)
+	f.opts.Apply(opts...)
 
 	var buf bytes.Buffer
 	if _, err := buf.ReadFrom(feed); err != nil {
@@ -63,7 +63,7 @@ func (f *Parser) parseAtomFeed(feed io.Reader) (*Feed, error) {
 		tr = &DefaultAtomTranslator{}
 	}
 
-	result, err := tr.Translate(af, f.opts)
+	result, err := tr.Translate(af, &f.opts)
 	if err != nil {
 		return nil, fmt.Errorf("gofeed: translate atom: %w", err)
 	}
@@ -87,7 +87,7 @@ func (f *Parser) parseRSSFeed(feed io.Reader) (*Feed, error) {
 		tr = &DefaultRSSTranslator{}
 	}
 
-	result, err := tr.Translate(rf, f.opts)
+	result, err := tr.Translate(rf, &f.opts)
 	if err != nil {
 		return nil, fmt.Errorf("gofeed: translate rss: %w", err)
 	}
@@ -109,7 +109,7 @@ func (f *Parser) parseJSONFeed(feed io.Reader) (*Feed, error) {
 		tr = &DefaultJSONTranslator{}
 	}
 
-	result, err := tr.Translate(jf, f.opts)
+	result, err := tr.Translate(jf, &f.opts)
 	if err != nil {
 		return nil, fmt.Errorf("gofeed: translate json: %w", err)
 	}
