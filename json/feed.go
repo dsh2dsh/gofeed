@@ -143,12 +143,12 @@ func (self *Item) Links() []string { return slices.Collect(self.AllLinks()) }
 
 func (self *Item) AllLinks() iter.Seq[string] {
 	return func(yield func(string) bool) {
-		if s := self.URL; s != "" {
+		if s := strings.TrimSpace(self.URL); s != "" {
 			if !yield(s) {
 				return
 			}
 		}
-		if s := self.ExternalURL; s != "" {
+		if s := strings.TrimSpace(self.ExternalURL); s != "" {
 			if !yield(s) {
 				return
 			}
