@@ -390,10 +390,10 @@ func (self *Parser) guid(name string) (guid *GUID) {
 
 func (self *Parser) appendCategory(name string, categories []*Category,
 ) []*Category {
-	var c *Category
+	var c Category
 	err := self.p.WithText(name,
 		func() error {
-			c = &Category{Domain: self.p.Attribute("domain")}
+			c.Domain = self.p.Attribute("domain")
 			return nil
 		},
 		func(s string) error {
@@ -404,7 +404,11 @@ func (self *Parser) appendCategory(name string, categories []*Category,
 		self.err = err
 		return categories
 	}
-	return append(categories, c)
+
+	if c.Value == "" {
+		return categories
+	}
+	return append(categories, &c)
 }
 
 func (self *Parser) textInput(name string) (ti *TextInput) {

@@ -84,6 +84,10 @@ func (self *parser) appendCategory(name string, categories []string) []string {
 		self.err = err
 		return categories
 	}
+
+	if s := strings.TrimSpace(label); s == "" {
+		return categories
+	}
 	return append(categories, label)
 }
 
