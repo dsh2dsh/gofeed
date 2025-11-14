@@ -374,7 +374,7 @@ func (self *Parser) imageBody(name string, image *Image) {
 func (self *Parser) guid(name string) (guid *GUID) {
 	err := self.p.WithText(name,
 		func() error {
-			guid = &GUID{IsPermalink: self.p.Attribute("isPermalink")}
+			guid = &GUID{IsPermalink: self.p.Attribute("ispermalink")}
 			return nil
 		},
 		func(s string) error {
