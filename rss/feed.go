@@ -2,6 +2,7 @@ package rss
 
 import (
 	"iter"
+	"strconv"
 	"strings"
 	"time"
 
@@ -288,6 +289,18 @@ func (self *Feed) categoriesIter(yield func(string) bool) {
 	}
 }
 
+func (self *Feed) GetTTL() int {
+	if self.TTL == "" {
+		return 0
+	}
+
+	ttl, err := strconv.Atoi(self.TTL)
+	if err != nil {
+		return 0
+	}
+	return ttl
+}
+
 // Item is an RSS Item
 type Item struct {
 	Title         string                   `json:"title,omitempty"`
@@ -338,6 +351,13 @@ func (self *Item) GetTitle() string {
 		return self.DublinCoreExt.Title
 	}
 	return ""
+}
+
+func (self *Item) GetContent() string {
+	if self.Content != "" {
+		return self.Content
+	}
+	return self.GetDescription()
 }
 
 func (self *Item) GetDescription() string {
@@ -474,6 +494,116 @@ func (self *Item) categoriesIter(yield func(string) bool) {
 	if media := self.Media; media != nil {
 		for s := range media.AllCategories() {
 			if !yield(s) {
+				return
+			}
+		}
+	}
+}
+
+func (self *Item) Link() string {
+	for _, s := range self.Links {
+		if s != "" {
+			return s
+		}
+	}
+
+	for _, link := range self.AtomLinks {
+		if link.Href != "" {
+			switch link.Rel {
+			case "", "alternate":
+				return link.Href
+			}
+		}
+	}
+
+	if guid := self.GUID; guid != nil {
+		if s := guid.IsPermalink; s == "true" || s == "" {
+			return guid.Value
+		}
+	}
+	return ""
+}
+
+func (self *Item) AllEnclosures() iter.Seq[Enclosure] {
+	return func(yield func(Enclosure) bool) {
+		if self.Enclosure != nil && self.Enclosure.URL != "" {
+			if !yield(*self.Enclosure) {
+				return
+			}
+		}
+
+		if self.Media == nil {
+			return
+		}
+
+		for enc := range self.mediaThumbnails() {
+			if !yield(enc) {
+				return
+			}
+		}
+
+		for enc := range self.mediaContents() {
+			if !yield(enc) {
+				return
+			}
+		}
+
+		for enc := range self.mediaPeerLinks() {
+			if !yield(enc) {
+				return
+			}
+		}
+	}
+}
+
+func (self *Item) mediaThumbnails() iter.Seq[Enclosure] {
+	return func(yield func(Enclosure) bool) {
+		for thumbnail := range self.Media.AllThumbnails() {
+			enc := Enclosure{URL: thumbnail, Type: "image/*"}
+			if enc.URL != "" && !yield(enc) {
+				return
+			}
+		}
+	}
+}
+
+func (self *Item) mediaContents() iter.Seq[Enclosure] {
+	return func(yield func(Enclosure) bool) {
+		for content := range self.Media.AllContents() {
+			enc := Enclosure{
+				URL:    content.URL,
+				Length: content.FileSize,
+				Type:   content.Type,
+			}
+
+			if enc.Type == "" {
+				switch content.Medium {
+				case "image":
+					enc.Type = "image/*"
+				case "video":
+					enc.Type = "video/*"
+				case "audio":
+					enc.Type = "audio/*"
+				default:
+					enc.Type = "application/octet-stream"
+				}
+			}
+
+			if enc.URL != "" && !yield(enc) {
+				return
+			}
+		}
+	}
+}
+
+func (self *Item) mediaPeerLinks() iter.Seq[Enclosure] {
+	return func(yield func(Enclosure) bool) {
+		for pl := range self.Media.AllPeerLinks() {
+			enc := Enclosure{URL: pl.URL, Type: pl.Type}
+			if enc.Type == "" {
+				enc.Type = "application/octet-stream"
+			}
+			if enc.URL != "" && !yield(enc) {
 				return
 			}
 		}
