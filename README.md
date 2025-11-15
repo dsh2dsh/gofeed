@@ -1,7 +1,7 @@
 # gofeed
 
 [![Go](https://github.com/dsh2dsh/gofeed/actions/workflows/go.yml/badge.svg)](https://github.com/dsh2dsh/gofeed/actions/workflows/go.yml)
-[![GoDoc](https://godoc.org/github.com/dsh2dsh/gofeed?status.png)](https://godoc.org/github.com/dsh2dsh/gofeed)
+[![GoDoc](https://godoc.org/github.com/dsh2dsh/gofeed?status.png)](https://godoc.org/github.com/dsh2dsh/gofeed/v2)
 
 This project is a fork of [gofeed](https://github.com/mmcdole/gofeed). Changes
 from upstream:
