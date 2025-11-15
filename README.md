@@ -245,7 +245,7 @@ feedData := `<rss version="2.0">
 
 fp := gofeed.NewParser()
 fp.RSSTranslator = NewMyCustomTranslator()
-feed, _ := fp.ParseString(strings.NewReader(feedData))
+feed, _ := fp.Parse(strings.NewReader(feedData))
 fmt.Println(feed.Author) // Valentine Wiggin
 ```
 
