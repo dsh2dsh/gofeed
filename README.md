@@ -36,6 +36,8 @@ from upstream:
 
   See `options.WithSkipUnknownElements`.
 
+* Parse Youtube atom feed/entry elements `<yt:channelId>` and `<yt:videoId>`.
+
 ---
 
 # Gofeed: A Robust Feed Parser for Golang

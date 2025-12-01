@@ -16,6 +16,7 @@ import (
 	"github.com/dsh2dsh/gofeed/v2/internal/media"
 	"github.com/dsh2dsh/gofeed/v2/internal/shared"
 	"github.com/dsh2dsh/gofeed/v2/internal/xml"
+	"github.com/dsh2dsh/gofeed/v2/internal/youtube"
 	"github.com/dsh2dsh/gofeed/v2/options"
 )
 
@@ -141,12 +142,11 @@ func (self *Parser) resolveAttrs() {
 }
 
 func (self *Parser) feedBody(name string) {
-	atom := self.feed
-	if e, ok := self.unknownExtension(name, atom.Extensions); ok {
-		atom.Extensions = e
+	if self.parseChannelExt(name) {
 		return
 	}
 
+	atom := self.feed
 	switch name {
 	case "title":
 		atom.Title = self.text(name)
@@ -183,12 +183,24 @@ func (self *Parser) feedBody(name string) {
 	}
 }
 
-func (self *Parser) unknownExtension(name string, e ext.Extensions,
-) (ext.Extensions, bool) {
-	if self.p.ExtensionPrefix() == "" {
-		return e, false
+func (self *Parser) parseChannelExt(name string) bool {
+	switch ns := self.p.ExtensionPrefix(); ns {
+	case "":
+		return false
+	case "yt":
+		self.feed.Youtube = self.youtube(self.feed.Youtube)
+	default:
+		self.feed.Extensions = self.extensions(name, self.feed.Extensions)
 	}
-	return self.extensions(name, e), true
+	return true
+}
+
+func (self *Parser) youtube(yt *ext.Youtube) *ext.Youtube {
+	yt, err := youtube.Parse(self.p, yt)
+	if err != nil {
+		self.err = err
+	}
+	return yt
 }
 
 func (self *Parser) extensions(name string, e ext.Extensions) ext.Extensions {
@@ -265,6 +277,8 @@ func (self *Parser) parseEntryExt(name string, entry *Entry) bool {
 		return false
 	case "media":
 		entry.Media = self.media(entry.Media)
+	case "yt":
+		entry.Youtube = self.youtube(entry.Youtube)
 	default:
 		entry.Extensions = self.extensions(name, entry.Extensions)
 	}
@@ -330,6 +344,14 @@ func (self *Parser) sourceBody(name string, source *Source) {
 	default:
 		self.p.Skip(name)
 	}
+}
+
+func (self *Parser) unknownExtension(name string, e ext.Extensions,
+) (ext.Extensions, bool) {
+	if self.p.ExtensionPrefix() == "" {
+		return e, false
+	}
+	return self.extensions(name, e), true
 }
 
 func (self *Parser) content(name string) (c *Content) {

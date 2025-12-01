@@ -25,6 +25,7 @@ type Feed struct {
 	Authors       []*Person      `json:"authors,omitempty"`
 	Categories    []*Category    `json:"categories,omitempty"`
 	Entries       []*Entry       `json:"entries,omitempty"`
+	Youtube       *ext.Youtube   `json:"youtube,omitempty"`
 	Extensions    ext.Extensions `json:"extensions,omitempty"`
 	Version       string         `json:"version,omitempty"`
 }
@@ -170,6 +171,7 @@ type Entry struct {
 	Source          *Source        `json:"source,omitempty"`
 	Content         *Content       `json:"content,omitempty"`
 	Media           *ext.Media     `json:"media,omitempty"`
+	Youtube         *ext.Youtube   `json:"youtube,omitempty"`
 	Extensions      ext.Extensions `json:"extensions,omitempty"`
 }
 

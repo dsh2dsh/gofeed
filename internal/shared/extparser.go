@@ -187,4 +187,5 @@ var canonicalNamespaces = map[string]string{
 	"http://www.w3.org/1999/xlink":                                   "xlink",
 	"http://www.w3.org/XML/1998/namespace":                           "xml",
 	"http://podlove.org/simple-chapters":                             "psc",
+	"http://www.youtube.com/xml/schemas/2015":                        "yt",
 }
