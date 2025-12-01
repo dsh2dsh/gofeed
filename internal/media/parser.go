@@ -3,6 +3,7 @@ package media
 import (
 	"fmt"
 	"iter"
+	"strconv"
 	"strings"
 
 	xpp "github.com/dsh2dsh/goxpp/v2"
@@ -245,6 +246,8 @@ func (self *parser) appendGroup(name string, groups []ext.MediaGroup,
 			g.Descriptions = self.appendDescription(name, g.Descriptions)
 		case "peerlink":
 			g.PeerLinks = self.appendPeerLink(name, g.PeerLinks)
+		case "community":
+			g.Community = self.community(name)
 		default:
 			self.p.Skip(name)
 		}
@@ -254,4 +257,85 @@ func (self *parser) appendGroup(name string, groups []ext.MediaGroup,
 		return groups
 	}
 	return append(groups, g)
+}
+
+func (self *parser) community(name string) (community ext.MediaCommunity) {
+	children := self.makeChildrenSeq(name)
+	if children == nil {
+		return community
+	}
+
+	for name := range children {
+		switch name {
+		case "starrating":
+			community.StarRating = self.starRating(name)
+		case "statistics":
+			community.Statistics = self.statistics(name)
+		default:
+			self.p.Skip(name)
+		}
+	}
+	return community
+}
+
+func (self *parser) starRating(name string) (rating ext.MediaStarRating) {
+	err := self.p.WithSkip(name, func() error {
+		for name, value := range self.p.AttributeSeq() {
+			var err error
+			switch name {
+			case "average":
+				v, err := strconv.ParseFloat(value, 64)
+				if err != nil {
+					return fmt.Errorf("gofeed/media: parse %v=%q as float: %w",
+						name, value, err)
+				}
+				rating.Average = v
+			case "count":
+				err = parseIntTo(name, value, &rating.Count)
+			case "min":
+				err = parseIntTo(name, value, &rating.Min)
+			case "max":
+				err = parseIntTo(name, value, &rating.Max)
+			}
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		self.err = err
+	}
+	return rating
+}
+
+func parseIntTo(name, value string, to *int) error {
+	n, err := strconv.Atoi(value)
+	if err != nil {
+		return fmt.Errorf("gofeed/media: parse %v=%q as int: %w", name, value, err)
+	}
+	*to = n
+	return nil
+}
+
+func (self *parser) statistics(name string) (stat ext.MediaStatistics) {
+	err := self.p.WithSkip(name, func() error {
+		for name, value := range self.p.AttributeSeq() {
+			var err error
+			switch name {
+			case "views":
+				err = parseIntTo(name, value, &stat.Views)
+			case "favorites":
+				err = parseIntTo(name, value, &stat.Favorites)
+			}
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		self.err = err
+	}
+	return stat
 }

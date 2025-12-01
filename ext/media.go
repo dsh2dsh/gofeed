@@ -21,6 +21,7 @@ type MediaGroup struct {
 	Titles       []MediaDescription `json:"title,omitempty"`
 	Descriptions []MediaDescription `json:"description,omitempty"`
 	PeerLinks    []MediaPeerLink    `json:"peerLink,omitempty"`
+	Community    MediaCommunity     `json:"community,omitzero"`
 }
 
 type MediaContent struct {
@@ -44,6 +45,23 @@ type MediaDescription struct {
 type MediaPeerLink struct {
 	URL  string `json:"href,omitempty"`
 	Type string `json:"type,omitempty"`
+}
+
+type MediaCommunity struct {
+	StarRating MediaStarRating `json:"starRating,omitzero"`
+	Statistics MediaStatistics `json:"statistics,omitzero"`
+}
+
+type MediaStarRating struct {
+	Average float64 `json:"average,omitempty"`
+	Count   int     `json:"count,omitempty"`
+	Min     int     `json:"min,omitempty"`
+	Max     int     `json:"max,omitempty"`
+}
+
+type MediaStatistics struct {
+	Views     int `json:"views,omitempty"`
+	Favorites int `json:"favorites,omitempty"`
 }
 
 func (self *Media) AllCategories() iter.Seq[string] {
