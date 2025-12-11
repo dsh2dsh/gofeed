@@ -101,6 +101,7 @@ func (self *parser) appendContent(name string, contents []ext.MediaContent,
 
 	var c ext.MediaContent
 	for name, value := range self.p.AttributeSeq() {
+		var err error
 		switch name {
 		case "url":
 			c.URL = value
@@ -110,6 +111,14 @@ func (self *parser) appendContent(name string, contents []ext.MediaContent,
 			c.FileSize = value
 		case "medium":
 			c.Medium = value
+		case "height":
+			err = parseIntTo(name, value, &c.Height)
+		case "width":
+			err = parseIntTo(name, value, &c.Width)
+		}
+		if err != nil {
+			self.err = err
+			return contents
 		}
 	}
 

@@ -29,6 +29,8 @@ type MediaContent struct {
 	Type     string `json:"type,omitempty"`
 	FileSize string `json:"fileSize,omitempty"`
 	Medium   string `json:"medium,omitempty"`
+	Height   int    `json:"height,omitempty"`
+	Width    int    `json:"width,omitempty"`
 
 	Categories   []string           `json:"category,omitempty"`
 	Thumbnails   []string           `json:"thumbnail,omitempty"`

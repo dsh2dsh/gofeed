@@ -6,11 +6,15 @@
               "content": [
                 {
                   "url": "https://www.youtube.com/v/abcd",
-                  "type": "application/x-shockwave-flash"
+                  "type": "application/x-shockwave-flash",
+                  "height": 390,
+                  "width": 640
                 },
                 {
                   "url": "/relative/media.mp4",
-                  "type": "application/x-shockwave-flash"
+                  "type": "application/x-shockwave-flash",
+                  "height": 390,
+                  "width": 640
                 }
               ],
               "thumbnail": [

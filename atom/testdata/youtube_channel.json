@@ -9,7 +9,9 @@
             "content": [
               {
                 "url": "https://www.youtube.com/v/Pilt82b1jvg?version=3",
-                "type": "application/x-shockwave-flash"
+                "type": "application/x-shockwave-flash",
+                "height": 390,
+                "width": 640
               }
             ],
             "thumbnail": [
