@@ -38,6 +38,11 @@ from upstream:
 
 * Parse Youtube atom feed/entry elements `<yt:channelId>` and `<yt:videoId>`.
 
+* Filter invalid UTF-8 and XML characters by default.
+
+  Can be disabled with `options.WithStrictChars`, if parsed feed doesn't have
+  such characters. Parser will work faster in this mode.
+
 ---
 
 # Gofeed: A Robust Feed Parser for Golang

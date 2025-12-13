@@ -20,6 +20,11 @@ type Parse struct {
 	// into UTF-8. If CharsetReader is nil or returns an error, parsing stops with
 	// an error. One of the CharsetReader's result values must be non-nil.
 	CharsetReader func(charset string, input io.Reader) (io.Reader, error)
+
+	// Setting StrictChars to true disables filtering of invalid UTF-8 or XML
+	// characters. Parser will work faster, but XML decoder will return an error
+	// if it detects such character.
+	StrictChars bool
 }
 
 type Option func(opts *Parse)
@@ -61,4 +66,10 @@ func WithCharsetReader(
 	fn func(charset string, input io.Reader) (io.Reader, error),
 ) Option {
 	return func(opts *Parse) { opts.CharsetReader = fn }
+}
+
+// WithStrictChars configures parser don't skip invalid UTF-8 or XML characters.
+// See [Parse.StrictChars] for details.
+func WithStrictChars(v bool) Option {
+	return func(opts *Parse) { opts.StrictChars = v }
 }

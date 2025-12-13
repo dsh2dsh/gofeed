@@ -28,10 +28,14 @@ func NewParser(r io.Reader, opts ...options.Option) *Parser {
 
 func (self *Parser) init(r io.Reader, opts ...options.Option) *Parser {
 	self.opts.Apply(opts...)
-	self.validReader.WithCharsetReader(self.opts.CharsetReader).WithReader(r)
 
-	self.XMLPullParser = xpp.NewXMLPullParser(&self.validReader, false,
-		self.validReader.CharsetReader)
+	if self.opts.StrictChars {
+		self.XMLPullParser = xpp.NewXMLPullParser(r, false, self.opts.CharsetReader)
+	} else {
+		self.validReader.WithCharsetReader(self.opts.CharsetReader).WithReader(r)
+		self.XMLPullParser = xpp.NewXMLPullParser(&self.validReader, false,
+			self.validReader.CharsetReader)
+	}
 	return self
 }
 

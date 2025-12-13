@@ -36,7 +36,7 @@ func BenchmarkParse(b *testing.B) {
 	for b.Loop() {
 		var parser atom.Parser
 		bytesReader.Reset(data)
-		parser.Parse(&bytesReader)
+		parser.Parse(&bytesReader, options.WithStrictChars(true))
 	}
 }
 
