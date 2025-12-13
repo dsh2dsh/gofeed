@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"path"
 	"strings"
 	"sync"
 	"testing"
@@ -15,7 +16,7 @@ import (
 )
 
 func TestParser_Parse(t *testing.T) {
-	feedTests := []struct {
+	tests := []struct {
 		file      string
 		feedType  string
 		feedTitle string
@@ -33,28 +34,30 @@ func TestParser_Parse(t *testing.T) {
 		{"unknown_feed.xml", "", "", true},
 		{"empty_feed.xml", "", "", true},
 		{"invalid.json", "", "", true},
+		{"invalidutf8.xml", "rss", "Android Authority", false},
 	}
 
-	for _, test := range feedTests {
-		fmt.Printf("Testing %s... ", test.file)
-
-		// Get feed content
-		path := "testdata/parser/" + test.file
-		f, _ := os.ReadFile(path)
-
-		// Get actual value
-		fp := gofeed.NewParser()
-		feed, err := fp.Parse(bytes.NewReader(f))
-
-		if test.hasError {
-			require.Error(t, err)
-			assert.Nil(t, feed)
-		} else {
-			assert.NotNil(t, feed)
+	for _, tt := range tests {
+		t.Run(tt.file, func(t *testing.T) {
+			// Get feed content
+			b, err := os.ReadFile(path.Join("testdata/parser/", tt.file))
 			require.NoError(t, err)
-			assert.Equal(t, feed.FeedType, test.feedType)
-			assert.Equal(t, feed.Title, test.feedTitle)
-		}
+
+			// Get actual value
+			fp := gofeed.NewParser()
+			feed, err := fp.Parse(bytes.NewReader(b))
+
+			if tt.hasError {
+				require.Error(t, err)
+				assert.Nil(t, feed)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.NotNil(t, feed)
+			assert.Equal(t, feed.FeedType, tt.feedType)
+			assert.Equal(t, feed.Title, tt.feedTitle)
+		})
 	}
 }
 

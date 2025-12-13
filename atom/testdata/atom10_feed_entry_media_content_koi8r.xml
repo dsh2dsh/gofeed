@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="koi8-r"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <entry>
+    <title>Раз два три, ёлочка - гори!</title>
+    <media:content url="https://www.androidauthority.com/wp-content/uploads/2023/02/Samsung-Galaxy-S23-Ultra-Green-Calling-On-Phone-scaled.jpg" medium="image">
+      <media:title type="html">blog-open</media:title>
+    </media:content>
+  </entry>
+</feed>

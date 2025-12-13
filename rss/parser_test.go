@@ -30,9 +30,13 @@ func BenchmarkParse(b *testing.B) {
 	data, err := os.ReadFile("testdata/bench/large_rss.xml")
 	require.NoError(b, err)
 
+	var bytesReader bytes.Reader
+
 	b.ReportAllocs()
 	for b.Loop() {
-		rss.NewParser().Parse(bytes.NewReader(data))
+		var parser rss.Parser
+		bytesReader.Reset(data)
+		parser.Parse(&bytesReader)
 	}
 }
 

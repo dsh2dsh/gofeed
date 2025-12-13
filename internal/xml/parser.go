@@ -3,22 +3,36 @@ package xml
 import (
 	"errors"
 	"fmt"
+	"io"
 	"iter"
 	"strings"
 
 	xpp "github.com/dsh2dsh/goxpp/v2"
 
 	"github.com/dsh2dsh/gofeed/v2/internal/shared"
+	"github.com/dsh2dsh/gofeed/v2/options"
 )
 
 type Parser struct {
 	*xpp.XMLPullParser
 
-	err error
+	opts        options.Parse
+	validReader ValidReader
+	err         error
 }
 
-func NewParser(p *xpp.XMLPullParser) *Parser {
-	return &Parser{XMLPullParser: p}
+func NewParser(r io.Reader, opts ...options.Option) *Parser {
+	self := &Parser{}
+	return self.init(r, opts...)
+}
+
+func (self *Parser) init(r io.Reader, opts ...options.Option) *Parser {
+	self.opts.Apply(opts...)
+	self.validReader.WithCharsetReader(self.opts.CharsetReader).WithReader(r)
+
+	self.XMLPullParser = xpp.NewXMLPullParser(&self.validReader, false,
+		self.validReader.CharsetReader)
+	return self
 }
 
 func (self *Parser) Err() error { return self.err }

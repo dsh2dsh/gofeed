@@ -5,6 +5,7 @@
     <media:content url="https://www.youtube.com/v/abcd" type="application/x-shockwave-flash" width="640" height="390"/>
     <media:content url="   /relative/media.mp4   " type="application/x-shockwave-flash" width="640" height="390"/>
     <media:content url="      " type="application/x-shockwave-flash" width="640" height="390"/>
+    <media:content name="AndroidAuthority" url="https://www.androidauthority.com/wp-content/uploads/2023/02/Samsung-Galaxy-S23-Ultra-Green-Calling-On-Phone-scaled.jpg" medium="image" />
     <media:thumbnail url="https://example.org/duplicated-thumbnail.jpg" width="480" height="360"/>
     <media:thumbnail url="  https://example.org/duplicated-thumbnail.jpg  " width="480" height="360"/>
     <media:thumbnail url="    " width="480" height="360"/>

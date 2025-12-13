@@ -1,0 +1,22 @@
+{
+    "entries": [
+        {
+          "title": "Раз два три, ёлочка - гори!",
+          "media": {
+            "content": [
+              {
+                "medium": "image",
+                "url": "https://www.androidauthority.com/wp-content/uploads/2023/02/Samsung-Galaxy-S23-Ultra-Green-Calling-On-Phone-scaled.jpg",
+                "title": [
+                  {
+                    "type": "html",
+                    "text": "blog-open"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+    ],
+    "version": "1.0"
+}

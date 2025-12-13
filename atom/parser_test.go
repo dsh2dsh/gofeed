@@ -30,9 +30,13 @@ func BenchmarkParse(b *testing.B) {
 	data, err := os.ReadFile("testdata/bench/large_atom.xml")
 	require.NoError(b, err)
 
+	var bytesReader bytes.Reader
+
 	b.ReportAllocs()
 	for b.Loop() {
-		atom.NewParser().Parse(bytes.NewReader(data))
+		var parser atom.Parser
+		bytesReader.Reset(data)
+		parser.Parse(&bytesReader)
 	}
 }
 

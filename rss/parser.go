@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	xpp "github.com/dsh2dsh/goxpp/v2"
-
 	"github.com/dsh2dsh/gofeed/v2/atom"
 	"github.com/dsh2dsh/gofeed/v2/ext"
 	"github.com/dsh2dsh/gofeed/v2/internal/dublincore"
@@ -37,9 +35,7 @@ func NewParser() *Parser { return &Parser{} }
 // Parse parses an xml feed into an rss.Feed
 func (self *Parser) Parse(r io.Reader, opts ...options.Option) (*Feed, error) {
 	self.opts.Apply(opts...)
-
-	self.p = xml.NewParser(
-		xpp.NewXMLPullParser(r, false, shared.NewReaderLabel))
+	self.p = xml.NewParser(r, opts...)
 
 	if _, err := self.p.FindRoot(); err != nil {
 		return nil, fmt.Errorf("gofeed/rss: %w", err)

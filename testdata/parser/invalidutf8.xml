@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	xmlns:media="https://search.yahoo.com/mrss/"
+	xmlns:webfeeds="http://webfeeds.org/rss/1.0"  >
+
+<channel>
+	<title>Android Authority</title>
+	<atom:link href="https://www.androidauthority.com/feed/" rel="self" type="application/rss+xml" />
+	<link>https://www.androidauthority.com/</link>
+	<description>Android News, Reviews, How To</description>
+	<lastBuildDate>Fri, 12 Dec 2025 13:07:04 +0000</lastBuildDate>
+	<language>en-US</language>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=6.8.3</generator>
+<webfeeds:accentColor>00D49F</webfeeds:accentColor>
+	<webfeeds:related layout="card" target="browser" />
+	<webfeeds:analytics id="UA-20765087-1" engine="GoogleAnalytics" />
+	<webfeeds:icon>https://www.androidauthority.com/wp-content/uploads/feed/aa-mascot-192x192.png?v=1.0.2</webfeeds:icon>
+	<webfeeds:logo>https://www.androidauthority.com/wp-content/uploads/feed/aa_icon_feed.svg?v=1.0.2</webfeeds:logo>
+	<webfeeds:cover image="https://www.androidauthority.com/wp-content/uploads/feed/aboutus_top_imagev2.jpg?v=1.0.2" />       <item>
+            <title>Google finally lets you disable the Phone app&#8217;s weird landscape mode</title>
+            <link>https://www.androidauthority.com/google-phone-portrait-lock-3624481/</link>
+                            <comments>https://www.androidauthority.com/google-phone-portrait-lock-3624481/#respond</comments>
+            
+            <dc:creator><![CDATA[Stephen Schenck]]></dc:creator>
+            <pubDate>Thu, 11 Dec 2025 18:18:24 +0000</pubDate>
+            		<category><![CDATA[News]]></category>
+		<category><![CDATA[Google]]></category>
+		<category><![CDATA[Google Phone app]]></category>
+            <guid isPermaLink="false">https://www.androidauthority.com/google-phone-portrait-lock-3624481/</guid>
+
+                            <description><![CDATA[The landscape UI for Google Phone calls seems here to stay, but there’s now a fix.]]></description>
+                <media:content name="AndroidAuthority" url="https://www.androidauthority.com/wp-content/uploads/2023/02/Samsung-Galaxy-S23-Ultra-Green-Calling-On-Phone-scaled.jpg" medium="image" />                                    <content:encoded><![CDATA[<html><body>
+<div class="aa_tldr_text" style="background-color: #f4f4f4; padding: 10px;"><strong>TL;DR</strong>
+
+<ul>
+<li>Google implemented a landscape-mode UI for the Phone app’s call interface earlier this year.</li>
+<li>At the time it was not clear if this change was even intentional, or what use cases it was meant for.</li>
+<li>In its latest beta, the Phone app finally adds an option to stay locked in portrait.</li>
+</ul>
+</div><hr>
+<p>Sometimes, it only takes the smallest change to how something works to really set us off. Earlier this year, Android users starting noticing an odd shift in the behavior of Google’s Phone app: It started <a href="https://www.androidauthority.com/google-phone-landscape-3599092/">supporting landscape mode</a>, and would sometimes automatically switch over to it during calls. That’s not something any of us really asked for, and a horizontal Phone UI just felt all sorts of wrong to many of us who ran into it. The good news: You can finally disable it.</p>
+
+<p><strong>Don’t want to miss the best from <em>Android Authority</em>?</strong></p></body></html>]]></content:encoded>
+                            
+                            <wfw:commentRss>https://www.androidauthority.com/google-phone-portrait-lock-3624481/feed/</wfw:commentRss>
+                <slash:comments>0</slash:comments>
+            
+            
+                    </item>
+        </channel>
+</rss>
