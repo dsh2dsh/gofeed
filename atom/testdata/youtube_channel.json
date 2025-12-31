@@ -17,6 +17,13 @@
             "thumbnail": [
               "https://i1.ytimg.com/vi/Pilt82b1jvg/hqdefault.jpg"
             ],
+            "thumbnailEx": [
+              {
+                "url": "https://i1.ytimg.com/vi/Pilt82b1jvg/hqdefault.jpg",
+                "height": 360,
+                "width": 480
+              }
+            ],
             "title": [
               {
                 "text": "SOUTH PARK THE FRACTURE BUT WHOLE BRING THE CRUNCH Full Gameplay Walkthrough【FULL GAME】4K 60FPS"

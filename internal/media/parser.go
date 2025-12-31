@@ -63,7 +63,10 @@ func (self *parser) body(name string) {
 	case "category":
 		m.Categories = self.appendCategory(name, m.Categories)
 	case "thumbnail":
-		m.Thumbnails = self.appendThumbnail(name, m.Thumbnails)
+		m.ThumbnailsEx = self.appendThumbnail(name, m.ThumbnailsEx,
+			func(t *ext.MediaThumbnail) {
+				m.Thumbnails = append(m.Thumbnails, t.URL)
+			})
 	case "title":
 		m.Titles = self.appendDescription(name, m.Titles)
 	case "description":
@@ -127,7 +130,10 @@ func (self *parser) appendContent(name string, contents []ext.MediaContent,
 		case "category":
 			c.Categories = self.appendCategory(name, c.Categories)
 		case "thumbnail":
-			c.Thumbnails = self.appendThumbnail(name, c.Thumbnails)
+			c.ThumbnailsEx = self.appendThumbnail(name, c.ThumbnailsEx,
+				func(t *ext.MediaThumbnail) {
+					c.Thumbnails = append(c.Thumbnails, t.URL)
+				})
 		case "title":
 			c.Titles = self.appendDescription(name, c.Titles)
 		case "description":
@@ -171,21 +177,40 @@ func (self *parser) makeChildrenSeq(name string) iter.Seq[string] {
 	}
 }
 
-func (self *parser) appendThumbnail(name string, thumbnails []string) []string {
-	var url string
+func (self *parser) appendThumbnail(name string,
+	thumbnails []ext.MediaThumbnail, okFunc func(*ext.MediaThumbnail),
+) []ext.MediaThumbnail {
+	var t ext.MediaThumbnail
 	err := self.p.WithSkip(name, func() error {
-		url = strings.TrimSpace(self.p.Attribute("url"))
+		for name, value := range self.p.AttributeSeq() {
+			var err error
+			switch name {
+			case "url":
+				t.URL = value
+			case "height":
+				err = parseIntTo(name, value, &t.Height)
+			case "width":
+				err = parseIntTo(name, value, &t.Width)
+			}
+			if err != nil {
+				return err
+			}
+		}
 		return nil
 	})
-	if err != nil {
+
+	switch {
+	case err != nil:
 		self.err = err
+		fallthrough
+	case t.URL == "":
 		return thumbnails
 	}
 
-	if url == "" {
-		return thumbnails
+	if okFunc != nil {
+		okFunc(&t)
 	}
-	return append(thumbnails, url)
+	return append(thumbnails, t)
 }
 
 func (self *parser) appendDescription(name string,
@@ -248,7 +273,10 @@ func (self *parser) appendGroup(name string, groups []ext.MediaGroup,
 		case "content":
 			g.Contents = self.appendContent(name, g.Contents)
 		case "thumbnail":
-			g.Thumbnails = self.appendThumbnail(name, g.Thumbnails)
+			g.ThumbnailsEx = self.appendThumbnail(name, g.ThumbnailsEx,
+				func(t *ext.MediaThumbnail) {
+					g.Thumbnails = append(g.Thumbnails, t.URL)
+				})
 		case "title":
 			g.Titles = self.appendDescription(name, g.Titles)
 		case "description":

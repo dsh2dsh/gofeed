@@ -9,6 +9,7 @@ type Media struct {
 
 	Categories   []string           `json:"category,omitempty"`
 	Thumbnails   []string           `json:"thumbnail,omitempty"`
+	ThumbnailsEx []MediaThumbnail   `json:"thumbnailEx,omitempty"`
 	Titles       []MediaDescription `json:"title,omitempty"`
 	Descriptions []MediaDescription `json:"description,omitempty"`
 	PeerLinks    []MediaPeerLink    `json:"peerLink,omitempty"`
@@ -18,6 +19,7 @@ type MediaGroup struct {
 	Categories   []string           `json:"category,omitempty"`
 	Contents     []MediaContent     `json:"content,omitempty"`
 	Thumbnails   []string           `json:"thumbnail,omitempty"`
+	ThumbnailsEx []MediaThumbnail   `json:"thumbnailEx,omitempty"`
 	Titles       []MediaDescription `json:"title,omitempty"`
 	Descriptions []MediaDescription `json:"description,omitempty"`
 	PeerLinks    []MediaPeerLink    `json:"peerLink,omitempty"`
@@ -34,9 +36,16 @@ type MediaContent struct {
 
 	Categories   []string           `json:"category,omitempty"`
 	Thumbnails   []string           `json:"thumbnail,omitempty"`
+	ThumbnailsEx []MediaThumbnail   `json:"thumbnailEx,omitempty"`
 	Titles       []MediaDescription `json:"title,omitempty"`
 	Descriptions []MediaDescription `json:"description,omitempty"`
 	PeerLinks    []MediaPeerLink    `json:"peerLink,omitempty"`
+}
+
+type MediaThumbnail struct {
+	URL    string `json:"url,omitempty"`
+	Height int    `json:"height,omitempty"`
+	Width  int    `json:"width,omitempty"`
 }
 
 type MediaDescription struct {

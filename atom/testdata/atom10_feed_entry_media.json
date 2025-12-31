@@ -25,6 +25,18 @@
                 "https://example.org/duplicated-thumbnail.jpg",
                 "https://example.org/duplicated-thumbnail.jpg"
               ],
+              "thumbnailEx": [
+                {
+                  "url": "https://example.org/duplicated-thumbnail.jpg",
+                  "height": 360,
+                  "width": 480
+                },
+                {
+                  "url": "https://example.org/duplicated-thumbnail.jpg",
+                  "height": 360,
+                  "width": 480
+                }
+              ],
               "title": [
                 {
                   "text": "Another title"
