@@ -279,7 +279,7 @@ func (t *DefaultAtomTranslator) itemEnclosures(entry *atom.Entry) []*Enclosure {
 		return nil
 	}
 
-	var enclosures []*Enclosure //nolint:prealloc // not all links enclosures
+	var enclosures []*Enclosure
 	for _, e := range entry.Links {
 		if e.Rel != "enclosure" {
 			continue
