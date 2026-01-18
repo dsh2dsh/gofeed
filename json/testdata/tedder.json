@@ -1,0 +1,22 @@
+{
+  "version": "https://jsonfeed.org/version/1.1",
+  "title": "printables: top rated models",
+  "home_page_url": "https://www.printables.com/model",
+  "feed_url": "https://dyn.tedder.me/rss/printables/top_rated.json",
+  "authors": {
+    "name": "Molodos"
+  },
+  "items": [
+    {
+      "id": "1538269",
+      "title": "Ultimate Cable Organizer Clip",
+      "url": "https://www.printables.com/model/1538269-ultimate-cable-organizer-clip",
+      "image": "https://media.printables.com/media/prints/f9356105-8694-4689-a9d9-d33b711c776e/images/11596443_9cf8302c-472c-45d4-9e61-bf56b7bbd7f6_d95c7cfc-8d5e-405b-847a-08b3e37f7ed6/thumb.jpg",
+      "date_published": "2026-01-02T12:02:54.189074+00:00",
+      "authors": {
+        "name": "Molodos"
+      },
+      "content_html": "<h2>Ultimate Cable Organizer Clip</h2>\n    <img src=\"https://media.printables.com/media/prints/f9356105-8694-4689-a9d9-d33b711c776e/images/11596443_9cf8302c-472c-45d4-9e61-bf56b7bbd7f6_d95c7cfc-8d5e-405b-847a-08b3e37f7ed6/thumb.jpg\" /><br />\n    1607 likes, 6560 downloads, 4.92 rating<br />\n    first published 2026-01-02<br />\n    category: <a href=\"https://www.printables.com/model?category=48\">Hobby & Makers</a> - <a href=\"https://www.printables.com/model?category=50\">Organizers</a>\n    "
+    }
+ ]
+}
