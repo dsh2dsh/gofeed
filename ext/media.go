@@ -156,23 +156,35 @@ func (self *Media) AllThumbnails() iter.Seq[string] {
 }
 
 func (self *Media) thumbnailsIter(yield func(string) bool) {
-	for _, s := range self.Thumbnails {
-		if s != "" && !yield(s) {
+	for t := range self.AllThumbnailsEx() {
+		if !yield(t.URL) {
+			return
+		}
+	}
+}
+
+func (self *Media) AllThumbnailsEx() iter.Seq[MediaThumbnail] {
+	return self.thumbnailsExIter
+}
+
+func (self *Media) thumbnailsExIter(yield func(MediaThumbnail) bool) {
+	for _, t := range self.ThumbnailsEx {
+		if t.URL != "" && !yield(t) {
 			return
 		}
 	}
 
 	for _, c := range self.Contents {
-		for _, s := range c.Thumbnails {
-			if s != "" && !yield(s) {
+		for _, t := range c.ThumbnailsEx {
+			if t.URL != "" && !yield(t) {
 				return
 			}
 		}
 	}
 
 	for _, g := range self.Groups {
-		for s := range g.AllThumbnails() {
-			if !yield(s) {
+		for t := range g.AllThumbnailsEx() {
+			if !yield(t) {
 				return
 			}
 		}
@@ -256,15 +268,27 @@ func (self *MediaGroup) AllThumbnails() iter.Seq[string] {
 }
 
 func (self *MediaGroup) thumbnailsIter(yield func(string) bool) {
-	for _, s := range self.Thumbnails {
-		if s != "" && !yield(s) {
+	for t := range self.AllThumbnailsEx() {
+		if !yield(t.URL) {
+			return
+		}
+	}
+}
+
+func (self *MediaGroup) AllThumbnailsEx() iter.Seq[MediaThumbnail] {
+	return self.thumbnailsExIter
+}
+
+func (self *MediaGroup) thumbnailsExIter(yield func(MediaThumbnail) bool) {
+	for _, t := range self.ThumbnailsEx {
+		if t.URL != "" && !yield(t) {
 			return
 		}
 	}
 
 	for _, c := range self.Contents {
-		for _, s := range c.Thumbnails {
-			if s != "" && !yield(s) {
+		for _, t := range c.ThumbnailsEx {
+			if t.URL != "" && !yield(t) {
 				return
 			}
 		}

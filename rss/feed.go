@@ -558,8 +558,8 @@ func (self *Item) AllEnclosures() iter.Seq[Enclosure] {
 
 func (self *Item) mediaThumbnails() iter.Seq[Enclosure] {
 	return func(yield func(Enclosure) bool) {
-		for thumbnail := range self.Media.AllThumbnails() {
-			enc := Enclosure{URL: thumbnail, Type: "image/*"}
+		for thumbnail := range self.Media.AllThumbnailsEx() {
+			enc := Enclosure{URL: thumbnail.URL, Type: "image/*"}
 			if enc.URL != "" && !yield(enc) {
 				return
 			}
