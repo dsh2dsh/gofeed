@@ -196,12 +196,6 @@ func Parse(ds string) (time.Time, error) {
 		return time.Time{}, errors.New("date string is empty")
 	}
 
-	for _, f := range formats {
-		if t, err := time.Parse(f, ds); err == nil {
-			return t, nil
-		}
-	}
-
 	for _, f := range formatsWithNamedZone {
 		t, err := time.Parse(f, ds)
 		if err != nil {
@@ -221,6 +215,12 @@ func Parse(ds string) (time.Time, error) {
 		// This should not be reachable
 		return time.Time{}, fmt.Errorf("unable parse %q as %q in location %q",
 			ds, f, loc.String())
+	}
+
+	for _, f := range formats {
+		if t, err := time.Parse(f, ds); err == nil {
+			return t, nil
+		}
 	}
 	return time.Time{}, fmt.Errorf("failed to parse date: %s", ds)
 }
