@@ -125,7 +125,7 @@ func TestParseAtomDate(t *testing.T) {
 func TestParseRSSDateGMT(t *testing.T) {
 	date, err := Parse("Tue, 03 Jun 2003 09:39:21 GMT")
 	require.NoError(t, err)
-	assert.Equal(t, time.Unix(1054633161, 0), date)
+	assert.Equal(t, int64(1054633161), date.Unix())
 }
 
 func TestParseRSSDatePST(t *testing.T) {
