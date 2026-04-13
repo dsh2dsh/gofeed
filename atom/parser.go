@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/dsh2dsh/gofeed/v2/ext"
+	"github.com/dsh2dsh/gofeed/v2/internal/date"
 	"github.com/dsh2dsh/gofeed/v2/internal/media"
 	"github.com/dsh2dsh/gofeed/v2/internal/shared"
 	"github.com/dsh2dsh/gofeed/v2/internal/xml"
@@ -596,7 +597,7 @@ func (self *Parser) parseDate(name string) (string, *time.Time) {
 		return "", nil
 	}
 
-	date, err := shared.ParseDate(result)
+	date, err := date.Parse(result)
 	if err != nil {
 		return result, nil
 	}

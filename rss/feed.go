@@ -8,6 +8,7 @@ import (
 
 	"github.com/dsh2dsh/gofeed/v2/atom"
 	"github.com/dsh2dsh/gofeed/v2/ext"
+	"github.com/dsh2dsh/gofeed/v2/internal/date"
 	"github.com/dsh2dsh/gofeed/v2/internal/json"
 	"github.com/dsh2dsh/gofeed/v2/internal/shared"
 )
@@ -160,7 +161,7 @@ func (self *Feed) GetUpdatedParsed() *time.Time {
 		return nil
 	}
 
-	if date, err := shared.ParseDate(self.DublinCoreExt.Date); err == nil {
+	if date, err := date.Parse(self.DublinCoreExt.Date); err == nil {
 		return &date
 	}
 	return nil
@@ -402,7 +403,7 @@ func (self *Item) GetPublishedParsed() *time.Time {
 		return nil
 	}
 
-	pubDateParsed, err := shared.ParseDate(self.DublinCoreExt.Date)
+	pubDateParsed, err := date.Parse(self.DublinCoreExt.Date)
 	if err == nil {
 		return &pubDateParsed
 	}

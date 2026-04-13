@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dsh2dsh/gofeed/v2/internal/date"
 	"github.com/dsh2dsh/gofeed/v2/internal/json"
-	"github.com/dsh2dsh/gofeed/v2/internal/shared"
 )
 
 // Feed describes the structure for JSON Feed v1.0
@@ -161,7 +161,7 @@ func (self *Item) UpdatedParsed() *time.Time {
 		return nil
 	}
 
-	updatedTime, err := shared.ParseDate(self.DateModified)
+	updatedTime, err := date.Parse(self.DateModified)
 	if err != nil {
 		return nil
 	}
@@ -173,7 +173,7 @@ func (self *Item) PublishedParsed() *time.Time {
 		return nil
 	}
 
-	publishTime, err := shared.ParseDate(self.DatePublished)
+	publishTime, err := date.Parse(self.DatePublished)
 	if err != nil {
 		return nil
 	}

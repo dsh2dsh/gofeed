@@ -1,17 +1,14 @@
-package shared
+package date
 
 import (
 	"errors"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
-
-	"golang.org/x/sync/singleflight"
 )
 
 // DateFormats taken from github.com/mjibson/goread
-var dateFormats = []string{
+var formats = []string{
 	time.RFC822,  // RSS
 	time.RFC822Z, // RSS
 	time.RFC3339, // Atom
@@ -143,7 +140,7 @@ var dateFormats = []string{
 }
 
 // Named zone cannot be consistently loaded, so handle separately
-var dateFormatsWithNamedZone = []string{
+var formatsWithNamedZone = []string{
 	"Mon, January 02, 2006, 15:04:05 MST",
 	"Mon, January 02, 2006 15:04:05 MST",
 	"Mon, Jan 2, 2006 15:04 MST",
@@ -191,28 +188,28 @@ var dateFormatsWithNamedZone = []string{
 	"01/02/2006 15:04:05 MST",
 }
 
-// ParseDate parses a given date string using a large
-// list of commonly found feed date formats.
-func ParseDate(ds string) (t time.Time, err error) {
-	d := strings.TrimSpace(ds)
-	if d == "" {
-		return t, errors.New("date string is empty")
+// ParseDate parses a given date string using a large list of commonly found
+// feed date formats.
+func Parse(ds string) (time.Time, error) {
+	ds = strings.TrimSpace(ds)
+	if ds == "" {
+		return time.Time{}, errors.New("date string is empty")
 	}
 
-	for _, f := range dateFormats {
-		if t, err = time.Parse(f, d); err == nil {
+	for _, f := range formats {
+		if t, err := time.Parse(f, ds); err == nil {
 			return t, nil
 		}
 	}
 
-	for _, f := range dateFormatsWithNamedZone {
-		t, err = time.Parse(f, d)
+	for _, f := range formatsWithNamedZone {
+		t, err := time.Parse(f, ds)
 		if err != nil {
 			continue
 		}
 
 		// This is a format match! Now try to load the timezone name
-		loc := getLocation(t.Location().String())
+		loc := locationFromCache(t.Location().String())
 		// We couldn't load the TZ name. Just use UTC instead...
 		if loc == time.UTC {
 			return t, nil
@@ -222,44 +219,8 @@ func ParseDate(ds string) (t time.Time, err error) {
 			return t, nil
 		}
 		// This should not be reachable
+		return time.Time{}, fmt.Errorf("unable parse %q as %q in location %q",
+			ds, f, loc.String())
 	}
-
-	return t, fmt.Errorf("failed to parse date: %s", ds)
-}
-
-func getLocation(tz string) *time.Location {
-	return cachedLocations.Location(tz)
-}
-
-var cachedLocations = newLocationCache()
-
-type locationCache struct {
-	mu        sync.RWMutex
-	locations map[string]*time.Location
-	sg        singleflight.Group
-}
-
-func newLocationCache() *locationCache {
-	return &locationCache{locations: make(map[string]*time.Location)}
-}
-
-func (self *locationCache) Location(tz string) *time.Location {
-	self.mu.RLock()
-	loc, ok := self.locations[tz]
-	self.mu.RUnlock()
-	if ok {
-		return loc
-	}
-
-	v, _, _ := self.sg.Do(tz, func() (any, error) {
-		loc, err := time.LoadLocation(tz)
-		if err != nil {
-			loc = time.UTC
-		}
-		self.mu.Lock()
-		self.locations[tz] = loc
-		self.mu.Unlock()
-		return loc, nil
-	})
-	return v.(*time.Location)
+	return time.Time{}, fmt.Errorf("failed to parse date: %s", ds)
 }
