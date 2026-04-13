@@ -9,14 +9,10 @@ import (
 
 // DateFormats taken from github.com/mjibson/goread
 var formats = []string{
-	time.RFC822,  // RSS
 	time.RFC822Z, // RSS
 	time.RFC3339, // Atom
-	time.UnixDate,
 	time.RubyDate,
-	time.RFC850,
 	time.RFC1123Z,
-	time.RFC1123,
 	time.ANSIC,
 	"Mon, January 2 2006 15:04:05 -0700",
 	"Mon, Jan 2 2006 15:04:05 -700",
@@ -26,6 +22,7 @@ var formats = []string{
 	"Mon Jan 02 2006 15:04:05 -0700",
 	"Mon Jan 02 2006 15:04:05 GMT-0700 (MST)",
 	"Monday, January 2, 2006 03:04 PM",
+	"Monday, January 2, 2006 - 3:04pm",
 	"Monday, January 2, 2006",
 	"Monday, January 02, 2006",
 	"Monday, 2 January 2006 15:04:05 -0700",
@@ -38,6 +35,7 @@ var formats = []string{
 	"Mon, 2 Jan 2006 3:04:05 PM -0700",
 	"Mon, 2 Jan 2006 15:4:5 -0700 GMT",
 	"Mon, 2, Jan 2006 15:4",
+	"Mon, 2 Jan 2006, 15:04",
 	"Mon, 2 Jan 2006, 15:04 -0700",
 	"Mon, 2 Jan 2006 15:04 -0700",
 	"Mon, 2 Jan 2006 15:04:05 UT",
@@ -141,6 +139,10 @@ var formats = []string{
 
 // Named zone cannot be consistently loaded, so handle separately
 var formatsWithNamedZone = []string{
+	time.RFC822, // RSS
+	time.UnixDate,
+	time.RFC850,
+	time.RFC1123,
 	"Mon, January 02, 2006, 15:04:05 MST",
 	"Mon, January 02, 2006 15:04:05 MST",
 	"Mon, Jan 2, 2006 15:04 MST",
@@ -196,6 +198,12 @@ func Parse(ds string) (time.Time, error) {
 		return time.Time{}, errors.New("date string is empty")
 	}
 
+	for _, f := range formats {
+		if t, err := time.Parse(f, ds); err == nil {
+			return t, nil
+		}
+	}
+
 	for _, f := range formatsWithNamedZone {
 		t, err := time.Parse(f, ds)
 		if err != nil {
@@ -215,12 +223,6 @@ func Parse(ds string) (time.Time, error) {
 		// This should not be reachable
 		return time.Time{}, fmt.Errorf("unable parse %q as %q in location %q",
 			ds, f, loc.String())
-	}
-
-	for _, f := range formats {
-		if t, err := time.Parse(f, ds); err == nil {
-			return t, nil
-		}
 	}
 	return time.Time{}, fmt.Errorf("failed to parse date: %s", ds)
 }
