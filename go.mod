@@ -4,6 +4,7 @@ go 1.25.0
 
 require (
 	github.com/dsh2dsh/goxpp/v2 v2.0.5
+	github.com/itlightning/dateparse v0.2.1
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/net v0.53.0
 	golang.org/x/sync v0.20.0
