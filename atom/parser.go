@@ -218,7 +218,7 @@ func (self *Parser) appendEntry(name string, entries []*Entry) []*Entry {
 		return entries
 	}
 
-	entry := new(Entry)
+	entry := &Entry{Language: self.language()}
 	for name := range children {
 		self.entryBody(name, entry)
 	}

@@ -165,6 +165,7 @@ type Entry struct {
 	Contributors    []*Person      `json:"contributors,omitempty"`
 	Categories      []*Category    `json:"categories,omitempty"`
 	Links           []*Link        `json:"links,omitempty"`
+	Language        string         `json:"language,omitempty"`
 	Rights          string         `json:"rights,omitempty"`
 	Published       string         `json:"published,omitempty"`
 	PublishedParsed *time.Time     `json:"publishedParsed,omitempty"`
