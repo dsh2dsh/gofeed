@@ -30,7 +30,7 @@ func TestParser_Parse(t *testing.T) {
 		}
 
 		t.Run(name, func(t *testing.T) {
-			fmt.Printf("Testing %s... ", name)
+			t.Logf("Testing %s... ", name)
 
 			// Get actual source feed
 			f, err := os.ReadFile(fmt.Sprintf("testdata/%s.json", name))
