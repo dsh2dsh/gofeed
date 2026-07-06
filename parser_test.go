@@ -70,17 +70,13 @@ func TestParser_Concurrent(t *testing.T) {
 	}
 
 	fp := gofeed.NewParser()
-	fp.AtomTranslator = &gofeed.DefaultAtomTranslator{}
-	fp.RSSTranslator = &gofeed.DefaultRSSTranslator{}
-	fp.JSONTranslator = &gofeed.DefaultJSONTranslator{}
-	wg := sync.WaitGroup{}
+	var wg sync.WaitGroup
 	for _, test := range feedTests {
-		fmt.Printf("\nTesting concurrently %s... ", test)
+		t.Logf("\nTesting concurrently %s... ", test)
 
 		// Get feed content
 		path := "testdata/parser/" + test
 		f, _ := os.ReadFile(path)
-
 		wg.Go(func() { fp.Parse(bytes.NewReader(f)) })
 	}
 	wg.Wait()
@@ -100,4 +96,20 @@ func ExampleParser_Parse() {
 		panic(err)
 	}
 	fmt.Println(feed.Title)
+}
+
+// TestParserConcurrentParseString shares one Parser across goroutines. Before
+// the lazy-init fix this races on the
+// AtomTranslator/RSSTranslator/JSONTranslator fields under -race.
+func TestParserConcurrentParseString(t *testing.T) {
+	p := gofeed.NewParser()
+	var wg sync.WaitGroup
+	for range 16 {
+		wg.Go(func() {
+			const concurrencyFeed = `<rss version="2.0"><channel><title>t</title><item><title>i</title></item></channel></rss>`
+			_, err := p.Parse(strings.NewReader(concurrencyFeed))
+			require.NoError(t, err)
+		})
+	}
+	wg.Wait()
 }

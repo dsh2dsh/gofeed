@@ -28,7 +28,15 @@ type Parser struct {
 }
 
 // NewParser creates a universal feed parser.
-func NewParser() *Parser { return &Parser{} }
+func NewParser(opts ...options.Option) *Parser {
+	p := &Parser{}
+	return p.init()
+}
+
+func (f *Parser) init(opts ...options.Option) *Parser {
+	f.opts.Apply(opts...)
+	return f
+}
 
 // Parse parses a RSS or Atom or JSON feed into the universal gofeed.Feed. It
 // takes an io.Reader which should return the xml/json content.
