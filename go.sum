@@ -1,7 +1,7 @@
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/dsh2dsh/goxpp/v2 v2.0.5 h1:RBEy9Hi22rkqbUOBFg+1KxaS3ipgWpHfjdZGqFIAJ4k=
-github.com/dsh2dsh/goxpp/v2 v2.0.5/go.mod h1:6IFiwugLa3KDWCeTiUYMlUnu2UL5Nw7fE+n+MXcm9sM=
+github.com/dsh2dsh/goxpp/v2 v2.0.6 h1:yXqPJIjIa5AIGjYOP8VIuERc8oSz/I5/XxAwsTKT4N0=
+github.com/dsh2dsh/goxpp/v2 v2.0.6/go.mod h1:6IFiwugLa3KDWCeTiUYMlUnu2UL5Nw7fE+n+MXcm9sM=
 github.com/itlightning/dateparse v0.2.1 h1:AB0NJTyI0HYcerEUMovKZOiQVBg1mBPxgAnWQwzLP6g=
 github.com/itlightning/dateparse v0.2.1/go.mod h1:xHlmL8lT0L9JIBlaKotRwsoDYpKJskXpiU9ZwbbSkNA=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
