@@ -1,0 +1,11 @@
+{
+    "items": [
+        {
+            "guid": {
+                "value": "abc123",
+                "isPermalink": "true"
+            }
+        }
+    ],
+    "version": "2.0"
+}
