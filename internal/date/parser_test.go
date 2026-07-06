@@ -158,3 +158,29 @@ func TestParseRSSDateOffset(t *testing.T) {
 	_, offset := date.Zone()
 	assert.Equal(t, 3600, offset)
 }
+
+// Named timezone abbreviations must resolve to the right offset, not a silent
+// zero offset (issue #237). The result is checked in UTC.
+func TestParseDateNamedZones(t *testing.T) {
+	tests := []struct {
+		in      string
+		wantUTC string
+	}{
+		{"Mon, 02 Jan 2006 15:04:05 EST", "2006-01-02 20:04:05"},   // -5
+		{"Mon, 02 Jan 2006 15:04:05 EDT", "2006-01-02 19:04:05"},   // -4
+		{"Mon, 02 Jan 2006 15:04:05 CST", "2006-01-02 21:04:05"},   // -6
+		{"Mon, 02 Jan 2006 15:04:05 PST", "2006-01-02 23:04:05"},   // -8
+		{"Mon, 02 Jan 2006 15:04:05 PDT", "2006-01-02 22:04:05"},   // -7
+		{"Mon, 02 Jan 2006 15:04:05 CEST", "2006-01-02 13:04:05"},  // +2
+		{"Mon, 02 Jan 2006 15:04:05 GMT", "2006-01-02 15:04:05"},   // 0
+		{"Mon, 02 Jan 2006 15:04:05 UTC", "2006-01-02 15:04:05"},   // 0
+		{"Mon, 02 Jan 2006 15:04:05 -0700", "2006-01-02 22:04:05"}, // numeric still works
+		{"2006-01-02T15:04:05Z", "2006-01-02 15:04:05"},            // RFC3339 still works
+	}
+	for _, tt := range tests {
+		got, err := Parse(tt.in)
+		require.NoError(t, err)
+		assert.Equal(t, tt.wantUTC, got.UTC().Format("2006-01-02 15:04:05"),
+			"input %s", tt.in)
+	}
+}
