@@ -64,7 +64,7 @@ func TestDefaultRSSTranslator_Translate(t *testing.T) {
 }
 
 func TestDefaultRSSTranslator_Translate_WrongType(t *testing.T) {
-	translator := &gofeed.DefaultRSSTranslator{}
+	var translator gofeed.DefaultRSSTranslator
 	af, err := translator.Translate("wrong type", nil)
 	require.Nil(t, af)
 	require.Error(t, err)
@@ -132,32 +132,34 @@ func TestDefaultJSONTranslator_Translate(t *testing.T) {
 			continue
 		}
 
-		fmt.Printf("Testing %s... ", name)
+		t.Run(name, func(t *testing.T) {
+			t.Logf("Testing %s... ", name)
 
-		// Get actual source feed
-		ff := fmt.Sprintf("testdata/translator/json/%s.json", name)
-		f, _ := os.Open(ff)
-		defer f.Close()
+			// Get actual source feed
+			f, err := os.ReadFile(
+				fmt.Sprintf("testdata/translator/json/%s.json", name))
+			require.NoError(t, err)
 
-		// Parse actual feed
-		translator := &gofeed.DefaultJSONTranslator{}
-		fp := json.NewParser()
-		jsonFeed, _ := fp.Parse(f, nil)
-		actual, _ := translator.Translate(jsonFeed, nil)
+			// Parse actual feed
+			fp := json.NewParser()
+			jsonFeed, err := fp.Parse(bytes.NewReader(f))
+			require.NoError(t, err)
 
-		// Get json encoded expected feed result
-		ef := fmt.Sprintf("testdata/translator/json/%s_expected.json", name)
-		e, _ := os.ReadFile(ef)
+			var translator gofeed.DefaultJSONTranslator
+			actual, err := translator.Translate(jsonFeed, nil)
+			require.NoError(t, err)
 
-		// Unmarshal expected feed
-		expected := &gofeed.Feed{}
-		jsonEncoding.Unmarshal(e, &expected)
+			// Get json encoded expected feed result
+			e, err := os.ReadFile(
+				fmt.Sprintf("testdata/translator/json/%s_expected.json", name))
+			require.NoError(t, err)
 
-		if assert.Equal(t, expected, actual, "Feed file %s.json did not match expected output %s_expected.json", name, name) {
-			fmt.Printf("OK\n")
-		} else {
-			fmt.Printf("Failed\n")
-		}
+			// Unmarshal expected feed
+			var expected gofeed.Feed
+			require.NoError(t, jsonEncoding.Unmarshal(e, &expected),
+				"unmarshal expected json")
+			assert.Equal(t, &expected, actual)
+		})
 	}
 }
 

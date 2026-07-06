@@ -1,0 +1,17 @@
+{
+	"feedVersion": "1.1",
+	"feedType": "json",
+  "title": "t",
+  "items": [
+    {
+      "guid": "a",
+      "enclosures": [
+        {
+          "url": "u",
+          "type": "audio/mpeg",
+          "length": "5000000"
+        }
+      ]
+    }
+  ]
+}

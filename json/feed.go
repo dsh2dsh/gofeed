@@ -13,7 +13,7 @@ import (
 // Feed describes the structure for JSON Feed v1.0
 // https://www.jsonfeed.org/version/1/
 type Feed struct {
-	Version     string  `json:"version"`                 // version (required, string) is the URL of the version of the format the feed uses
+	Version     string  `json:"version,omitempty"`       // version (required, string) is the URL of the version of the format the feed uses
 	Title       string  `json:"title,omitempty"`         // title (required, string) is the name of the feed
 	HomePageURL string  `json:"home_page_url,omitempty"` // home_page_url (optional but strongly recommended, string) is the URL of the resource that the feed describes. This resource should be an HTML page
 	FeedURL     string  `json:"feed_url,omitempty"`      // feed_url (optional but strongly recommended, string) is the URL of the feed, and serves as the unique identifier for the feed
@@ -24,7 +24,7 @@ type Feed struct {
 	Favicon     string  `json:"favicon,omitempty"`       // favicon (optional, string) is the URL of an image for the feed suitable to be used in a source list. It should be square and relatively small, but not smaller than 64 x 64
 	Author      *Author `json:"author,omitempty"`        // author (optional, object) specifies the feed author. The author object has several members. These are all optional — but if you provide an author object, then at least one is required:
 	Expired     bool    `json:"expired,omitempty"`       // expired (optional, boolean) says whether or not the feed is finished — that is, whether or not it will ever update again.
-	Items       []*Item `json:"items"`                   // items is an array, and is required
+	Items       []*Item `json:"items,omitempty"`         // items is an array, and is required
 	// TODO Hubs // hubs (very optional, array of objects) describes endpoints that can be used to subscribe to real-time notifications from the publisher of this feed. Each object has a type and url, both of which are required. See the section “Subscribing to Real-time Notifications” below for details.
 	// TODO Extensions
 

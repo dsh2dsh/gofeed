@@ -454,12 +454,10 @@ func (t *DefaultJSONTranslator) itemEnclosures(jsonItem *json.Item) []*Enclosure
 
 	enclosures := make([]*Enclosure, len(*jsonItem.Attachments))
 	for i, attachment := range *jsonItem.Attachments {
-		// Title is not defined in global enclosure
-		// SizeInBytes is not defined in global enclosure
 		enclosures[i] = &Enclosure{
 			URL:    attachment.URL,
 			Type:   attachment.MimeType,
-			Length: strconv.FormatInt(attachment.DurationInSeconds, 10),
+			Length: strconv.FormatInt(attachment.SizeInBytes, 10),
 		}
 	}
 	return enclosures
