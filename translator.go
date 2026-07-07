@@ -66,6 +66,8 @@ func (t *DefaultRSSTranslator) translateFeedItem(rssItem *rss.Item) *Item {
 		Description:     rssItem.GetDescription(),
 		Content:         rssItem.Content,
 		Links:           rssItem.Links,
+		Updated:         rssItem.GetPublished(),
+		UpdatedParsed:   rssItem.GetPublishedParsed(),
 		Published:       rssItem.GetPublished(),
 		PublishedParsed: rssItem.GetPublishedParsed(),
 		Author:          t.itemAuthor(rssItem),
