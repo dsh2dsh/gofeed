@@ -24,5 +24,21 @@ func (self *textAttributes) Encoded() bool {
 	textEncoding := self.Type == "text" || self.Type == "html" ||
 		strings.HasPrefix(self.Type, "text/") ||
 		(self.Type == "" && self.Mode == "")
-	return !textEncoding
+	if textEncoding {
+		return false
+	}
+
+	mediaTypes := strings.HasPrefix(self.Type, "image/") ||
+		strings.HasPrefix(self.Type, "audio/") ||
+		strings.HasPrefix(self.Type, "video/")
+	if mediaTypes {
+		return true
+	}
+
+	switch self.Type {
+	case "application/octet-stream", "application/pdf", "application/zip",
+		"application/gzip", "application/x-gzip", "application/ogg":
+		return true
+	}
+	return false
 }
