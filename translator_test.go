@@ -247,3 +247,22 @@ func TestDefaultJSONTranslator_Translate_WrongType(t *testing.T) {
 	assert.Nil(t, af)
 	assert.Error(t, err)
 }
+
+// DisableContentImageScan turns off the HTML-parsing fallback that finds a
+// first <img> in feed and item content; explicit images are unaffected.
+func TestDisableContentImageScan(t *testing.T) {
+	feed := `<rss version="2.0"><channel>
+		<description><![CDATA[<p><img src="http://example.org/feed.png"/></p>]]></description>
+		<item><description><![CDATA[<img src="http://example.org/item.png">]]></description></item>
+	</channel></rss>`
+
+	rssFeed, err := rss.NewParser().Parse(strings.NewReader(feed))
+	require.NoError(t, err)
+	require.NotNil(t, rssFeed)
+
+	var def gofeed.DefaultRSSTranslator
+	out, err := def.Translate(rssFeed, nil)
+	require.NoError(t, err)
+	assert.Nil(t, out.Image)
+	assert.Nil(t, out.Items[0].Image)
+}
