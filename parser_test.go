@@ -13,6 +13,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/dsh2dsh/gofeed/v2"
+	"github.com/dsh2dsh/gofeed/v2/options"
+	"github.com/dsh2dsh/gofeed/v2/rss"
 )
 
 func TestParser_Parse(t *testing.T) {
@@ -112,4 +114,24 @@ func TestParserConcurrentParseString(t *testing.T) {
 		})
 	}
 	wg.Wait()
+}
+
+func TestParserKeepOriginalFeed(t *testing.T) {
+	const feed = `<rss version="2.0"><channel><title>t</title><item><title>i</title></item></channel></rss>`
+
+	// Off by default: OriginalFeed() is nil.
+	p := gofeed.NewParser()
+	f, err := p.Parse(strings.NewReader(feed))
+	require.NoError(t, err)
+	require.NotNil(t, feed)
+	assert.Nil(t, f.OriginalFeed, "want nil when KeepOriginalFeed is off")
+
+	// On: OriginalFeed() returns the source *rss.Feed.
+	f, err = p.Parse(strings.NewReader(feed), options.WithKeepOriginalFeed(true))
+	require.NoError(t, err)
+	require.NotNil(t, feed)
+
+	orig, ok := f.OriginalFeed.(*rss.Feed)
+	require.True(t, ok, "want *rss.Feed")
+	assert.Equal(t, "t", orig.Title, "original feed title")
 }
