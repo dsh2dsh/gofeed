@@ -208,6 +208,8 @@ func (self *Parser) itemBody(name string, item *Item) {
 		return
 	}
 
+	var intoCustom bool
+
 	switch name {
 	case "title":
 		item.Title = self.p.Text()
@@ -216,6 +218,8 @@ func (self *Parser) itemBody(name string, item *Item) {
 	case "encoded":
 		if self.p.NamespacePrefix() == "content" {
 			item.Content = self.p.Text()
+		} else {
+			intoCustom = true
 		}
 	case "link":
 		item.Links = self.appendLink(name, item.Links)
@@ -236,9 +240,15 @@ func (self *Parser) itemBody(name string, item *Item) {
 	default:
 		// For non-standard RSS elements, add them to extensions
 		// under a special "_custom" namespace prefix
-		if e, ok := self.parseCustomExtInto(name, item.Extensions); ok {
-			item.Extensions = e
-		}
+		intoCustom = true
+	}
+
+	if !intoCustom {
+		return
+	}
+
+	if e, ok := self.parseCustomExtInto(name, item.Extensions); ok {
+		item.Extensions = e
 	}
 }
 
