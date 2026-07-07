@@ -1,0 +1,25 @@
+{
+    "title": "Feed Title",
+    "items": [
+        {
+            "title": "Item Title",
+            "author": {
+                "name": "Bob"
+            },
+            "authors": [
+                {
+                    "name": "Bob"
+                }
+            ],
+            "categories": [
+                "Two"
+            ],
+            "dcExt": {
+                "creator": "Bob",
+                "subject": "Two"
+            }
+        }
+    ],
+    "feedType": "rss",
+    "feedVersion": "2.0"
+}

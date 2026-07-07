@@ -1,0 +1,33 @@
+{
+    "title": "Feed Title",
+    "items": [
+        {
+            "title": "Item Title",
+            "description": "An item description",
+            "updated": "2007-02-03T10:20:30Z",
+            "updatedParsed": "2007-02-03T10:20:30Z",
+            "published": "2007-02-03T10:20:30Z",
+            "publishedParsed": "2007-02-03T10:20:30Z",
+            "author": {
+                "name": "John Smith"
+            },
+            "authors": [
+                {
+                    "name": "John Smith"
+                }
+            ],
+            "categories": [
+                "Programming"
+            ],
+            "dcExt": {
+                "creator": "John Smith",
+                "subject": "Programming",
+                "description": "An item description",
+                "date": "2007-02-03T10:20:30Z",
+                "identifier": "urn:uuid:1234"
+            }
+        }
+    ],
+    "feedType": "rss",
+    "feedVersion": "2.0"
+}

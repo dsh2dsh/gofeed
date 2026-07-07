@@ -1,0 +1,28 @@
+{
+    "title": "Feed Title",
+    "updated": "2006-01-02T15:04:05Z",
+    "updatedParsed": "2006-01-02T15:04:05Z",
+    "author": {
+        "name": "Jane Doe"
+    },
+    "authors": [
+        {
+            "name": "Jane Doe"
+        }
+    ],
+    "language": "en-us",
+    "copyright": "Copyright 2006 Example",
+    "categories": [
+        "Technology"
+    ],
+    "dcExt": {
+        "creator": "Jane Doe",
+        "subject": "Technology",
+        "publisher": "Example Publisher",
+        "date": "2006-01-02T15:04:05Z",
+        "language": "en-us",
+        "rights": "Copyright 2006 Example"
+    },
+    "feedType": "rss",
+    "feedVersion": "2.0"
+}

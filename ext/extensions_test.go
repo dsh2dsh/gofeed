@@ -34,7 +34,8 @@ func TestParse(t *testing.T) {
 
 				ErrorContains string `json:"errorContains"`
 			}
-			require.NoError(t, json.Unmarshal(e, &expected))
+			require.NoError(t, json.Unmarshal(e, &expected),
+				"unable unmarshal %s.json", name)
 
 			// Get actual source feed
 			f, err := os.ReadFile(fmt.Sprintf("testdata/%s.xml", name))
