@@ -254,13 +254,6 @@ feed, _ := fp.Parse(strings.NewReader(feedData))
 fmt.Println(feed.Author) // Valentine Wiggin
 ```
 
-## Dependencies
-
-* [goxpp](https://github.com/dsh2dsh/goxpp) - XML Pull Parser
-* [testify](https://github.com/stretchr/testify) - Unit test enhancements
-* [golang.org/x/net](https://pkg.go.dev/golang.org/x/net) - Go supplementary network libraries
-* [golang.org/x/text](https://pkg.go.dev/golang.org/x/text) - Go supplementary text processing libraries
-
 ## License
 
 This project is licensed under the [MIT License](https://raw.githubusercontent.com/dsh2dsh/gofeed/master/LICENSE)
