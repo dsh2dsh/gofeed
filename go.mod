@@ -1,6 +1,6 @@
 module github.com/dsh2dsh/gofeed/v2
 
-go 1.25.0
+go 1.26
 
 require (
 	github.com/dsh2dsh/goxpp/v2 v2.1.0
