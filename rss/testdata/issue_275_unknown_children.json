@@ -1,0 +1,16 @@
+{
+  "title": "t",
+  "image": {
+    "url": "http://example.org/i.png"
+  },
+  "skipHours": [
+    "1"
+  ],
+  "skipDays": [
+    "Monday"
+  ],
+  "textInput": {
+    "title": "ti"
+  },
+  "version": "1.0"
+}

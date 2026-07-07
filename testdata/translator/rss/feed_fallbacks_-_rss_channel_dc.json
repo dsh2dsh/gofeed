@@ -1,0 +1,28 @@
+{
+  "title": "DC Title",
+  "description": "Itunes Summary",
+  "updated": "2026-01-02T15:04:05Z",
+  "updatedParsed": "2026-01-02T15:04:05Z",
+  "author": {
+    "name": "Jane Creator"
+  },
+  "authors": [
+    {
+      "name": "Jane Creator"
+    }
+  ],
+  "language": "en-us",
+  "copyright": "DC Rights",
+  "dcExt": {
+    "title": "DC Title",
+    "creator": "Jane Creator",
+    "date": "2026-01-02T15:04:05Z",
+    "language": "en-us",
+    "rights": "DC Rights"
+  },
+  "itunesExt": {
+    "summary": "Itunes Summary"
+  },
+  "feedType": "rss",
+  "feedVersion": "2.0"
+}

@@ -1,0 +1,30 @@
+{
+  "dcExt": {
+    "creator": "Chan Creator"
+  },
+  "items": [
+    {
+      "dcExt": {
+        "subject": "Subj"
+      },
+      "itunesExt": {
+        "author": "Item Author"
+      },
+      "extensions": {
+        "custom": {
+          "thing": [
+            {
+              "name": "thing",
+              "value": "val",
+              "attrs": {
+                "attr": "v"
+              },
+              "children": {}
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "version": "2.0"
+}

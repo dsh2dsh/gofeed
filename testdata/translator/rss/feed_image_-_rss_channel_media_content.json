@@ -1,0 +1,20 @@
+{
+  "author": {
+    "name": "Dave Author",
+    "email": "dave@example.org"
+  },
+  "authors": [
+    {
+      "name": "Dave Author",
+      "email": "dave@example.org"
+    }
+  ],
+  "image": {
+    "url": "http://example.org/media.png"
+  },
+  "dcExt": {
+    "author": "Dave Author (dave@example.org)"
+  },
+  "feedType": "rss",
+  "feedVersion": "2.0"
+}

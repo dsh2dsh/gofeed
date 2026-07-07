@@ -1,0 +1,88 @@
+{
+  "items": [
+    {
+      "title": "DC Item Title",
+      "description": "DC Item Description",
+      "updated": "2026-02-03T04:05:06Z",
+      "updatedParsed": "2026-02-03T04:05:06Z",
+      "published": "2026-02-03T04:05:06Z",
+      "publishedParsed": "2026-02-03T04:05:06Z",
+      "author": {
+        "name": "Item Author",
+        "email": "item@example.org"
+      },
+      "authors": [
+        {
+          "name": "Item Author",
+          "email": "item@example.org"
+        }
+      ],
+      "image": {
+        "url": "http://example.org/item-media.png"
+      },
+      "dcExt": {
+        "title": "DC Item Title",
+        "author": "Item Author (item@example.org)",
+        "description": "DC Item Description",
+        "date": "2026-02-03T04:05:06Z"
+      }
+    },
+    {
+      "description": "Item Itunes Summary",
+      "author": {
+        "name": "Item Creator"
+      },
+      "authors": [
+        {
+          "name": "Item Creator"
+        }
+      ],
+      "image": {
+        "url": "http://example.org/item-itunes.png"
+      },
+      "categories": [
+        "one",
+        "two",
+        "Item Subject"
+      ],
+      "dcExt": {
+        "creator": "Item Creator",
+        "subject": "Item Subject"
+      },
+      "itunesExt": {
+        "keywords": "one,two",
+        "summary": "Item Itunes Summary",
+        "image": "http://example.org/item-itunes.png"
+      },
+      "extensions": {
+        "atom": {
+          "category": [
+            {
+              "name": "category",
+              "value": "",
+              "attrs": {
+                "term": "atomterm"
+              },
+              "children": {}
+            }
+          ]
+        }
+      }
+    },
+    {
+      "author": {
+        "name": "Item Itunes Author"
+      },
+      "authors": [
+        {
+          "name": "Item Itunes Author"
+        }
+      ],
+      "itunesExt": {
+        "author": "Item Itunes Author"
+      }
+    }
+  ],
+  "feedType": "rss",
+  "feedVersion": "2.0"
+}
