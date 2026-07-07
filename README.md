@@ -3,10 +3,8 @@
 [![Go](https://github.com/dsh2dsh/gofeed/actions/workflows/go.yml/badge.svg)](https://github.com/dsh2dsh/gofeed/actions/workflows/go.yml)
 [![GoDoc](https://godoc.org/github.com/dsh2dsh/gofeed?status.png)](https://godoc.org/github.com/dsh2dsh/gofeed/v2)
 
-This project is a fork of [gofeed](https://github.com/mmcdole/gofeed). Changes
-from upstream:
-
-* `master` branch follows `v2` branch of upstream
+This project is a curated fork of [gofeed](https://github.com/mmcdole/gofeed)
+without an AI slop. Changes from upstream:
 
 * `ParseURL` is deprecated and removed
 
