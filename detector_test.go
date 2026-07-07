@@ -63,9 +63,10 @@ func ExampleDetectFeedType() {
 	}
 }
 
-// A reader that fails mid-stream must yield FeedTypeUnknown, not a type
-// guessed from the partial prefix (issue #311).
+// A reader that fails mid-stream must yield FeedTypeUnknown, not a type guessed
+// from the partial prefix (issue #311).
 func TestDetectFeedType_ReaderError(t *testing.T) {
-	r := io.MultiReader(strings.NewReader(`<rss version="2.0"></rss>`), iotest.ErrReader(errors.New("boom")))
+	r := io.MultiReader(strings.NewReader(`<rss version="2.0"></rss>`),
+		iotest.ErrReader(errors.New("boom")))
 	assert.Equal(t, gofeed.FeedTypeUnknown, gofeed.DetectFeedType(r))
 }

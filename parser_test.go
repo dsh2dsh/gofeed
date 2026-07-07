@@ -2,12 +2,15 @@ package gofeed_test
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"strings"
 	"sync"
 	"testing"
+	"testing/iotest"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -134,4 +137,42 @@ func TestParserKeepOriginalFeed(t *testing.T) {
 	orig, ok := f.OriginalFeed.(*rss.Feed)
 	require.True(t, ok, "want *rss.Feed")
 	assert.Equal(t, "t", orig.Title, "original feed title")
+}
+
+// An I/O error from the reader must surface as itself, not be masked as a
+// failed type detection (issue #311).
+func TestParser_Parse_ReaderError(t *testing.T) {
+	boom := errors.New("boom")
+	r := io.MultiReader(strings.NewReader(`<rss version="2.0"><channel>`),
+		iotest.ErrReader(boom))
+
+	_, err := gofeed.NewParser().Parse(r)
+	assert.ErrorIs(t, err, boom)
+}
+
+// A feed much larger than the detection window must parse completely: the
+// format parser reads from the start of the stream, not from after the peek.
+func TestParser_Parse_LargeFeed(t *testing.T) {
+	var sb strings.Builder
+	sb.WriteString(`<rss version="2.0"><channel><title>big</title>`)
+	for i := range 2000 {
+		fmt.Fprintf(&sb,
+			`<item><title>item %d</title><guid>g%d</guid></item>`, i, i)
+	}
+	sb.WriteString(`</channel></rss>`)
+
+	feed, err := gofeed.NewParser().Parse(strings.NewReader(sb.String()))
+	require.NoError(t, err)
+	require.NotNil(t, feed)
+	assert.Len(t, feed.Items, 2000)
+	assert.Equal(t, "item 1999", feed.Items[1999].Title)
+}
+
+func TestParser_Parse_RootBeyondDetectionWindow(t *testing.T) {
+	pad := "<!-- " + strings.Repeat("x", 8192) + " -->"
+	feed, err := gofeed.NewParser().Parse(
+		strings.NewReader(pad + `<rss version="2.0"><channel></channel></rss>`))
+	require.NoError(t, err)
+	require.NotNil(t, feed)
+	assert.Equal(t, "rss", feed.FeedType)
 }
