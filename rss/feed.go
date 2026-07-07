@@ -111,6 +111,12 @@ func (self *Feed) Link() string {
 	if len(self.Links) != 0 {
 		return self.Links[0]
 	}
+
+	for _, l := range self.AtomLinks {
+		if l.Rel == "" || l.Rel == "alternate" {
+			return l.Href
+		}
+	}
 	return ""
 }
 
