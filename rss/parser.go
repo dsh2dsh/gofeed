@@ -372,6 +372,9 @@ func (self *Parser) guid(name string) (guid *GUID) {
 	err := self.p.WithText(name,
 		func() error {
 			guid = &GUID{IsPermalink: self.p.Attribute("ispermalink")}
+			if guid.IsPermalink == "" {
+				guid.IsPermalink = "true"
+			}
 			return nil
 		},
 		func(s string) error {
