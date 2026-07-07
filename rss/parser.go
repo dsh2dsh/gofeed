@@ -154,7 +154,7 @@ func (self *Parser) channelBody(name string) {
 	case "generator":
 		rss.Generator = self.p.Text()
 	case "docs":
-		rss.Docs = self.p.Text()
+		rss.Docs = self.p.TextURL()
 	case "ttl":
 		rss.TTL = self.p.Text()
 	case "rating":
@@ -222,7 +222,7 @@ func (self *Parser) itemBody(name string, item *Item) {
 	case "author":
 		item.Author = self.p.Text()
 	case "comments":
-		item.Comments = self.p.Text()
+		item.Comments = self.p.TextURL()
 	case "pubdate":
 		item.PubDate, item.PubDateParsed = self.parseDate(name)
 	case "source":
@@ -258,6 +258,11 @@ func (self *Parser) appendLink(name string, links []string) []string {
 	if err != nil {
 		self.err = err
 		return links
+	}
+
+	u, err := self.p.XmlBaseResolveUrl(url)
+	if err == nil && u != nil {
+		url = u.String()
 	}
 	return append(links, url)
 }
@@ -352,11 +357,11 @@ func (self *Parser) image(name string) *Image {
 func (self *Parser) imageBody(name string, image *Image) {
 	switch name {
 	case "url":
-		image.URL = self.p.Text()
+		image.URL = self.p.TextURL()
 	case "title":
 		image.Title = self.p.Text()
 	case "link":
-		image.Link = self.p.Text()
+		image.Link = self.p.TextURL()
 	case "width":
 		image.Width = self.p.Text()
 	case "height":

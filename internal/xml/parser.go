@@ -72,6 +72,19 @@ func (self *Parser) Text() string {
 	return strings.TrimSpace(s)
 }
 
+func (self *Parser) TextURL() string {
+	s := self.Text()
+	if self.err != nil || s == "" {
+		return s
+	}
+
+	u, err := self.XmlBaseResolveUrl(s)
+	if err != nil || u == nil {
+		return s
+	}
+	return u.String()
+}
+
 func (self *Parser) Skip(tag string) {
 	if err := self.XMLPullParser.Skip(); err != nil {
 		self.err = fmt.Errorf(
