@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	xpp "github.com/dsh2dsh/goxpp/v2"
+
 	"github.com/dsh2dsh/gofeed/v2/ext"
 	"github.com/dsh2dsh/gofeed/v2/internal/date"
 	"github.com/dsh2dsh/gofeed/v2/internal/media"
@@ -571,7 +573,9 @@ func (self *Parser) xmlContent() (string, error) {
 	return strings.TrimSpace(xmlContent.InnerXML), nil
 }
 
-func (self *Parser) language() string { return self.p.Attribute("lang") }
+func (self *Parser) language() string {
+	return self.p.AttributeNS("lang", xpp.XMLnamespace)
+}
 
 func (self *Parser) version() string {
 	if ver := self.p.Attribute("version"); ver != "" {
