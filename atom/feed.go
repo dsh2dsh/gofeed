@@ -1,6 +1,8 @@
 package atom
 
 import (
+	"iter"
+	"slices"
 	"strings"
 	"time"
 
@@ -265,14 +267,27 @@ func (self *Entry) GetCategories() []string {
 	if len(self.Categories) == 0 {
 		return nil
 	}
+	return slices.Collect(self.categoriesIter)
+}
 
-	categories := make([]string, 0, len(self.Categories))
+func (self *Entry) AllCategories() iter.Seq[string] {
+	return self.categoriesIter
+}
+
+func (self *Entry) categoriesIter(yield func(string) bool) {
+	if len(self.Categories) == 0 {
+		return
+	}
+
 	for _, c := range self.Categories {
 		if c.Label != "" {
-			categories = append(categories, c.Label)
+			if !yield(c.Label) {
+				return
+			}
 		} else if c.Term != "" {
-			categories = append(categories, c.Term)
+			if !yield(c.Term) {
+				return
+			}
 		}
 	}
-	return categories
 }

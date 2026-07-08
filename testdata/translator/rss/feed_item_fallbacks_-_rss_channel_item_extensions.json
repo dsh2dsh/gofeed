@@ -43,7 +43,8 @@
       "categories": [
         "one",
         "two",
-        "Item Subject"
+        "Item Subject",
+        "atomterm"
       ],
       "dcExt": {
         "creator": "Item Creator",
@@ -54,19 +55,12 @@
         "summary": "Item Itunes Summary",
         "image": "http://example.org/item-itunes.png"
       },
-      "extensions": {
-        "atom": {
-          "category": [
-            {
-              "name": "category",
-              "value": "",
-              "attrs": {
-                "term": "atomterm"
-              },
-              "children": {}
-            }
-          ]
-        }
+      "atomExt": {
+        "categories": [
+          {
+            "term": "atomterm"
+          }
+        ]
       }
     },
     {

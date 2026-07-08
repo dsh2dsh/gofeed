@@ -184,7 +184,7 @@ func (self *Parser) feedBody(name string) {
 
 func (self *Parser) parseChannelExt(name string) bool {
 	switch ns := self.p.ExtensionPrefix(); ns {
-	case "":
+	case "", "atom", "atom10", "atom03":
 		return false
 	case "yt":
 		self.feed.Youtube = self.youtube(self.feed.Youtube)
@@ -272,7 +272,7 @@ func (self *Parser) entryBody(name string, entry *Entry) {
 
 func (self *Parser) parseEntryExt(name string, entry *Entry) bool {
 	switch ns := self.p.ExtensionPrefix(); ns {
-	case "":
+	case "", "atom", "atom10", "atom03":
 		return false
 	case "media":
 		entry.Media = self.media(entry.Media)

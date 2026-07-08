@@ -1,0 +1,28 @@
+{
+    "title": "Feed Title",
+    "items": [
+        {
+          "title": "Item Title",
+          "author": {
+            "name": "John Doe",
+            "email": "john@example.com"
+          },
+          "authors": [
+            {
+              "name": "John Doe",
+              "email": "john@example.com"
+            }
+          ],
+          "atomExt": {
+            "authors": [
+              {
+                "name": "John Doe",
+                "email": "john@example.com"
+              }
+            ]
+          }
+        }
+    ],
+    "feedType": "rss",
+    "feedVersion": "2.0"
+}

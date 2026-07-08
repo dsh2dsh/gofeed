@@ -3,6 +3,15 @@
   "links": [
     "http://example.org/"
   ],
+  "atomExt": {
+    "links": [
+      {
+        "href": "http://example.org/",
+        "rel": "alternate",
+        "type": "text/html"
+      }
+    ]
+  },
   "feedType": "rss",
   "feedVersion": "2.0"
 }

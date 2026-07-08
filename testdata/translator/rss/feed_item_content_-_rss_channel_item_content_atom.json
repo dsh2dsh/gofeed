@@ -1,0 +1,17 @@
+{
+  "title": "Feed Title",
+  "items": [
+    {
+      "title": "Item Title",
+      "content": "<p>Body</p>",
+      "atomExt": {
+        "content": {
+          "type": "html",
+          "value": "<p>Body</p>"
+        }
+      }
+    }
+  ],
+  "feedType": "rss",
+  "feedVersion": "2.0"
+}

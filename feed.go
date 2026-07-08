@@ -3,6 +3,7 @@ package gofeed
 import (
 	"time"
 
+	"github.com/dsh2dsh/gofeed/v2/atom"
 	"github.com/dsh2dsh/gofeed/v2/ext"
 	"github.com/dsh2dsh/gofeed/v2/internal/json"
 )
@@ -29,6 +30,7 @@ type Feed struct {
 	Copyright       string                   `json:"copyright,omitempty"`
 	Generator       string                   `json:"generator,omitempty"`
 	Categories      []string                 `json:"categories,omitempty"`
+	AtomExt         *atom.Feed               `json:"atomExt,omitempty"`
 	DublinCoreExt   *ext.DublinCoreExtension `json:"dcExt,omitempty"`
 	ITunesExt       *ext.ITunesFeedExtension `json:"itunesExt,omitempty"`
 	Extensions      ext.Extensions           `json:"extensions,omitempty"`
@@ -97,6 +99,7 @@ type Item struct {
 	Image           *Image                   `json:"image,omitempty"`
 	Categories      []string                 `json:"categories,omitempty"`
 	Enclosures      []*Enclosure             `json:"enclosures,omitempty"`
+	AtomExt         *atom.Entry              `json:"atomExt,omitempty"`
 	DublinCoreExt   *ext.DublinCoreExtension `json:"dcExt,omitempty"`
 	ITunesExt       *ext.ITunesItemExtension `json:"itunesExt,omitempty"`
 	Extensions      ext.Extensions           `json:"extensions,omitempty"`

@@ -28,6 +28,7 @@ type Parser struct {
 	err  error
 
 	opts options.Parse
+	atom *atom.ExtensionParser
 }
 
 // NewParser creates a new RSS parser
@@ -37,6 +38,7 @@ func NewParser() *Parser { return &Parser{} }
 func (self *Parser) Parse(r io.Reader, opts ...options.Option) (*Feed, error) {
 	self.opts.Apply(opts...)
 	self.p = xml.NewParser(r, opts...)
+	self.atom = atom.NewExtension(self.p, options.From(self.opts))
 
 	if _, err := self.p.FindRoot(); err != nil {
 		return nil, fmt.Errorf("gofeed/rss: %w", err)
@@ -87,6 +89,11 @@ func (self *Parser) root(name string) {
 			self.p.Skip(name)
 		}
 	}
+
+	if self.err != nil || self.feed.AtomExt == nil {
+		return
+	}
+	self.feed.AtomLinks = self.feed.AtomExt.Links
 }
 
 func (self *Parser) makeChildrenSeq(name string) iter.Seq[string] {
@@ -199,6 +206,10 @@ func (self *Parser) appendItem(name string, items []*Item) []*Item {
 
 	if self.err != nil {
 		return items
+	}
+
+	if item.AtomExt != nil {
+		item.AtomLinks = item.AtomExt.Links
 	}
 	return append(items, item)
 }
@@ -571,15 +582,19 @@ func (self *Parser) parseChannelExt(name string, rss *Feed) bool {
 	case "media":
 		rss.Media = self.media(rss.Media)
 	case "atom", "atom10", "atom03":
-		if name == "link" {
-			rss.AtomLinks = self.appendAtomLink(name, rss.AtomLinks)
-			break
-		}
-		fallthrough
+		rss.AtomExt = self.atomFeed(rss.AtomExt)
 	default:
 		rss.Extensions = self.extensions(name, rss.Extensions)
 	}
 	return true
+}
+
+func (self *Parser) atomFeed(feed *atom.Feed) *atom.Feed {
+	feed, err := self.atom.ParseFeed(feed)
+	if err != nil {
+		self.err = err
+	}
+	return feed
 }
 
 func (self *Parser) dublinCore(dc *ext.DublinCoreExtension,
@@ -613,16 +628,6 @@ func (self *Parser) extensions(name string, e ext.Extensions) ext.Extensions {
 	return e
 }
 
-func (self *Parser) appendAtomLink(name string, links []*atom.Link,
-) []*atom.Link {
-	l, err := atom.ParseLink(name, self.p)
-	if err != nil {
-		self.err = err
-		return links
-	}
-	return append(links, l)
-}
-
 func (self *Parser) parseItemExt(name string, item *Item) bool {
 	switch self.p.ExtensionPrefix() {
 	case "":
@@ -634,15 +639,19 @@ func (self *Parser) parseItemExt(name string, item *Item) bool {
 	case "media":
 		item.Media = self.media(item.Media)
 	case "atom", "atom10", "atom03":
-		if name == "link" {
-			item.AtomLinks = self.appendAtomLink(name, item.AtomLinks)
-			break
-		}
-		fallthrough
+		item.AtomExt = self.atomEntry(item.AtomExt)
 	default:
 		item.Extensions = self.extensions(name, item.Extensions)
 	}
 	return true
+}
+
+func (self *Parser) atomEntry(entry *atom.Entry) *atom.Entry {
+	entry, err := self.atom.ParseEntry(entry)
+	if err != nil {
+		self.err = err
+	}
+	return entry
 }
 
 func (self *Parser) itunesItem(item *ext.ITunesItemExtension,

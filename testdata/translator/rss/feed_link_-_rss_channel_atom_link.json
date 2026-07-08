@@ -4,5 +4,14 @@
   "feedVersion": "2.0",
   "links": [
     "http://example.org"
-  ]
+  ],
+  "atomExt": {
+    "links": [
+      {
+        "href": "http://example.org",
+        "rel": "self",
+        "type": "application/rss+xml"
+      }
+    ]
+  }
 }

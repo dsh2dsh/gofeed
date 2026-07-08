@@ -37,6 +37,7 @@ type Feed struct {
 	SkipDays            []string                 `json:"skipDays,omitempty"`
 	Cloud               *Cloud                   `json:"cloud,omitempty"`
 	TextInput           *TextInput               `json:"textInput,omitempty"`
+	AtomExt             *atom.Feed               `json:"atomExt,omitempty"`
 	DublinCoreExt       *ext.DublinCoreExtension `json:"dcExt,omitempty"`
 	ITunesExt           *ext.ITunesFeedExtension `json:"itunesExt,omitempty"`
 	Media               *ext.Media               `json:"media,omitempty"`
@@ -323,6 +324,7 @@ type Item struct {
 	PubDate       string                   `json:"pubDate,omitempty"`
 	PubDateParsed *time.Time               `json:"pubDateParsed,omitempty"`
 	Source        *Source                  `json:"source,omitempty"`
+	AtomExt       *atom.Entry              `json:"atomExt,omitempty"`
 	DublinCoreExt *ext.DublinCoreExtension `json:"dcExt,omitempty"`
 	ITunesExt     *ext.ITunesItemExtension `json:"itunesExt,omitempty"`
 	Media         *ext.Media               `json:"media,omitempty"`
@@ -361,10 +363,13 @@ func (self *Item) GetTitle() string {
 }
 
 func (self *Item) GetContent() string {
-	if self.Content != "" {
+	switch {
+	case self.Content != "":
 		return self.Content
+	case self.AtomExt != nil && self.AtomExt.Content != nil:
+		return self.AtomExt.Content.Value
 	}
-	return self.GetDescription()
+	return ""
 }
 
 func (self *Item) GetDescription() string {
@@ -373,6 +378,8 @@ func (self *Item) GetDescription() string {
 		return self.Description
 	case self.DublinCoreExt != nil && self.DublinCoreExt.Description != "":
 		return self.DublinCoreExt.Description
+	case self.AtomExt != nil && self.AtomExt.Summary != "":
+		return self.AtomExt.Summary
 	}
 
 	if self.ITunesExt != nil {
@@ -390,12 +397,38 @@ func (self *Item) GetDescription() string {
 	return ""
 }
 
+func (self *Item) GetUpdated() string {
+	switch {
+	case self.DublinCoreExt != nil && self.DublinCoreExt.Date != "":
+		return self.DublinCoreExt.Date
+	case self.AtomExt != nil && self.AtomExt.Updated != "":
+		return self.AtomExt.Updated
+	}
+	return ""
+}
+
+func (self *Item) GetUpdatedParsed() *time.Time {
+	if self.DublinCoreExt != nil && self.DublinCoreExt.Date != "" {
+		pubDateParsed, err := date.Parse(self.DublinCoreExt.Date)
+		if err == nil {
+			return &pubDateParsed
+		}
+	}
+
+	if self.AtomExt != nil {
+		return self.AtomExt.UpdatedParsed
+	}
+	return nil
+}
+
 func (self *Item) GetPublished() string {
 	switch {
 	case self.PubDate != "":
 		return self.PubDate
-	case self.DublinCoreExt != nil:
+	case self.DublinCoreExt != nil && self.DublinCoreExt.Date != "":
 		return self.DublinCoreExt.Date
+	case self.AtomExt != nil && self.AtomExt.Published != "":
+		return self.AtomExt.Published
 	}
 	return ""
 }
@@ -405,13 +438,15 @@ func (self *Item) GetPublishedParsed() *time.Time {
 		return self.PubDateParsed
 	}
 
-	if self.DublinCoreExt == nil || self.DublinCoreExt.Date == "" {
-		return nil
+	if self.DublinCoreExt != nil && self.DublinCoreExt.Date != "" {
+		pubDateParsed, err := date.Parse(self.DublinCoreExt.Date)
+		if err == nil {
+			return &pubDateParsed
+		}
 	}
 
-	pubDateParsed, err := date.Parse(self.DublinCoreExt.Date)
-	if err == nil {
-		return &pubDateParsed
+	if self.AtomExt != nil {
+		return self.AtomExt.PublishedParsed
 	}
 	return nil
 }
@@ -436,6 +471,12 @@ func (self *Item) GetAuthor() (name, address string, ok bool) {
 	if self.ITunesExt != nil && self.ITunesExt.Author != "" {
 		name, address = shared.ParseNameAddress(self.ITunesExt.Author)
 		return name, address, true
+	}
+
+	if self.AtomExt != nil {
+		if person := self.AtomExt.GetAuthor(); person != nil {
+			return person.Name, person.Email, true
+		}
 	}
 	return name, address, false
 }
@@ -501,6 +542,14 @@ func (self *Item) categoriesIter(yield func(string) bool) {
 	if media := self.Media; media != nil {
 		for s := range media.AllCategories() {
 			if !yield(s) {
+				return
+			}
+		}
+	}
+
+	if atom := self.AtomExt; atom != nil {
+		for c := range atom.AllCategories() {
+			if !yield(c) {
 				return
 			}
 		}
