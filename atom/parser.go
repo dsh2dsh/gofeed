@@ -183,8 +183,8 @@ func (self *Parser) feedBody(name string) {
 }
 
 func (self *Parser) parseChannelExt(name string) bool {
-	switch ns := self.p.ExtensionPrefix(); ns {
-	case "", "atom", "atom10", "atom03":
+	switch self.namespacePrefix() {
+	case "":
 		return false
 	case "yt":
 		self.feed.Youtube = self.youtube(self.feed.Youtube)
@@ -192,6 +192,15 @@ func (self *Parser) parseChannelExt(name string) bool {
 		self.feed.Extensions = self.extensions(name, self.feed.Extensions)
 	}
 	return true
+}
+
+func (self *Parser) namespacePrefix() string {
+	switch ns := self.p.NamespacePrefix(); ns {
+	case "", "atom", "atom10", "atom03":
+		return ""
+	default:
+		return ns
+	}
 }
 
 func (self *Parser) youtube(yt *ext.Youtube) *ext.Youtube {
@@ -271,8 +280,8 @@ func (self *Parser) entryBody(name string, entry *Entry) {
 }
 
 func (self *Parser) parseEntryExt(name string, entry *Entry) bool {
-	switch ns := self.p.ExtensionPrefix(); ns {
-	case "", "atom", "atom10", "atom03":
+	switch self.namespacePrefix() {
+	case "":
 		return false
 	case "media":
 		entry.Media = self.media(entry.Media)
@@ -347,7 +356,7 @@ func (self *Parser) sourceBody(name string, source *Source) {
 
 func (self *Parser) unknownExtension(name string, e ext.Extensions,
 ) (ext.Extensions, bool) {
-	if self.p.ExtensionPrefix() == "" {
+	if self.namespacePrefix() == "" {
 		return e, false
 	}
 	return self.extensions(name, e), true
@@ -582,9 +591,10 @@ func (self *Parser) version() string {
 		return ver
 	}
 
-	if ns := self.p.Attribute("xmlns"); ns == "http://purl.org/atom/ns#" {
+	switch self.p.NamespacePrefix() {
+	case "atom03":
 		return "0.3"
-	} else if ns == "http://www.w3.org/2005/Atom" {
+	case "atom":
 		return "1.0"
 	}
 	return ""

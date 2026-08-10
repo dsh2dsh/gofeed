@@ -1,0 +1,35 @@
+{
+  "AtomLinks": [
+    {
+      "href": "https://hub.example.org/atom-prefix",
+      "rel": "hub"
+    },
+    {
+      "href": "https://hub.example.org/default-namespace",
+      "rel": "hub",
+      "xmlns": "http://www.w3.org/2005/Atom"
+    },
+    {
+      "href": "https://hub.example.org/atom03-prefix",
+      "rel": "hub"
+    }
+  ],
+  "AtomExt": {
+    "Links": [
+      {
+        "href": "https://hub.example.org/atom-prefix",
+        "rel": "hub"
+      },
+      {
+        "href": "https://hub.example.org/default-namespace",
+        "rel": "hub",
+        "xmlns": "http://www.w3.org/2005/Atom"
+      },
+      {
+        "href": "https://hub.example.org/atom03-prefix",
+        "rel": "hub"
+      }
+    ]
+  },
+  "version": "2.0"
+}

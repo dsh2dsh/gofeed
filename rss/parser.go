@@ -71,7 +71,9 @@ func (self *Parser) root(name string) {
 
 	for name := range children {
 		// Skip any extensions found in the feed root.
-		if self.p.ExtensionPrefix() != "" {
+		switch self.namespacePrefix() {
+		case "":
+		default:
 			self.p.Skip(name)
 			continue
 		}
@@ -94,6 +96,15 @@ func (self *Parser) root(name string) {
 		return
 	}
 	self.feed.AtomLinks = self.feed.AtomExt.Links
+}
+
+func (self *Parser) namespacePrefix() string {
+	switch ns := self.p.NamespacePrefix(); ns {
+	case "", "rss", "rss09", "rss09alt", "rdf", "content":
+		return ""
+	default:
+		return ns
+	}
 }
 
 func (self *Parser) makeChildrenSeq(name string) iter.Seq[string] {
@@ -521,16 +532,25 @@ func (self *Parser) makeCloud() *Cloud {
 }
 
 func (self *Parser) version(name string) string {
-	switch strings.ToLower(name) {
-	case "rss":
+	if strings.EqualFold(name, "rss") {
 		return self.p.Attribute("version")
-	case "rdf":
-		switch self.p.Attribute("xmlns") {
-		case "http://channel.netscape.com/rdf/simple/0.9/",
-			"http://my.netscape.com/rdf/simple/0.9/":
-			return "0.9"
-		case "http://purl.org/rss/1.0/":
+	} else if !strings.EqualFold(name, "rdf") {
+		return ""
+	}
+
+	switch self.p.NamespacePrefix() {
+	case "rss":
+		return "1.0"
+	case "rss09", "rss09alt":
+		return "0.9"
+	}
+
+	for space := range self.p.Spaces {
+		switch shared.PrefixForNamespace(space, self.p.XMLPullParser) {
+		case "rss":
 			return "1.0"
+		case "rss09", "rss09alt":
+			return "0.9"
 		}
 	}
 	return ""
@@ -572,7 +592,7 @@ func (self *Parser) parseCustomExtInto(name string, extensions ext.Extensions,
 }
 
 func (self *Parser) parseChannelExt(name string, rss *Feed) bool {
-	switch ns := self.p.ExtensionPrefix(); ns {
+	switch self.namespacePrefix() {
 	case "":
 		return false
 	case "dc":
@@ -629,7 +649,7 @@ func (self *Parser) extensions(name string, e ext.Extensions) ext.Extensions {
 }
 
 func (self *Parser) parseItemExt(name string, item *Item) bool {
-	switch self.p.ExtensionPrefix() {
+	switch self.namespacePrefix() {
 	case "":
 		return false
 	case "dc":

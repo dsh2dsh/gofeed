@@ -1,0 +1,26 @@
+{
+  "title": "Conan O’Brien Needs A Friend",
+  "link": "https://www.siriusxm.com",
+  "feedLink": "https://feeds.simplecast.com/dHoohVNH",
+  "links": [
+    "https://www.siriusxm.com",
+    "https://feeds.simplecast.com/dHoohVNH"
+  ],
+  "AtomExt": {
+    "Links": [
+      {
+        "href": "https://feeds.simplecast.com/dHoohVNH",
+        "rel": "self",
+        "title": "MP3 Audio",
+        "type": "application/atom+xml"
+      },
+      {
+        "href": "https://simplecast.superfeedr.com",
+        "rel": "hub",
+        "xmlns": "http://www.w3.org/2005/Atom"
+      }
+    ]
+  },
+  "feedType": "rss",
+  "feedVersion": "2.0"
+}

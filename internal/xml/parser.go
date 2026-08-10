@@ -206,15 +206,6 @@ func (self *Parser) WithSkip(name string, yield func() error) error {
 	return self.Expect(xpp.EndTag, name)
 }
 
-func (self *Parser) ExtensionPrefix() string {
-	ns := self.NamespacePrefix()
-	switch ns {
-	case "", "rss", "rdf", "content":
-		return ""
-	}
-	return ns
-}
-
 func (self *Parser) NamespacePrefix() string {
 	return shared.PrefixForNamespace(self.Space, self.XMLPullParser)
 }
