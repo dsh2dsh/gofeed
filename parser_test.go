@@ -176,3 +176,21 @@ func TestParser_Parse_RootBeyondDetectionWindow(t *testing.T) {
 	require.NotNil(t, feed)
 	assert.Equal(t, "rss", feed.FeedType)
 }
+
+// JSON feeds larger than the detection window must be classified from their
+// prefix and then validated and decoded from the complete stream (issue #344).
+func TestParser_Parse_LargeJSONFeed(t *testing.T) {
+	content := strings.Repeat("x", 8192)
+	body := fmt.Sprintf(
+		`{"version":"https://jsonfeed.org/version/1.1","title":"big","items":[{"id":"1","content_text":%q}]}`,
+		content)
+
+	feed, err := gofeed.NewParser().Parse(strings.NewReader(body))
+	require.NoError(t, err)
+	require.NotNil(t, feed)
+	require.NotEmpty(t, feed.Items)
+
+	assert.Equal(t, "json", feed.FeedType)
+	assert.Equal(t, "big", feed.Title)
+	assert.Equal(t, content, feed.Items[0].Content)
+}
