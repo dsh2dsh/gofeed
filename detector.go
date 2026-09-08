@@ -2,7 +2,7 @@ package gofeed
 
 import (
 	"bytes"
-	"encoding/json"
+	"encoding/json/jsontext"
 	"io"
 	"strings"
 	"unicode"
@@ -74,7 +74,7 @@ loop:
 		}
 	case '{':
 		// Check if document is valid JSON
-		if json.Valid(b) {
+		if jsontext.Value(b).IsValid() {
 			return FeedTypeJSON
 		}
 	}

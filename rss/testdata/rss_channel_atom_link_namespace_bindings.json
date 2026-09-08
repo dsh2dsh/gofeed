@@ -1,5 +1,5 @@
 {
-  "AtomLinks": [
+  "atomLinks": [
     {
       "href": "https://hub.example.org/atom-prefix",
       "rel": "hub"
@@ -14,8 +14,8 @@
       "rel": "hub"
     }
   ],
-  "AtomExt": {
-    "Links": [
+  "atomExt": {
+    "links": [
       {
         "href": "https://hub.example.org/atom-prefix",
         "rel": "hub"

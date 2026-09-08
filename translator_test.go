@@ -2,7 +2,7 @@ package gofeed_test
 
 import (
 	"bytes"
-	jsonEncoding "encoding/json"
+	jsonEnc "encoding/json/v2"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -37,7 +37,7 @@ func TestDefaultRSSTranslator_Translate(t *testing.T) {
 
 				ErrorContains string `json:"errorContains"`
 			}
-			require.NoError(t, jsonEncoding.Unmarshal(e, &expected))
+			require.NoError(t, jsonEnc.Unmarshal(e, &expected))
 
 			// Get actual source feed
 			f, err := os.ReadFile(fmt.Sprintf("testdata/translator/rss/%s.xml", name))
@@ -89,7 +89,7 @@ func TestDefaultAtomTranslator_Translate(t *testing.T) {
 
 				ErrorContains string `json:"errorContains"`
 			}
-			require.NoError(t, jsonEncoding.Unmarshal(e, &expected))
+			require.NoError(t, jsonEnc.Unmarshal(e, &expected))
 
 			// Get actual source feed
 			f, err := os.ReadFile(fmt.Sprintf("testdata/translator/atom/%s.xml", name))
@@ -156,7 +156,7 @@ func TestDefaultJSONTranslator_Translate(t *testing.T) {
 
 			// Unmarshal expected feed
 			var expected gofeed.Feed
-			require.NoError(t, jsonEncoding.Unmarshal(e, &expected),
+			require.NoError(t, jsonEnc.Unmarshal(e, &expected),
 				"unmarshal expected json")
 			assert.Equal(t, &expected, actual)
 		})

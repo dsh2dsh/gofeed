@@ -1,7 +1,8 @@
 package json
 
 import (
-	"encoding/json"
+	"encoding/json/jsontext"
+	jsonEnc "encoding/json/v2"
 	"fmt"
 	"io"
 	"slices"
@@ -19,13 +20,14 @@ func NewParser() *Parser { return &Parser{} }
 // Parse parses an json feed into an json.Feed
 func (ap *Parser) Parse(r io.Reader, opts ...options.Option) (*Feed, error) {
 	feed := &Feed{}
-	if err := json.NewDecoder(r).Decode(feed); err != nil {
+	dec := jsontext.NewDecoder(r)
+	if err := jsonEnc.UnmarshalDecode(dec, feed); err != nil {
 		return nil, fmt.Errorf("gofeed/json: unable unmarshal feed: %w", err)
 	}
 	return feed, nil
 }
 
-var _ json.Unmarshaler = (*Feed)(nil)
+var _ jsonEnc.Unmarshaler = (*Feed)(nil)
 
 func (self *Feed) UnmarshalJSON(b []byte) error {
 	type alias Feed
@@ -35,7 +37,7 @@ func (self *Feed) UnmarshalJSON(b []byte) error {
 		Authors arrayOrSingle[Author] `json:"authors,omitempty"`
 	}{alias: (*alias)(self)}
 
-	if err := json.Unmarshal(b, &aux); err != nil {
+	if err := jsonEnc.Unmarshal(b, &aux); err != nil {
 		return fmt.Errorf("unmarshal json feed: %w", err)
 	}
 
@@ -46,7 +48,7 @@ func (self *Feed) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-var _ json.Unmarshaler = (*Item)(nil)
+var _ jsonEnc.Unmarshaler = (*Item)(nil)
 
 func (self *Item) UnmarshalJSON(b []byte) error {
 	type alias Item
@@ -57,7 +59,7 @@ func (self *Item) UnmarshalJSON(b []byte) error {
 		Authors arrayOrSingle[Author] `json:"authors,omitempty"`
 	}{alias: (*alias)(self)}
 
-	if err := json.Unmarshal(b, &aux); err != nil {
+	if err := jsonEnc.Unmarshal(b, &aux); err != nil {
 		return fmt.Errorf("unmarshal json feed item: %w", err)
 	}
 
@@ -68,18 +70,18 @@ func (self *Item) UnmarshalJSON(b []byte) error {
 
 type arrayOrSingle[T any] []*T
 
-var _ json.Unmarshaler = (*arrayOrSingle[any])(nil)
+var _ jsonEnc.Unmarshaler = (*arrayOrSingle[any])(nil)
 
 func (self *arrayOrSingle[T]) UnmarshalJSON(b []byte) error {
 	var items []*T
-	err := json.Unmarshal(b, &items)
+	err := jsonEnc.Unmarshal(b, &items)
 	if err == nil {
 		*self = slices.DeleteFunc(items, func(item *T) bool { return item == nil })
 		return nil
 	}
 
 	item := new(T)
-	if err2 := json.Unmarshal(b, item); err2 != nil {
+	if err2 := jsonEnc.Unmarshal(b, item); err2 != nil {
 		return fmt.Errorf(
 			"unmarshal array of objects or single object: %w: %w", err, err2)
 	}
@@ -91,19 +93,19 @@ type asString struct {
 	Value string
 }
 
-var _ json.Unmarshaler = (*asString)(nil)
+var _ jsonEnc.Unmarshaler = (*asString)(nil)
 
 func (self *asString) UnmarshalJSON(b []byte) error {
-	err := json.Unmarshal(b, &self.Value)
+	err := jsonEnc.Unmarshal(b, &self.Value)
 	if err == nil {
 		return nil
 	}
 
-	var raw json.RawMessage
-	if err2 := json.Unmarshal(b, &raw); err2 != nil {
+	var raw jsontext.Value
+	if err2 := jsonEnc.Unmarshal(b, &raw); err2 != nil {
 		return fmt.Errorf("unmarshal as string value: %w: %w", err, err2)
 	}
 
-	self.Value = strings.TrimSpace(string(raw))
+	self.Value = strings.TrimSpace(raw.String())
 	return nil
 }

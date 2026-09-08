@@ -6,8 +6,8 @@
     "https://www.siriusxm.com",
     "https://feeds.simplecast.com/dHoohVNH"
   ],
-  "AtomExt": {
-    "Links": [
+  "atomExt": {
+    "links": [
       {
         "href": "https://feeds.simplecast.com/dHoohVNH",
         "rel": "self",

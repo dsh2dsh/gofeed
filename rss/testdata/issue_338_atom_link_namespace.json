@@ -4,7 +4,7 @@
   "links": [
     "https://www.siriusxm.com"
   ],
-  "AtomLinks": [
+  "atomLinks": [
     {
       "href": "https://feeds.simplecast.com/dHoohVNH",
       "rel": "self",
@@ -17,8 +17,8 @@
       "xmlns": "http://www.w3.org/2005/Atom"
     }
   ],
-  "AtomExt": {
-    "Links": [
+  "atomExt": {
+    "links": [
       {
         "href": "https://feeds.simplecast.com/dHoohVNH",
         "rel": "self",

@@ -4,19 +4,19 @@
   "links": [
     "https://suspilne.media/"
   ],
-  "AtomLinks": [
+  "atomLinks": [
     {
-      "Href": "https://suspilne.media/rss/ukrnet.rss?",
-      "Rel": "self",
-      "Type": "application/rss+xml"
+      "href": "https://suspilne.media/rss/ukrnet.rss?",
+      "rel": "self",
+      "type": "application/rss+xml"
     }
   ],
   "description": "Новини України від редакції Суспільне | Новини.",
   "pubDate": "Fri, 22 Dec 2023 01:04:55 +0200",
   "pubDateParsed": "2023-12-21T23:04:55Z",
   "ttl": "5",
-  "AtomExt": {
-    "Links": [
+  "atomExt": {
+    "links": [
       {
         "href": "https://suspilne.media/rss/ukrnet.rss?",
         "rel": "self",

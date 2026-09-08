@@ -2,7 +2,7 @@ package json_test
 
 import (
 	"bytes"
-	"encoding/json"
+	jsonEnc "encoding/json/v2"
 	"errors"
 	"fmt"
 	"io"
@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	jsonParser "github.com/dsh2dsh/gofeed/v2/json"
+	"github.com/dsh2dsh/gofeed/v2/json"
 )
 
 func TestParser_Parse(t *testing.T) {
@@ -37,7 +37,7 @@ func TestParser_Parse(t *testing.T) {
 			require.NoError(t, err)
 
 			// Parse actual feed
-			fp := jsonParser.NewParser()
+			fp := json.NewParser()
 			actual, err := fp.Parse(bytes.NewReader(f), nil)
 			require.NoError(t, err)
 
@@ -46,8 +46,8 @@ func TestParser_Parse(t *testing.T) {
 			require.NoError(t, err)
 
 			// Unmarshal expected feed
-			var expected jsonParser.Feed
-			require.NoError(t, json.Unmarshal(e, &expected))
+			var expected json.Feed
+			require.NoError(t, jsonEnc.Unmarshal(e, &expected))
 			assert.Equal(t, &expected, actual)
 		})
 	}
@@ -64,7 +64,7 @@ func TestParser_ParseInvalidAndStruct(t *testing.T) {
 	f, _ := os.ReadFile(ff)
 
 	// Parse actual feed
-	fp := jsonParser.NewParser()
+	fp := json.NewParser()
 	_, err := fp.Parse(bytes.NewReader(f), nil)
 	require.Error(t, err)
 
@@ -125,7 +125,7 @@ func TestParser_Parse_ReaderError(t *testing.T) {
 		strings.NewReader(`{"version":"https://jsonfeed.org/version/1"`),
 		iotest.ErrReader(boom))
 
-	_, err := jsonParser.NewParser().Parse(r)
+	_, err := json.NewParser().Parse(r)
 	require.ErrorIs(t, err, boom)
 }
 
@@ -136,7 +136,7 @@ func TestParser_NullOptionalJSONFields(t *testing.T) {
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			data := `{"version":"https://jsonfeed.org/version/1.1","title":"Null fields","author":null,"authors":null,"items":` + items + `}`
-			feed, err := jsonParser.NewParser().Parse(strings.NewReader(data))
+			feed, err := json.NewParser().Parse(strings.NewReader(data))
 			require.NoError(t, err)
 			require.NotNil(t, feed)
 			require.Empty(t, feed.Authors)
