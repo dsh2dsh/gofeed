@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 
 	"github.com/dsh2dsh/gofeed/v2/options"
@@ -39,6 +40,9 @@ func (self *Feed) UnmarshalJSON(b []byte) error {
 	}
 
 	self.Authors = aux.Authors
+	self.Items = slices.DeleteFunc(self.Items, func(item *Item) bool {
+		return item == nil
+	})
 	return nil
 }
 
@@ -70,7 +74,7 @@ func (self *arrayOrSingle[T]) UnmarshalJSON(b []byte) error {
 	var items []*T
 	err := json.Unmarshal(b, &items)
 	if err == nil {
-		*self = items
+		*self = slices.DeleteFunc(items, func(item *T) bool { return item == nil })
 		return nil
 	}
 

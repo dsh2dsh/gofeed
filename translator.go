@@ -224,7 +224,7 @@ func (t *DefaultAtomTranslator) feedItem(entry *atom.Entry) *Item {
 
 func (t *DefaultAtomTranslator) feedAuthor(atom *atom.Feed) *Person {
 	if a := atom.GetAuthor(); a != nil {
-		return &Person{Name: a.Name, Email: a.Email}
+		return &Person{Name: a.Name, Email: a.Email, URL: a.URI}
 	}
 	return nil
 }
@@ -239,6 +239,7 @@ func (t *DefaultAtomTranslator) feedAuthors(atom *atom.Feed) []*Person {
 		authors[i] = &Person{
 			Name:  a.Name,
 			Email: a.Email,
+			URL:   a.URI,
 		}
 	}
 	return authors
@@ -261,7 +262,7 @@ func (t *DefaultAtomTranslator) feedItems(atom *atom.Feed) []*Item {
 
 func (t *DefaultAtomTranslator) itemAuthor(entry *atom.Entry) *Person {
 	if a := entry.GetAuthor(); a != nil {
-		return &Person{Name: a.Name, Email: a.Email}
+		return &Person{Name: a.Name, Email: a.Email, URL: a.URI}
 	}
 	return nil
 }
@@ -273,7 +274,7 @@ func (t *DefaultAtomTranslator) itemAuthors(entry *atom.Entry) []*Person {
 
 	authors := make([]*Person, len(entry.Authors))
 	for i, a := range entry.Authors {
-		authors[i] = &Person{Name: a.Name, Email: a.Email}
+		authors[i] = &Person{Name: a.Name, Email: a.Email, URL: a.URI}
 	}
 	return authors
 }
@@ -371,7 +372,7 @@ func (t *DefaultJSONTranslator) feedAuthor(json *json.Feed) *Person {
 	name, address := shared.ParseNameAddress(json.Author.Name)
 	// Author.URL is missing in global feed
 	// Author.Avatar is missing in global feed
-	return &Person{Name: name, Email: address}
+	return &Person{Name: name, Email: address, URL: json.Author.URL}
 }
 
 func (t *DefaultJSONTranslator) feedAuthors(json *json.Feed) []*Person {
@@ -379,7 +380,7 @@ func (t *DefaultJSONTranslator) feedAuthors(json *json.Feed) []*Person {
 		authors := make([]*Person, len(json.Authors))
 		for i, a := range json.Authors {
 			name, address := shared.ParseNameAddress(a.Name)
-			authors[i] = &Person{Name: name, Email: address}
+			authors[i] = &Person{Name: name, Email: address, URL: a.URL}
 		}
 		return authors
 	}
@@ -421,7 +422,7 @@ func (t *DefaultJSONTranslator) itemAuthor(jsonItem *json.Item) *Person {
 	name, address := shared.ParseNameAddress(jsonItem.Author.Name)
 	// Author.URL is missing in global feed
 	// Author.Avatar is missing in global feed
-	return &Person{Name: name, Email: address}
+	return &Person{Name: name, Email: address, URL: jsonItem.Author.URL}
 }
 
 func (t *DefaultJSONTranslator) itemAuthors(jsonItem *json.Item) []*Person {
@@ -429,7 +430,7 @@ func (t *DefaultJSONTranslator) itemAuthors(jsonItem *json.Item) []*Person {
 		authors := make([]*Person, len(jsonItem.Authors))
 		for i, a := range jsonItem.Authors {
 			name, address := shared.ParseNameAddress(a.Name)
-			authors[i] = &Person{Name: name, Email: address}
+			authors[i] = &Person{Name: name, Email: address, URL: a.URL}
 		}
 		return authors
 	}

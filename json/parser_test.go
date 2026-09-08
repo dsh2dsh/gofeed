@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"testing/iotest"
@@ -17,10 +18,6 @@ import (
 
 	jsonParser "github.com/dsh2dsh/gofeed/v2/json"
 )
-
-// Tests
-
-// TODO: add tests for invalid
 
 func TestParser_Parse(t *testing.T) {
 	files, _ := filepath.Glob("testdata/*.json")
@@ -130,4 +127,28 @@ func TestParser_Parse_ReaderError(t *testing.T) {
 
 	_, err := jsonParser.NewParser().Parse(r)
 	require.ErrorIs(t, err, boom)
+}
+
+func TestParser_NullOptionalJSONFields(t *testing.T) {
+	for i, items := range [...]string{
+		"null",
+		`[{"id":"a","content_text":"text","author":null,"authors":null}]`,
+	} {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			data := `{"version":"https://jsonfeed.org/version/1.1","title":"Null fields","author":null,"authors":null,"items":` + items + `}`
+			feed, err := jsonParser.NewParser().Parse(strings.NewReader(data))
+			require.NoError(t, err)
+			require.NotNil(t, feed)
+			require.Empty(t, feed.Authors)
+			if items == "null" {
+				require.Empty(t, feed.Items)
+				return
+			}
+
+			require.Len(t, feed.Items, 1)
+			require.Equal(t, "a", feed.Items[0].ID)
+			require.Equal(t, "text", feed.Items[0].Content())
+			require.Empty(t, feed.Items[0].Authors)
+		})
+	}
 }
