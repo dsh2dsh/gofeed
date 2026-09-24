@@ -1,6 +1,7 @@
 package shared
 
 import (
+	"net/mail"
 	"regexp"
 )
 
@@ -16,6 +17,10 @@ var (
 func ParseNameAddress(s string) (name, address string) {
 	if s == "" {
 		return "", ""
+	}
+
+	if a, err := mail.ParseAddress(s); err == nil {
+		return a.Name, a.Address
 	}
 
 	if m := emailNameRgx.FindStringSubmatch(s); m != nil {
