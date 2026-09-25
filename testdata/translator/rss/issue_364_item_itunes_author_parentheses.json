@@ -1,0 +1,19 @@
+{
+  "items": [
+    {
+      "author": {
+        "name": "This American Life (WBEZ)"
+      },
+      "authors": [
+        {
+          "name": "This American Life (WBEZ)"
+        }
+      ],
+      "itunesExt": {
+        "author": "This American Life (WBEZ)"
+      }
+    }
+  ],
+  "feedType": "rss",
+  "feedVersion": "2.0"
+}

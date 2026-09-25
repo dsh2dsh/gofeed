@@ -1,0 +1,58 @@
+{
+  "items": [
+    {
+      "author": {
+        "name": "Smith & Sons (Ltd)"
+      },
+      "authors": [
+        {
+          "name": "Smith & Sons (Ltd)"
+        }
+      ],
+      "dcExt": {
+        "creator": "Smith & Sons (Ltd)"
+      }
+    },
+    {
+      "author": {
+        "name": "@jack"
+      },
+      "authors": [
+        {
+          "name": "@jack"
+        }
+      ],
+      "dcExt": {
+        "creator": "@jack"
+      }
+    },
+    {
+      "author": {
+        "name": "Jane Doe (@jane)"
+      },
+      "authors": [
+        {
+          "name": "Jane Doe (@jane)"
+        }
+      ],
+      "dcExt": {
+        "creator": "Jane Doe (@jane)"
+      }
+    },
+    {
+      "author": {
+        "name": "John (Johnny) Doe"
+      },
+      "authors": [
+        {
+          "name": "John (Johnny) Doe"
+        }
+      ],
+      "dcExt": {
+        "creator": "John (Johnny) Doe"
+      }
+    }
+  ],
+  "feedType": "rss",
+  "feedVersion": "2.0"
+}

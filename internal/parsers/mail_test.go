@@ -12,13 +12,22 @@ func TestParseNameAddress(t *testing.T) {
 		in   string
 		want [2]string
 	}{
+		{"", [2]string{"", ""}},
+		{"John Doe", [2]string{"John Doe", ""}},
+		{"john@example.com", [2]string{"", "john@example.com"}},
 		{"john@example.com (John Doe)", [2]string{"John Doe", "john@example.com"}},
-		{"John Doe <john@example.com>", [2]string{"John Doe", "john@example.com"}},
 		{"John Doe (john@example.com)", [2]string{"John Doe", "john@example.com"}},
+		{"john@example.com (John (JD) Doe)", [2]string{"John (JD) Doe", "john@example.com"}},
+		{"john@example.com (John@Home)", [2]string{"John@Home", "john@example.com"}},
+		{"John Doe <john@example.com>", [2]string{"John Doe", "john@example.com"}},
+		{`"Doe, John" <john@example.com>`, [2]string{"Doe, John", "john@example.com"}},
+		{"<john@example.com>", [2]string{"", "john@example.com"}},
 		{"Smith & Sons (Ltd)", [2]string{"Smith & Sons (Ltd)", ""}},
 		{"@jack", [2]string{"@jack", ""}},
-		{"John Doe", [2]string{"John Doe", ""}},
-		{"user@localhost", [2]string{"", "user@localhost"}},
+		{"Jane Doe (@jane)", [2]string{"Jane Doe (@jane)", ""}},
+		{"John (Johnny) Doe", [2]string{"John (Johnny) Doe", ""}},
+		{"Jane <not an address>", [2]string{"Jane <not an address>", ""}},
+		{"John Doe john@example.com", [2]string{"John Doe john@example.com", ""}},
 	}
 
 	for i, tt := range tests {
