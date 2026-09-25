@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/dsh2dsh/gofeed/v2/atom"
-	"github.com/dsh2dsh/gofeed/v2/internal/shared"
+	"github.com/dsh2dsh/gofeed/v2/internal/parsers"
 	"github.com/dsh2dsh/gofeed/v2/json"
 	"github.com/dsh2dsh/gofeed/v2/options"
 	"github.com/dsh2dsh/gofeed/v2/rss"
@@ -369,7 +369,7 @@ func (t *DefaultJSONTranslator) feedAuthor(json *json.Feed) *Person {
 		return nil
 	}
 
-	name, address := shared.ParseNameAddress(json.Author.Name)
+	name, address := parsers.ParseNameAddress(json.Author.Name)
 	// Author.URL is missing in global feed
 	// Author.Avatar is missing in global feed
 	return &Person{Name: name, Email: address, URL: json.Author.URL}
@@ -379,7 +379,7 @@ func (t *DefaultJSONTranslator) feedAuthors(json *json.Feed) []*Person {
 	if json.Authors != nil {
 		authors := make([]*Person, len(json.Authors))
 		for i, a := range json.Authors {
-			name, address := shared.ParseNameAddress(a.Name)
+			name, address := parsers.ParseNameAddress(a.Name)
 			authors[i] = &Person{Name: name, Email: address, URL: a.URL}
 		}
 		return authors
@@ -419,7 +419,7 @@ func (t *DefaultJSONTranslator) itemAuthor(jsonItem *json.Item) *Person {
 		return nil
 	}
 
-	name, address := shared.ParseNameAddress(jsonItem.Author.Name)
+	name, address := parsers.ParseNameAddress(jsonItem.Author.Name)
 	// Author.URL is missing in global feed
 	// Author.Avatar is missing in global feed
 	return &Person{Name: name, Email: address, URL: jsonItem.Author.URL}
@@ -429,7 +429,7 @@ func (t *DefaultJSONTranslator) itemAuthors(jsonItem *json.Item) []*Person {
 	if jsonItem.Authors != nil {
 		authors := make([]*Person, len(jsonItem.Authors))
 		for i, a := range jsonItem.Authors {
-			name, address := shared.ParseNameAddress(a.Name)
+			name, address := parsers.ParseNameAddress(a.Name)
 			authors[i] = &Person{Name: name, Email: address, URL: a.URL}
 		}
 		return authors

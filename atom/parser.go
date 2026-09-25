@@ -15,7 +15,7 @@ import (
 	"github.com/dsh2dsh/gofeed/v2/ext"
 	"github.com/dsh2dsh/gofeed/v2/internal/date"
 	"github.com/dsh2dsh/gofeed/v2/internal/media"
-	"github.com/dsh2dsh/gofeed/v2/internal/shared"
+	"github.com/dsh2dsh/gofeed/v2/internal/parsers"
 	"github.com/dsh2dsh/gofeed/v2/internal/xml"
 	"github.com/dsh2dsh/gofeed/v2/internal/youtube"
 	"github.com/dsh2dsh/gofeed/v2/options"
@@ -216,7 +216,7 @@ func (self *Parser) extensions(name string, e ext.Extensions) ext.Extensions {
 		self.p.Skip(name)
 		return e
 	}
-	e, err := shared.ParseExtension(e, self.p.XMLPullParser)
+	e, err := parsers.ParseExtension(e, self.p.XMLPullParser)
 	if err != nil {
 		self.err = err
 	}

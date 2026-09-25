@@ -14,7 +14,7 @@ import (
 	"github.com/dsh2dsh/gofeed/v2/internal/dublincore"
 	"github.com/dsh2dsh/gofeed/v2/internal/itunes"
 	"github.com/dsh2dsh/gofeed/v2/internal/media"
-	"github.com/dsh2dsh/gofeed/v2/internal/shared"
+	"github.com/dsh2dsh/gofeed/v2/internal/parsers"
 	"github.com/dsh2dsh/gofeed/v2/internal/xml"
 	"github.com/dsh2dsh/gofeed/v2/options"
 )
@@ -546,7 +546,7 @@ func (self *Parser) version(name string) string {
 	}
 
 	for space := range self.p.Spaces {
-		switch shared.PrefixForNamespace(space, self.p.XMLPullParser) {
+		switch parsers.PrefixForNamespace(space, self.p.XMLPullParser) {
 		case "rss":
 			return "1.0"
 		case "rss09", "rss09alt":
@@ -641,7 +641,7 @@ func (self *Parser) extensions(name string, e ext.Extensions) ext.Extensions {
 		return e
 	}
 
-	e, err := shared.ParseExtension(e, self.p.XMLPullParser)
+	e, err := parsers.ParseExtension(e, self.p.XMLPullParser)
 	if err != nil {
 		self.err = err
 	}

@@ -9,7 +9,7 @@ import (
 
 	xpp "github.com/dsh2dsh/goxpp/v2"
 
-	"github.com/dsh2dsh/gofeed/v2/internal/shared"
+	"github.com/dsh2dsh/gofeed/v2/internal/parsers"
 	"github.com/dsh2dsh/gofeed/v2/options"
 )
 
@@ -207,5 +207,5 @@ func (self *Parser) WithSkip(name string, yield func() error) error {
 }
 
 func (self *Parser) NamespacePrefix() string {
-	return shared.PrefixForNamespace(self.Space, self.XMLPullParser)
+	return parsers.PrefixForNamespace(self.Space, self.XMLPullParser)
 }

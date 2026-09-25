@@ -10,7 +10,7 @@ import (
 	"github.com/dsh2dsh/gofeed/v2/ext"
 	"github.com/dsh2dsh/gofeed/v2/internal/date"
 	"github.com/dsh2dsh/gofeed/v2/internal/json"
-	"github.com/dsh2dsh/gofeed/v2/internal/shared"
+	"github.com/dsh2dsh/gofeed/v2/internal/parsers"
 )
 
 // Feed is an RSS Feed
@@ -177,20 +177,20 @@ func (self *Feed) GetUpdatedParsed() *time.Time {
 func (self *Feed) GetAuthor() (name, address string, ok bool) {
 	switch {
 	case self.ManagingEditor != "":
-		name, address = shared.ParseNameAddress(self.ManagingEditor)
+		name, address = parsers.ParseNameAddress(self.ManagingEditor)
 		return name, address, true
 	case self.WebMaster != "":
-		name, address = shared.ParseNameAddress(self.WebMaster)
+		name, address = parsers.ParseNameAddress(self.WebMaster)
 		return name, address, true
 	}
 
 	if self.DublinCoreExt != nil {
 		switch {
 		case self.DublinCoreExt.Author != "":
-			name, address = shared.ParseNameAddress(self.DublinCoreExt.Author)
+			name, address = parsers.ParseNameAddress(self.DublinCoreExt.Author)
 			return name, address, true
 		case self.DublinCoreExt.Creator != "":
-			name, address = shared.ParseNameAddress(self.DublinCoreExt.Creator)
+			name, address = parsers.ParseNameAddress(self.DublinCoreExt.Creator)
 			return name, address, true
 		}
 	}
@@ -198,7 +198,7 @@ func (self *Feed) GetAuthor() (name, address string, ok bool) {
 	if self.ITunesExt != nil {
 		switch {
 		case self.ITunesExt.Author != "":
-			name, address = shared.ParseNameAddress(self.ITunesExt.Author)
+			name, address = parsers.ParseNameAddress(self.ITunesExt.Author)
 			return name, address, true
 		case self.ITunesExt.Owner != nil:
 			owner := self.ITunesExt.Owner
@@ -453,23 +453,23 @@ func (self *Item) GetPublishedParsed() *time.Time {
 
 func (self *Item) GetAuthor() (name, address string, ok bool) {
 	if self.Author != "" {
-		name, address = shared.ParseNameAddress(self.Author)
+		name, address = parsers.ParseNameAddress(self.Author)
 		return name, address, true
 	}
 
 	if self.DublinCoreExt != nil {
 		switch {
 		case self.DublinCoreExt.Author != "":
-			name, address = shared.ParseNameAddress(self.DublinCoreExt.Author)
+			name, address = parsers.ParseNameAddress(self.DublinCoreExt.Author)
 			return name, address, true
 		case self.DublinCoreExt.Creator != "":
-			name, address = shared.ParseNameAddress(self.DublinCoreExt.Creator)
+			name, address = parsers.ParseNameAddress(self.DublinCoreExt.Creator)
 			return name, address, true
 		}
 	}
 
 	if self.ITunesExt != nil && self.ITunesExt.Author != "" {
-		name, address = shared.ParseNameAddress(self.ITunesExt.Author)
+		name, address = parsers.ParseNameAddress(self.ITunesExt.Author)
 		return name, address, true
 	}
 
