@@ -211,3 +211,28 @@ func TestParseDateFormats(t *testing.T) {
 			"wrong UTC for %s", tt.in)
 	}
 }
+
+// RFC 3339 5.6 allows the "T" separator and "Z" designator in lower case
+// (issue #371). But time.Parse unable to handle it, so we too.
+func TestParseDateRFC3339LowerCase(t *testing.T) {
+	const want = "2006-01-02 15:04:05"
+
+	for _, in := range []string{
+		"2006-01-02t15:04:05Z",
+		"2006-01-02T15:04:05z",
+		"2006-01-02t15:04:05z",
+		"2006-01-02t17:04:05+02:00",
+	} {
+		got, err := Parse(in)
+		if err == nil {
+			assert.Equal(t, want, got.UTC().Format("2006-01-02 15:04:05"))
+			continue
+		}
+
+		// If we can't parse it, it's ok, while time.Parse can't parse it too.
+		t.Log("our err:", err)
+		_, err2 := time.Parse(time.RFC3339, in)
+		t.Log("time.Parse err:", err2)
+		require.Error(t, err2, "we can't parse %q, but time.Parse can", in)
+	}
+}
