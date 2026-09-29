@@ -1,6 +1,7 @@
 package xml
 
 import (
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
@@ -219,4 +220,54 @@ func (self *Parser) WithSkip(name string, yield func() error) error {
 
 func (self *Parser) NamespacePrefix() string {
 	return parsers.PrefixForNamespace(self.Space, self.XMLPullParser)
+}
+
+func (self *Parser) LookupAttribute(name string, opts ...LookupOption) string {
+	for _, attr := range self.Attrs {
+		lowerName := strings.ToLower(attr.Name.Local)
+		if lowerName != name {
+			continue
+		}
+
+		if len(opts) == 0 {
+			return strings.TrimSpace(attr.Value)
+		}
+
+		for _, fn := range opts {
+			if fn(attr) {
+				return strings.TrimSpace(attr.Value)
+			}
+		}
+		return ""
+	}
+	return ""
+}
+
+type LookupOption func(attr xml.Attr) bool
+
+func (self *Parser) WithNamespacePrefix(ns string) LookupOption {
+	return func(attr xml.Attr) bool {
+		prefix := parsers.PrefixForNamespace(attr.Name.Space, self.XMLPullParser)
+		return prefix == ns
+	}
+}
+
+// ResolveAttrs resolves relative URI attributes according to xml:base.
+func (self *Parser) ResolveAttrs() {
+	if self.BaseStack.Top() == nil {
+		return
+	}
+
+	for i := range self.Attrs {
+		attr := &self.Attrs[i]
+		lowerName := strings.ToLower(attr.Name.Local)
+		if _, ok := uriAttrs[lowerName]; ok {
+			u, err := self.XmlBaseResolveUrl(attr.Value)
+			if err == nil && u != nil {
+				attr.Value = u.String()
+			}
+			// Continue processing even if URL resolution fails (e.g., for non-HTTP
+			// URIs like at://)
+		}
+	}
 }

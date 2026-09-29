@@ -121,6 +121,7 @@ func (self *Parser) makeChildrenSeq(name string) iter.Seq[string] {
 				return
 			}
 
+			self.p.ResolveAttrs()
 			if !yield(name) {
 				break
 			}
@@ -209,8 +210,15 @@ func (self *Parser) appendItem(name string, items []*Item) []*Item {
 	if children == nil {
 		return items
 	}
-
 	item := new(Item)
+
+	if ns := self.p.NamespacePrefix(); ns == "rss" {
+		about := self.p.LookupAttribute("about", self.p.WithNamespacePrefix("rdf"))
+		if about != "" {
+			item.GUID = &GUID{Value: about}
+		}
+	}
+
 	for name := range children {
 		self.itemBody(name, item)
 	}
