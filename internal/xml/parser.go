@@ -13,6 +13,17 @@ import (
 	"github.com/dsh2dsh/gofeed/v2/options"
 )
 
+// XML attributes whose values are URI references, resolved relative to
+// xml:base: href, scheme, src and uri from Atom (RFC 4287), and url from RSS
+// <enclosure> and <source> and from Media RSS.
+var uriAttrs = map[string]struct{}{
+	"href":   {},
+	"scheme": {},
+	"src":    {},
+	"uri":    {},
+	"url":    {},
+}
+
 type Parser struct {
 	*xpp.XMLPullParser
 

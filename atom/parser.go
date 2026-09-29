@@ -23,21 +23,12 @@ import (
 
 // Atom elements which contain URIs
 // https://tools.ietf.org/html/rfc4287
-var atomUriElements = map[string]struct{}{
+var uriElements = map[string]struct{}{
 	"icon": {},
 	"id":   {},
 	"logo": {},
 	"uri":  {},
 	"url":  {}, // atom 0.3
-}
-
-// List of xml attributes that contain URIs to be resolved relative to xml:base.
-// From the Atom spec https://tools.ietf.org/html/rfc4287
-var atomUriAttrs = map[string]struct{}{
-	"href":   {},
-	"scheme": {},
-	"src":    {},
-	"uri":    {},
 }
 
 // Parser is an Atom Parser
@@ -107,7 +98,7 @@ func (self *Parser) makeChildrenSeq(name string) iter.Seq[string] {
 				return
 			}
 
-			self.resolveAttrs()
+			self.p.ResolveAttrs()
 			if !yield(name) {
 				break
 			}
@@ -116,26 +107,6 @@ func (self *Parser) makeChildrenSeq(name string) iter.Seq[string] {
 		if err := self.Err(); err != nil {
 			self.err = err
 			return
-		}
-	}
-}
-
-// resolveAttrs resolves relative URI attributes according to xml:base.
-func (self *Parser) resolveAttrs() {
-	if self.p.BaseStack.Top() == nil {
-		return
-	}
-
-	for i := range self.p.Attrs {
-		attr := &self.p.Attrs[i]
-		lowerName := strings.ToLower(attr.Name.Local)
-		if _, ok := atomUriAttrs[lowerName]; ok {
-			absURL, err := self.p.XmlBaseResolveUrl(attr.Value)
-			if err == nil && absURL != nil {
-				attr.Value = absURL.String()
-			}
-			// Continue processing even if URL resolution fails (e.g., for non-HTTP
-			// URIs like at://)
 		}
 	}
 }
@@ -527,7 +498,7 @@ func (self *Parser) parseAtomText(name string) (string, error) {
 	}
 
 	// resolve relative URIs in URI-containing elements according to xml:base
-	if _, ok := atomUriElements[strings.ToLower(self.p.Name)]; !ok {
+	if _, ok := uriElements[strings.ToLower(self.p.Name)]; !ok {
 		return result, nil
 	}
 
