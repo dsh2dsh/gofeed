@@ -1,8 +1,6 @@
 package json
 
 import (
-	"bufio"
-	"bytes"
 	"encoding/json/jsontext"
 	jsonEnc "encoding/json/v2"
 	"fmt"
@@ -10,10 +8,9 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/dsh2dsh/gofeed/v2/internal/utf8bom"
 	"github.com/dsh2dsh/gofeed/v2/options"
 )
-
-var utf8BOM = [...]byte{0xEF, 0xBB, 0xBF}
 
 // Parser is an JSON Feed Parser
 type Parser struct{}
@@ -25,7 +22,7 @@ func NewParser() *Parser { return &Parser{} }
 
 // Parse parses an json feed into an json.Feed
 func (ap *Parser) Parse(r io.Reader, opts ...options.Option) (*Feed, error) {
-	r, err := stripUTF8BOM(r)
+	r, err := utf8bom.NewReader(r)
 	if err != nil {
 		return nil, fmt.Errorf("gofeed/json: strip UTF8 BOM: %w", err)
 	}
@@ -36,30 +33,6 @@ func (ap *Parser) Parse(r io.Reader, opts ...options.Option) (*Feed, error) {
 		return nil, fmt.Errorf("gofeed/json: unable unmarshal feed: %w", err)
 	}
 	return feed, nil
-}
-
-func stripUTF8BOM(r io.Reader) (io.Reader, error) {
-	var br *bufio.Reader
-	switch v := r.(type) {
-	case *bufio.Reader:
-		br = v
-	default:
-		br = bufio.NewReader(r)
-	}
-
-	prefix, err := br.Peek(len(utf8BOM))
-	if err != nil {
-		return nil, fmt.Errorf("reading UTF8 BOM prefix: %w", err)
-	}
-
-	if !bytes.Equal(prefix, utf8BOM[:]) {
-		return br, nil
-	}
-
-	if _, err := br.Discard(len(utf8BOM)); err != nil {
-		return nil, fmt.Errorf("discarding UTF8 BOM prefix: %w", err)
-	}
-	return br, nil
 }
 
 func (self *Feed) UnmarshalJSON(b []byte) error {

@@ -1,7 +1,6 @@
 package json_test
 
 import (
-	"bufio"
 	"bytes"
 	jsonEnc "encoding/json/v2"
 	"errors"
@@ -155,45 +154,15 @@ func TestParser_NullOptionalJSONFields(t *testing.T) {
 }
 
 func TestParser_Parse_withUTF8BOM(t *testing.T) {
-	data := "\xEF\xBB\xBF" + `{
+	const data = "\xEF\xBB\xBF" + `{
 		"version": "https://jsonfeed.org/version/1.1",
 		"title": "My Example Feed",
 		"home_page_url": "https://example.org/",
 		"items": []
 	}`
 
-	tests := []struct {
-		name   string
-		reader io.Reader
-	}{
-		{
-			name:   "strings.Reader",
-			reader: strings.NewReader(data),
-		},
-		{
-			name:   "bytes.Reader",
-			reader: bytes.NewReader([]byte(data)),
-		},
-		{
-			name:   "bytes.Buffer",
-			reader: bytes.NewBuffer([]byte(data)),
-		},
-		{
-			name:   "bufio.Reader",
-			reader: bufio.NewReader(strings.NewReader(data)),
-		},
-		{
-			name:   "default",
-			reader: io.NopCloser(strings.NewReader(data)),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			feed, err := json.NewParser().Parse(tt.reader)
-			require.NoError(t, err)
-			require.NotNil(t, feed)
-			assert.Equal(t, "My Example Feed", feed.Title)
-		})
-	}
+	feed, err := json.NewParser().Parse(strings.NewReader(data))
+	require.NoError(t, err)
+	require.NotNil(t, feed)
+	assert.Equal(t, "My Example Feed", feed.Title)
 }
