@@ -6,7 +6,7 @@ require (
 	github.com/dsh2dsh/goxpp/v2 v2.2.0
 	github.com/itlightning/dateparse v0.2.1
 	github.com/stretchr/testify v1.12.1
-	golang.org/x/net v0.61.0
+	golang.org/x/net v0.62.0
 	golang.org/x/sync v0.24.0
 )
 
