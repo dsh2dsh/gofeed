@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	xpp "github.com/dsh2dsh/goxpp/v2"
+	"golang.org/x/text/encoding/unicode"
+	"golang.org/x/text/transform"
 
 	"github.com/dsh2dsh/gofeed/v2/internal/parsers"
 	"github.com/dsh2dsh/gofeed/v2/options"
@@ -40,15 +42,25 @@ func NewParser(r io.Reader, opts ...options.Option) *Parser {
 
 func (self *Parser) init(r io.Reader, opts ...options.Option) *Parser {
 	self.opts.Apply(opts...)
-
 	if self.opts.StrictChars {
 		self.XMLPullParser = xpp.NewXMLPullParser(r, false, self.opts.CharsetReader)
-	} else {
-		self.validReader.WithCharsetReader(self.opts.CharsetReader).WithReader(r)
-		self.XMLPullParser = xpp.NewXMLPullParser(&self.validReader, false,
-			self.validReader.CharsetReader)
+		return self
 	}
+
+	r = transform.NewReader(r, unicode.BOMOverride(new(maybeUTF16)))
+
+	self.validReader.WithCharsetReader(self.opts.CharsetReader).WithReader(r)
+	self.XMLPullParser = xpp.NewXMLPullParser(&self.validReader, false,
+		self.charsetReader)
 	return self
+}
+
+func (self *Parser) charsetReader(label string, input io.Reader,
+) (io.Reader, error) {
+	if strings.EqualFold(label, "utf-16") {
+		return &self.validReader, nil
+	}
+	return self.validReader.CharsetReader(label, input)
 }
 
 func (self *Parser) Err() error { return self.err }
