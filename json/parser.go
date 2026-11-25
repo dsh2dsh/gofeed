@@ -8,7 +8,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/dsh2dsh/gofeed/v2/internal/utf8bom"
+	"golang.org/x/text/encoding/unicode"
+	"golang.org/x/text/transform"
+
 	"github.com/dsh2dsh/gofeed/v2/options"
 )
 
@@ -22,10 +24,7 @@ func NewParser() *Parser { return &Parser{} }
 
 // Parse parses an json feed into an json.Feed
 func (ap *Parser) Parse(r io.Reader, opts ...options.Option) (*Feed, error) {
-	r, err := utf8bom.NewReader(r)
-	if err != nil {
-		return nil, fmt.Errorf("gofeed/json: strip UTF8 BOM: %w", err)
-	}
+	r = transform.NewReader(r, unicode.BOMOverride(transform.Nop))
 
 	feed := &Feed{}
 	dec := jsontext.NewDecoder(r)
